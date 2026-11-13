@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" role="img" aria-label="Animated AI background">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#041229"/>
+      <stop offset="55%" stop-color="#0b2f59"/>
+      <stop offset="100%" stop-color="#041a36"/>
+    </linearGradient>
+    <radialGradient id="orbA" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7de3ff" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#1377ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orbB" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#93b4ff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#6b42ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7cf4ff" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#2a64ff" stop-opacity="0.15"/>
+    </linearGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="22"/>
+    </filter>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="1.4"/>
+    </filter>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <g opacity="0.62">
+    <path d="M-20 760 C 260 700 490 760 760 710 C 980 668 1210 548 1450 602 C 1650 648 1820 782 1940 828" fill="none" stroke="#63b2ff" stroke-opacity="0.35" stroke-width="1.2"/>
+    <path d="M-20 820 C 280 768 510 846 780 804 C 1020 767 1245 628 1510 684 C 1695 724 1838 832 1940 880" fill="none" stroke="#84ddff" stroke-opacity="0.24" stroke-width="1"/>
+  </g>
+
+  <g>
+    <circle cx="470" cy="310" r="260" fill="url(#orbA)" filter="url(#glow)">
+      <animate attributeName="cx" values="420;560;430;470" dur="14s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="320;250;360;310" dur="12s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1410" cy="680" r="320" fill="url(#orbB)" filter="url(#glow)">
+      <animate attributeName="cx" values="1450;1300;1460;1410" dur="16s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="700;560;730;680" dur="15s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+
+  <g opacity="0.45" stroke="url(#ring)" fill="none" filter="url(#soft)">
+    <ellipse cx="960" cy="540" rx="480" ry="220" stroke-width="1.5">
+      <animateTransform attributeName="transform" type="rotate" from="0 960 540" to="360 960 540" dur="30s" repeatCount="indefinite"/>
+    </ellipse>
+    <ellipse cx="960" cy="540" rx="360" ry="160" stroke-width="1.3">
+      <animateTransform attributeName="transform" type="rotate" from="360 960 540" to="0 960 540" dur="24s" repeatCount="indefinite"/>
+    </ellipse>
+  </g>
+
+  <g opacity="0.55">
+    <circle cx="920" cy="500" r="3.2" fill="#8ef7ff">
+      <animate attributeName="opacity" values="0.2;1;0.2" dur="3.2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="980" cy="560" r="2.8" fill="#9ac4ff">
+      <animate attributeName="opacity" values="1;0.2;1" dur="2.7s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="1030" cy="500" r="2.4" fill="#8ef7ff">
+      <animate attributeName="opacity" values="0.25;1;0.25" dur="2.9s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="870" cy="560" r="2.2" fill="#9ac4ff">
+      <animate attributeName="opacity" values="1;0.3;1" dur="2.5s" repeatCount="indefinite"/>
+    </circle>
+  </g>
+</svg>

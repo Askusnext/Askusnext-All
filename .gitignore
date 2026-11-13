@@ -8,3 +8,4 @@ dist/
 .DS_Store
 askus-platform/backend/askus-api/uploads/*
 !askus-platform/backend/askus-api/uploads/.gitkeep
+.git-nested-backup/

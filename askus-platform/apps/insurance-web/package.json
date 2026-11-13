@@ -1,0 +1,38 @@
+{
+  "name": "@askus/insurance-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3002",
+    "build": "next build",
+    "start": "next start -p 3002",
+    "predev": "node scripts/copy-pdf-worker.mjs && node scripts/build-ocr-worker.mjs",
+    "prebuild": "node scripts/copy-pdf-worker.mjs && node scripts/build-ocr-worker.mjs"
+  },
+  "dependencies": {
+    "@askus/api-client": "*",
+    "@askus/authentication": "*",
+    "@askus/shared-types": "*",
+    "@askus/ui-components": "*",
+    "@askus/validation": "*",
+    "heic-to": "^1.6.7",
+    "lucide-react": "^1.69.0",
+    "next": "14.2.35",
+    "onnxruntime-web": "^1.31.1",
+    "pdfjs-dist": "^6.5.438",
+    "ppu-paddle-ocr": "^6.6.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "utif2": "^4.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.4",
+    "@types/node": "^20.12.7",
+    "@types/react": "18.3.3",
+    "@types/react-dom": "18.3.0",
+    "esbuild": "^0.25.0",
+    "postcss": "^8.4.47",
+    "tailwindcss": "^4.3.4",
+    "typescript": "^5.5.4"
+  }
+}

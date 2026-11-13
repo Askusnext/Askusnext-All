@@ -1,0 +1,16 @@
+node_modules
+.pnp
+.pnp.js
+.next
+out
+build
+dist
+.turbo
+coverage
+uploads
+.env
+.env.local
+.env*.local
+*.log
+*.pem
+.DS_Store
