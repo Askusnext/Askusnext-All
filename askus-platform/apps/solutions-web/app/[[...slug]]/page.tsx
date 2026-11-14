@@ -1,11 +1,10 @@
-'use client';
+import Client from './client';
 
-import dynamic from 'next/dynamic';
-
-// The existing React app (pages, components, routing) is preserved as-is and
-// mounted client-side via react-router-dom's BrowserRouter inside <App />.
-const App = dynamic(() => import('@/App'), { ssr: false });
+// Static export emits only index.html; other paths fall back to it via public/_redirects.
+export function generateStaticParams() {
+  return [{ slug: [] }];
+}
 
 export default function CatchAllPage() {
-  return <App />;
+  return <Client />;
 }

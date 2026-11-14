@@ -1,0 +1,8 @@
+{
+  "name": "askus-solutions",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./out",
+    "not_found_handling": "single-page-application"
+  }
+}
