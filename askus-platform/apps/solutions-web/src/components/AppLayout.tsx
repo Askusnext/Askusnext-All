@@ -2,33 +2,15 @@ import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { logout, useAppDispatch, useAppSelector } from '../store';
 import { STAFF_KEYS, clearSession } from '../api/session';
-import type { UserRole } from '../types';
-
-type NavItem = {
-	to: string;
-	label: string;
-	roles: UserRole[];
-};
-
-const navItems: NavItem[] = [
-	{ to: '/dashboard', label: 'Dashboard', roles: ['Admin', 'Employee'] },
-	{ to: '/board', label: 'Board', roles: ['Admin', 'Employee'] },
-	{ to: '/tickets', label: 'Tickets', roles: ['Admin', 'Employee'] },
-	{ to: '/analytics', label: 'Analytics', roles: ['Admin', 'Employee'] },
-	{ to: '/calendar', label: 'Calendar', roles: ['Admin', 'Employee'] },
-	{ to: '/timesheet', label: 'Timesheet', roles: ['Admin', 'Employee', 'Agent'] },
-	{ to: '/renewals', label: 'Renewals', roles: ['Admin'] },
-	{ to: '/users', label: 'User Management', roles: ['Admin'] },
-];
+import { NAV_ITEMS, canOpen } from '../access';
 
 export default function AppLayout() {
 	const dispatch = useAppDispatch();
 	const navigate = useNavigate();
 	const user = useAppSelector((state) => state.auth.user);
-	const role = user?.role ?? 'Agent';
 	const isAuthenticated = Boolean(localStorage.getItem('tms_token'));
 
-	const visibleItems = navItems.filter((item) => item.roles.includes(role));
+	const visibleItems = NAV_ITEMS.filter((item) => canOpen(user, item));
 
 	const handleLogout = () => {
 		clearSession(STAFF_KEYS);
@@ -69,7 +51,7 @@ export default function AppLayout() {
 
 				<div style={styles.footer}>
 					<div style={styles.userName}>{user?.name ?? 'Signed in user'}</div>
-					<div style={styles.userRole}>{role}</div>
+					<div style={styles.userRole}>{user?.role === 'SuperAdmin' ? 'Super Admin' : user?.role ?? 'Agent'}</div>
 					<button type="button" style={styles.logoutButton} onClick={handleLogout}>
 						Logout
 					</button>

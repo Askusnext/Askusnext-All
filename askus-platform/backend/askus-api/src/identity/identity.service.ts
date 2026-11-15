@@ -43,15 +43,25 @@ export class IdentityService implements OnApplicationBootstrap {
     private readonly audit: AuditService,
   ) {}
 
-  // Without this, a fresh database has no staff able to sign in.
+  // Without this, a fresh database has no staff able to sign in. Each env var is a comma-separated
+  // list of emails/mobiles; 
   async onApplicationBootstrap() {
-    const raw = this.config.get<string>('SUPER_ADMIN_IDENTIFIER');
-    if (!raw) return;
-    const user = await this.findOrCreateUser(normalizeIdentifier(raw));
-    if (!user.roles.includes(Role.SuperAdmin)) {
-      user.roles = [...user.roles, Role.SuperAdmin];
-      await this.users.save(user);
-      this.logger.log(`Granted SUPER_ADMIN to ${raw}`);
+    const seeds: [string, Role[]][] = [
+      ['SUPER_ADMIN_IDENTIFIER', [Role.SuperAdmin]],
+      ['ADMIN_IDENTIFIERS', [Role.Admin]],
+      ['EMPLOYEE_IDENTIFIERS', [Role.Employee]],
+      ['AGENT_IDENTIFIERS', [Role.Agent]],
+    ];
+    for (const [key, roles] of seeds) {
+      const raw = this.config.get<string>(key);
+      for (const entry of (raw ?? '').split(',').map((v) => v.trim()).filter(Boolean)) {
+        const user = await this.findOrCreateUser(normalizeIdentifier(entry));
+        const missing = roles.filter((r) => !user.roles.includes(r));
+        if (!missing.length) continue;
+        user.roles = [...user.roles, ...missing];
+        await this.users.save(user);
+        this.logger.log(`Granted ${missing.join(',')} to ${entry}`);
+      }
     }
   }
 
@@ -164,6 +174,7 @@ export class IdentityService implements OnApplicationBootstrap {
     const accessToken = await this.jwt.signAsync({
       sub: user.id,
       roles: user.roles,
+      permissions: user.permissions ?? [],
       name: user.fullName ?? user.email ?? user.mobile ?? 'User',
     });
     const refreshToken = randomBytes(48).toString('base64url');

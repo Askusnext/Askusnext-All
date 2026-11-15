@@ -13,6 +13,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { useAppSelector } from '../store';
 import type { UserRole } from '../types';
+import { isAdminRole } from '../access';
 
 dayjs.extend(isoWeek);
 
@@ -447,7 +448,7 @@ export default function TimesheetPage() {
   const userId   = authUser?.id   ?? 'user-003';
   const userName = authUser?.name ?? '';
 
-  const [tab, setTab]             = useState(userRole === 'Admin' ? 'all' : 'my');
+  const [tab, setTab]             = useState(isAdminRole(userRole) ? 'all' : 'my');
   const [weekStart, setWeekStart] = useState(getWkStart(dayjs()));
   const [filterRole, setFilterRole] = useState<string>('All');
   const [showAdd, setShowAdd]     = useState(false);
@@ -472,7 +473,7 @@ export default function TimesheetPage() {
         id: userId,
         employeeName: userName || 'User',
         employeeId: 'EMP',
-        role: userRole as 'Admin' | 'Employee' | 'Agent',
+        role: (userRole === 'SuperAdmin' ? 'Admin' : userRole) as 'Admin' | 'Employee' | 'Agent',
         days: {},
       }];
     });
@@ -659,7 +660,7 @@ export default function TimesheetPage() {
           userName={userName}
           allRows={allRows}
           setAllRows={setAllRows}
-          isAdmin={userRole === 'Admin'}
+          isAdmin={isAdminRole(userRole)}
         />
       ),
     },

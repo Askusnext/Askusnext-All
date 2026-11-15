@@ -17,7 +17,8 @@ export interface Me {
   name: string;
   email: string | null;
   mobile: string | null;
-  role: 'Admin' | 'Employee' | 'Agent' | 'Customer';
+  role: 'SuperAdmin' | 'Admin' | 'Employee' | 'Agent' | 'Customer';
+  permissions?: string[];
   branchId: string;
 }
 

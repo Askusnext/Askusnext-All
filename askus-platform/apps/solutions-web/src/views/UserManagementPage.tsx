@@ -1,20 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Table, Button, Modal, Form, Input, Select, Tag, message,
-  Space, Switch, Typography, Tooltip,
+  Space, Switch, Typography, Tooltip, Upload, Checkbox,
 } from 'antd';
 import {
-  PlusOutlined, EditOutlined, ReloadOutlined,
+  PlusOutlined, EditOutlined, ReloadOutlined, UploadOutlined, FileSearchOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
   userApi, type ManagedUser, SUPER_ADMIN_EMAIL, ALLOWED_EMAIL_DOMAIN,
 } from '../api/mockApi';
-import type { UserRole } from '../types';
+import { PERMISSION_OPTIONS, type UserRole } from '../types';
+import { useAppSelector } from '../store';
 
 const { Title, Text } = Typography;
 
 const ROLE_COLORS: Record<UserRole, string> = {
+  SuperAdmin: 'gold',
   Admin: 'red',
   Employee: 'blue',
   Agent: 'green',
@@ -25,6 +27,8 @@ const ROLE_OPTIONS: { label: string; value: UserRole }[] = [
   { label: 'Employee', value: 'Employee' },
   { label: 'Agent', value: 'Agent' },
 ];
+const AADHAAR_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+const AADHAAR_MAX_BYTES = 5 * 1024 * 1024;
 
 export default function UserManagementPage() {
   const [users, setUsers] = useState<ManagedUser[]>([]);
@@ -35,6 +39,11 @@ export default function UserManagementPage() {
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
+  const selectedRole = Form.useWatch('role', form) as UserRole | undefined;
+
+  // Only Super Admin can create Admins; an Admin manages Employees and Agents.
+  const isSuperAdmin = useAppSelector((s) => s.auth.user?.role) === 'SuperAdmin';
+  const roleOptions = isSuperAdmin ? ROLE_OPTIONS : ROLE_OPTIONS.filter((r) => r.value !== 'Admin');
 
   const loadUsers = async () => {
     setLoading(true);
@@ -63,7 +72,7 @@ export default function UserManagementPage() {
   const openCreate = () => {
     setEditing(null);
     form.resetFields();
-    form.setFieldsValue({ role: 'Agent' });
+    form.setFieldsValue({ role: 'Agent', permissions: [] });
     setModalOpen(true);
   };
 
@@ -74,6 +83,7 @@ export default function UserManagementPage() {
       email: user.email,
       mobile: user.mobile.replace(/^\+91/, ''),
       role: user.role,
+      permissions: user.permissions ?? [],
     });
     setModalOpen(true);
   };
@@ -88,6 +98,7 @@ export default function UserManagementPage() {
           mobile: values.mobile,
           role: values.role,
         });
+        if (values.role !== 'Admin') await userApi.setPermissions(editing.id, values.permissions ?? []);
         message.success('User updated');
       } else {
         await userApi.create({
@@ -95,6 +106,8 @@ export default function UserManagementPage() {
           email: values.email,
           mobile: values.mobile,
           role: values.role,
+          aadhaar: values.aadhaar?.[0]?.originFileObj as File | undefined,
+          permissions: values.role === 'Admin' ? [] : values.permissions ?? [],
         });
         message.success('User created');
       }
@@ -104,6 +117,14 @@ export default function UserManagementPage() {
       message.error(err instanceof Error ? err.message : 'Save failed');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const viewAadhaar = async (user: ManagedUser) => {
+    try {
+      window.open(await userApi.aadhaarUrl(user.id), '_blank', 'noopener');
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : 'Could not open Aadhaar');
     }
   };
 
@@ -142,6 +163,17 @@ export default function UserManagementPage() {
       render: (role: UserRole) => <Tag color={ROLE_COLORS[role]}>{role}</Tag>,
     },
     {
+      title: 'Permissions',
+      dataIndex: 'permissions',
+      key: 'permissions',
+      render: (permissions: string[] | undefined, u) =>
+        u.role === 'Admin' || u.role === 'SuperAdmin'
+          ? <Text type="secondary">Full access</Text>
+          : (permissions?.length
+              ? permissions.map((p) => <Tag key={p}>{p}</Tag>)
+              : <Text type="secondary">None</Text>),
+    },
+    {
       title: 'Status',
       dataIndex: 'isActive',
       key: 'isActive',
@@ -168,6 +200,9 @@ export default function UserManagementPage() {
         <Space>
           <Tooltip title="Edit">
             <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(u)} />
+          </Tooltip>
+          <Tooltip title="View Aadhaar">
+            <Button size="small" icon={<FileSearchOutlined />} disabled={!u.hasAadhaar} onClick={() => viewAadhaar(u)} />
           </Tooltip>
         </Space>
       ),
@@ -257,10 +292,39 @@ export default function UserManagementPage() {
             rules={[{ required: true, message: 'Select a role' }]}
           >
             <Select
-              options={ROLE_OPTIONS}
+              options={roleOptions}
               disabled={!!editing && editing.email?.toLowerCase() === SUPER_ADMIN_EMAIL}
             />
           </Form.Item>
+
+          {!editing && (
+            <Form.Item
+              name="aadhaar"
+              label="Aadhaar document"
+              valuePropName="fileList"
+              getValueFromEvent={(e) => e?.fileList}
+              extra="JPG, PNG or PDF, up to 5 MB. Stored privately; only Admins can view it."
+              rules={[{ required: true, message: 'Upload the Aadhaar document' }]}
+            >
+              <Upload
+                maxCount={1}
+                accept=".jpg,.jpeg,.png,.pdf"
+                beforeUpload={(file) => {
+                  if (!AADHAAR_TYPES.includes(file.type)) { message.error('Aadhaar must be a JPG, PNG or PDF'); return Upload.LIST_IGNORE; }
+                  if (file.size > AADHAAR_MAX_BYTES) { message.error('File must be 5 MB or smaller'); return Upload.LIST_IGNORE; }
+                  return false;
+                }}
+              >
+                <Button icon={<UploadOutlined />}>Select file</Button>
+              </Upload>
+            </Form.Item>
+          )}
+
+          {selectedRole !== 'Admin' && (
+            <Form.Item name="permissions" label="Permissions">
+              <Checkbox.Group options={PERMISSION_OPTIONS.map((p) => ({ label: p.label, value: p.value }))} />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
     </div>

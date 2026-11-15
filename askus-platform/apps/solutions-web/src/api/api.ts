@@ -18,7 +18,7 @@ function toStaffAuth(token: string, me: Me): AuthResponse {
   return {
     token,
     expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-    user: { id: me.id, name: me.name, email: me.email ?? undefined, mobile: me.mobile ?? '', role: me.role, branchId: me.branchId },
+    user: { id: me.id, name: me.name, email: me.email ?? undefined, mobile: me.mobile ?? '', role: me.role, permissions: me.permissions ?? [], branchId: me.branchId },
   };
 }
 
@@ -124,8 +124,17 @@ export const apiClient = {
   getUsers: () =>
     get<User[]>('/users'),
 
-  createUser: (data: { name: string; email: string; mobile: string; role: string; password?: string }) =>
+  createUser: (data: { name: string; email: string; mobile: string; role: string; aadhaarKey: string; permissions?: string[]; password?: string }) =>
     post<User>('/users', data),
+
+  getAadhaarUploadUrl: (contentType: string, size: number) =>
+    post<{ key: string; uploadUrl: string }>('/users/aadhaar-upload-url', { contentType, size }),
+
+  getAadhaarUrl: (id: string) =>
+    get<{ url: string }>(`/users/${id}/aadhaar`),
+
+  setUserPermissions: (id: string, permissions: string[]) =>
+    put<User>(`/users/${id}/permissions`, { permissions }),
 
   setUserPassword: (id: string, password: string) =>
     put<{ message: string }>(`/users/${id}/password`, { password }),

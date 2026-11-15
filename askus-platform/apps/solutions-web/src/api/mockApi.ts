@@ -22,7 +22,7 @@ export const isAllowedEmail = (email: string): boolean =>
 export const MOCK_USERS: Record<string, User> = {
   admin: {
     id: 'user-001', name: 'Rajesh', mobile: '+919800000001',
-    email: 'rajesh@askussolutions.in', role: 'Admin', branchId: 'branch-001',
+    email: 'rajesh@askussolutions.in', role: 'SuperAdmin', branchId: 'branch-001',
   },
   employee: {
     id: 'user-002', name: 'Employee', mobile: '+919800000002',
@@ -85,10 +85,14 @@ export const userApi = {
     return loadManagedUsers().map(stripPassword);
   },
 
-  create: async (data: { name: string; email: string; mobile: string; role: UserRole; password?: string }): Promise<ManagedUser> => {
+  create: async (data: { name: string; email: string; mobile: string; role: UserRole; aadhaar?: File; permissions?: string[]; password?: string }): Promise<ManagedUser> => {
     if (!isAllowedEmail(data.email)) throw new Error(`Only @${ALLOWED_EMAIL_DOMAIN} accounts are allowed`);
     if (USE_REAL_API) {
-      const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role, password: data.password || undefined });
+      if (!data.aadhaar) throw new Error('Upload the Aadhaar document');
+      const { key, uploadUrl } = await apiClient.getAadhaarUploadUrl(data.aadhaar.type, data.aadhaar.size);
+      const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': data.aadhaar.type }, body: data.aadhaar });
+      if (!put.ok) throw new Error('Aadhaar upload failed');
+      const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role, aadhaarKey: key, permissions: data.permissions, password: data.password || undefined });
       return { ...u, isActive: true, createdAt: new Date().toISOString() };
     }
     await delay(300);
@@ -101,7 +105,9 @@ export const userApi = {
       name: data.name.trim(),
       email: data.email.trim().toLowerCase(),
       mobile: data.mobile.startsWith('+91') ? data.mobile : '+91' + data.mobile,
-      role: data.email.trim().toLowerCase() === SUPER_ADMIN_EMAIL ? 'Admin' : data.role,
+      role: data.email.trim().toLowerCase() === SUPER_ADMIN_EMAIL ? 'SuperAdmin' : data.role,
+      permissions: data.role === 'Admin' ? [] : data.permissions ?? [],
+      hasAadhaar: !!data.aadhaar,
       branchId: 'branch-001',
       isActive: true,
       createdAt: new Date().toISOString(),
@@ -129,10 +135,28 @@ export const userApi = {
       mobile: data.mobile
         ? (data.mobile.startsWith('+91') ? data.mobile : '+91' + data.mobile)
         : list[idx].mobile,
-      role: isSuperAdmin ? 'Admin' : (data.role ?? list[idx].role),
+      role: isSuperAdmin ? 'SuperAdmin' : (data.role ?? list[idx].role),
     };
     saveManagedUsers(list);
     return stripPassword(list[idx]);
+  },
+
+  setPermissions: async (id: string, permissions: string[]): Promise<void> => {
+    if (USE_REAL_API) {
+      await apiClient.setUserPermissions(id, permissions);
+      return;
+    }
+    await delay(200);
+    const list = loadManagedUsers();
+    const idx = list.findIndex(u => u.id === id);
+    if (idx === -1) throw new Error('User not found');
+    list[idx].permissions = permissions;
+    saveManagedUsers(list);
+  },
+
+  aadhaarUrl: async (id: string): Promise<string> => {
+    if (!USE_REAL_API) throw new Error('Aadhaar documents are only stored when connected to the API');
+    return (await apiClient.getAadhaarUrl(id)).url;
   },
 
   setActive: async (id: string, isActive: boolean): Promise<void> => {

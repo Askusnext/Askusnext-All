@@ -1,7 +1,7 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { IsString, IsUUID } from 'class-validator';
-import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Roles } from '../common/access';
+import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Permissions, Roles } from '../common/access';
 import { Role } from '../common/roles';
 import { PaymentsService } from './payments.service';
 
@@ -19,7 +19,8 @@ class VerifyOrderDto extends CreateOrderDto {
 @ApiBearerAuth()
 @Controller('payments')
 @UseGuards(JwtAuthGuard, AccessGuard)
-@Roles(Role.Employee)
+@Roles(Role.Employee, Role.Agent)
+@Permissions('payments')
 export class PaymentsController {
   constructor(private readonly payments: PaymentsService) {}
 
