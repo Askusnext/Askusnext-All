@@ -64,9 +64,10 @@ export class UsersService {
     return actor.roles.includes(Role.SuperAdmin) ? ['Admin', 'Employee', 'Agent'] : ['Employee', 'Agent'];
   }
 
-  private async getManaged(actor: AuthUser, id: string) {
+  private async getManaged(actor: AuthUser, id: string, allowRequest = false) {
     const user = await this.users.findOne({ where: { id } });
     if (!user) throw new NotFoundException('Not found');
+    if (allowRequest && user.approvalStatus === 'PENDING' && user.roles.every((r) => r === Role.Customer)) return user;
     const role = toTmsRole(user.roles);
     if (role === 'SuperAdmin' || role === 'Customer' || !this.assignable(actor).includes(role)) {
       throw new ForbiddenException('You cannot manage this user');
@@ -87,7 +88,7 @@ export class UsersService {
       .createQueryBuilder('u')
       .where("(u.isActive = true OR u.approvalStatus = 'PENDING')")
       .andWhere(
-        '(' + roles.map((_, i) => `u.roles LIKE :r${i}`).join(' OR ') + ')',
+        '(' + roles.map((_, i) => `u.roles LIKE :r${i}`).join(' OR ') + ` OR u.approvalStatus = 'PENDING')`,
         Object.fromEntries(roles.map((r, i) => [`r${i}`, `%${r}%`])),
       )
       .orderBy('u.createdAt', 'ASC')
@@ -105,7 +106,7 @@ export class UsersService {
   }
 
   async aadhaarDownloadUrl(actor: AuthUser, id: string) {
-    const user = await this.getManaged(actor, id);
+    const user = await this.getManaged(actor, id, true);
     if (!user.aadhaarKey) throw new NotFoundException('No Aadhaar uploaded');
     await this.audit.log({ actorId: actor.id, action: 'staff.aadhaar.view', resource: `user:${id}` });
     return { url: this.storage.signDownload(user.aadhaarKey, `aadhaar-${id}`) };
@@ -162,18 +163,69 @@ export class UsersService {
     return rows.map(toTmsUser);
   }
 
-  async review(actor: AuthUser, id: string, approve: boolean) {
+  /**
+   * Approve or reject a pending account. Staff an Admin created need a Super Admin; a self-service
+   * access request (a Customer who asked for staff access) can be reviewed by an Admin too, and
+   * approval picks the role and permissions.
+   */
+  async review(actor: AuthUser, id: string, approve: boolean, body: { role?: StaffRole; permissions?: string[] } = {}) {
     const user = await this.users.findOne({ where: { id } });
     if (!user) throw new NotFoundException('Not found');
     if (user.approvalStatus !== 'PENDING') throw new BadRequestException('This request is not pending');
+
+    const selfRequest = !user.createdBy && user.roles.every((r) => r === Role.Customer);
+    if (!selfRequest && !actor.roles.includes(Role.SuperAdmin)) {
+      throw new ForbiddenException('Only a Super Admin can review this account');
+    }
+
+    if (selfRequest && approve) {
+      if (!body.role) throw new BadRequestException('Choose a role for this person');
+      if (!this.assignable(actor).includes(body.role)) throw new ForbiddenException(`You cannot assign ${body.role}`);
+      user.roles = [FROM_TMS[body.role]];
+      user.permissions = this.cleanPermissions(body.role, body.permissions);
+      user.isActive = true;
+    } else if (!selfRequest) {
+      user.isActive = approve;
+    }
     user.approvalStatus = approve ? 'APPROVED' : 'REJECTED';
-    user.isActive = approve;
     await this.users.save(user);
     await this.audit.log({
       actorId: actor.id,
       action: approve ? 'staff.approve' : 'staff.reject',
       resource: `user:${id}`,
+      metadata: approve && selfRequest ? { role: body.role } : undefined,
     });
+    return toTmsUser(user);
+  }
+
+  /** Self-service: a signed-in Customer asks for staff access. An Admin reviews it. */
+  async requestAccess(
+    actor: AuthUser,
+    body: { name: string; email?: string; mobile?: string; aadhaarKey?: string },
+  ) {
+    const user = await this.users.findOne({ where: { id: actor.id } });
+    if (!user) throw new NotFoundException('Not found');
+    if (user.roles.some((r) => r !== Role.Customer)) throw new BadRequestException('You already have staff access');
+    if (user.approvalStatus === 'PENDING') throw new BadRequestException('Your request is already being reviewed');
+    if (body.aadhaarKey && !AADHAAR_KEY.test(body.aadhaarKey)) throw new BadRequestException('Upload the Aadhaar document first');
+
+    // The identity they signed in with is already verified by OTP; only fill in what is missing.
+    if (!user.email) {
+      if (!body.email) throw new BadRequestException('Enter your email address');
+      const email = normalizeIdentifier(body.email);
+      if (await this.users.findOne({ where: { email } })) throw new ConflictException('This email is already registered');
+      user.email = email;
+    }
+    if (!user.mobile && body.mobile) {
+      const mobile = normalizeIdentifier(body.mobile);
+      if (await this.users.findOne({ where: { mobile } })) throw new ConflictException('This mobile number is already registered');
+      user.mobile = mobile;
+    }
+    user.fullName = body.name.trim();
+    if (body.aadhaarKey) user.aadhaarKey = body.aadhaarKey;
+    user.approvalStatus = 'PENDING';
+    await this.users.save(user);
+    await this.audit.log({ actorId: actor.id, action: 'staff.access_request', resource: `user:${user.id}` });
     return toTmsUser(user);
   }
 

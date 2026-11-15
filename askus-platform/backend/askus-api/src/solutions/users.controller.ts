@@ -55,6 +55,36 @@ class PermissionsDto {
   permissions: string[];
 }
 
+class AccessRequestDto {
+  @IsString()
+  @MinLength(2)
+  @MaxLength(120)
+  name: string;
+
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @Matches(MOBILE, { message: 'mobile must be 10-15 digits' })
+  mobile?: string;
+
+  @IsOptional()
+  @IsString()
+  aadhaarKey?: string;
+}
+
+class ReviewDto {
+  @IsOptional()
+  @IsIn(STAFF_ROLES)
+  role?: (typeof STAFF_ROLES)[number];
+
+  @IsOptional()
+  @IsArray()
+  @IsIn(PERMISSIONS, { each: true })
+  permissions?: string[];
+}
+
 class SetPasswordDto {
   @IsString()
   @MinLength(8)
@@ -107,13 +137,24 @@ export class UsersController {
     return this.users.findPending();
   }
 
-  @Roles(Role.SuperAdmin)
-  @Post(':id/approve')
-  approve(@CurrentUser() actor: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
-    return this.users.review(actor, id, true);
+  // Any signed-in user can ask for staff access; an Admin or Super Admin reviews it.
+  @Roles()
+  @Post('access-request/aadhaar-upload-url')
+  accessAadhaarUploadUrl(@Body() dto: AadhaarUploadDto) {
+    return this.users.aadhaarUploadUrl(dto);
   }
 
-  @Roles(Role.SuperAdmin)
+  @Roles()
+  @Post('access-request')
+  requestAccess(@CurrentUser() actor: AuthUser, @Body() dto: AccessRequestDto) {
+    return this.users.requestAccess(actor, dto);
+  }
+
+  @Post(':id/approve')
+  approve(@CurrentUser() actor: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: ReviewDto) {
+    return this.users.review(actor, id, true, dto);
+  }
+
   @Post(':id/reject')
   reject(@CurrentUser() actor: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.users.review(actor, id, false);

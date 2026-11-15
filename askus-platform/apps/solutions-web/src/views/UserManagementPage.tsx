@@ -15,8 +15,9 @@ import { useAppSelector } from '../store';
 
 const { Title, Text } = Typography;
 
-const ROLE_COLORS: Record<UserRole, string> = {
+const ROLE_COLORS: Record<UserRole | 'Customer', string> = {
   SuperAdmin: 'gold',
+  Customer: 'default',
   Admin: 'red',
   Employee: 'blue',
   Agent: 'green',
@@ -39,6 +40,9 @@ export default function UserManagementPage() {
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [saving, setSaving] = useState(false);
   const [form] = Form.useForm();
+  const [approving, setApproving] = useState<ManagedUser | null>(null);
+  const [approveForm] = Form.useForm();
+  const approveRole = Form.useWatch('role', approveForm) as UserRole | undefined;
   const selectedRole = Form.useWatch('role', form) as UserRole | undefined;
 
   // Only Super Admin can create Admins; an Admin manages Employees and Agents.
@@ -140,6 +144,30 @@ export default function UserManagementPage() {
     }
   };
 
+  const isRequest = (u: ManagedUser) => u.approvalStatus === 'PENDING' && (u.role as string) === 'Customer';
+
+  const openApprove = (u: ManagedUser) => {
+    setApproving(u);
+    approveForm.resetFields();
+    approveForm.setFieldsValue({ role: 'Agent', permissions: [] });
+  };
+
+  const confirmApprove = async () => {
+    if (!approving) return;
+    const v = await approveForm.validateFields();
+    setSaving(true);
+    try {
+      await userApi.review(approving.id, true, { role: v.role, permissions: v.role === 'Admin' ? [] : v.permissions ?? [] });
+      message.success(`${approving.name} approved as ${v.role}`);
+      setApproving(null);
+      await loadUsers();
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : 'Update failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const pendingCount = users.filter((u) => u.approvalStatus === 'PENDING').length;
 
   const handleToggleActive = async (user: ManagedUser, next: boolean) => {
@@ -192,7 +220,7 @@ export default function UserManagementPage() {
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean, u) => {
-        if (u.approvalStatus === 'PENDING') return <Tag color="orange">Pending approval</Tag>;
+        if (u.approvalStatus === 'PENDING') return <Tag color="orange">{(u.role as string) === 'Customer' ? 'Access request' : 'Pending approval'}</Tag>;
         const isSuper = u.email?.toLowerCase() === SUPER_ADMIN_EMAIL;
         return (
           <Space>
@@ -213,11 +241,15 @@ export default function UserManagementPage() {
       key: 'actions',
       render: (_, u) => (
         <Space>
-          {isSuperAdmin && u.approvalStatus === 'PENDING' && (
+          {u.approvalStatus === 'PENDING' && (isSuperAdmin || isRequest(u)) && (
             <>
-              <Popconfirm title={`Approve ${u.name}?`} okText="Approve" onConfirm={() => handleReview(u, true)}>
-                <Button size="small" type="primary" icon={<CheckOutlined />}>Approve</Button>
-              </Popconfirm>
+              {isRequest(u)
+                ? <Button size="small" type="primary" icon={<CheckOutlined />} onClick={() => openApprove(u)}>Review</Button>
+                : (
+                  <Popconfirm title={`Approve ${u.name}?`} okText="Approve" onConfirm={() => handleReview(u, true)}>
+                    <Button size="small" type="primary" icon={<CheckOutlined />}>Approve</Button>
+                  </Popconfirm>
+                )}
               <Popconfirm title={`Reject ${u.name}?`} okText="Reject" okButtonProps={{ danger: true }} onConfirm={() => handleReview(u, false)}>
                 <Button size="small" danger icon={<CloseOutlined />}>Reject</Button>
               </Popconfirm>
@@ -255,7 +287,7 @@ export default function UserManagementPage() {
           showIcon
           style={{ marginBottom: 16 }}
           message={isSuperAdmin
-            ? `${pendingCount} staff account${pendingCount > 1 ? 's' : ''} waiting for your approval`
+            ? `${pendingCount} staff account${pendingCount > 1 ? 's' : ''} or request${pendingCount > 1 ? 's' : ''} waiting for review`
             : `${pendingCount} account${pendingCount > 1 ? 's' : ''} waiting for Super Admin approval`}
         />
       )}
@@ -274,6 +306,33 @@ export default function UserManagementPage() {
         dataSource={filtered}
         pagination={{ pageSize: 10, showSizeChanger: false }}
       />
+
+      <Modal
+        title={`Approve ${approving?.name ?? ''}`}
+        open={!!approving}
+        onOk={confirmApprove}
+        confirmLoading={saving}
+        onCancel={() => setApproving(null)}
+        okText="Approve"
+        destroyOnClose
+      >
+        <Space direction="vertical" size={2} style={{ marginBottom: 16 }}>
+          <Text type="secondary">{approving?.email ?? '—'} · {approving?.mobile || '—'}</Text>
+          {approving?.hasAadhaar && (
+            <Button size="small" icon={<FileSearchOutlined />} onClick={() => approving && viewAadhaar(approving)}>View Aadhaar</Button>
+          )}
+        </Space>
+        <Form form={approveForm} layout="vertical">
+          <Form.Item name="role" label="Role" rules={[{ required: true, message: 'Select a role' }]}>
+            <Select options={roleOptions} />
+          </Form.Item>
+          {approveRole !== 'Admin' && (
+            <Form.Item name="permissions" label="Permissions">
+              <Checkbox.Group options={PERMISSION_OPTIONS.map((p) => ({ label: p.label, value: p.value }))} />
+            </Form.Item>
+          )}
+        </Form>
+      </Modal>
 
       {/* Create / Edit modal */}
       <Modal

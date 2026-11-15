@@ -19,6 +19,7 @@ export interface Me {
   mobile: string | null;
   role: 'SuperAdmin' | 'Admin' | 'Employee' | 'Agent' | 'Customer';
   permissions?: string[];
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   branchId: string;
 }
 

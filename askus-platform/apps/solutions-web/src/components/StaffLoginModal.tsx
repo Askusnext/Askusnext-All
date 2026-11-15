@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState, type ClipboardEvent, type For
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { api, USE_REAL_API } from '../api/mockApi';
+import { NotStaffError, accessRequestApi } from '../api/api';
+import type { Me } from '../api/session';
 import { useAppDispatch, loginSuccess } from '../store';
 import type { AuthResponse } from '../types';
 
@@ -43,6 +45,21 @@ const Icon = {
   check: (
     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="m5 12.5 4.5 4.5L19 7.5" />
+    </svg>
+  ),
+  upload: (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 16V5m0 0-4 4m4-4 4 4" /><path d="M4.5 15.5v2a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2" />
+    </svg>
+  ),
+  user: (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="8.5" r="3.5" /><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" />
+    </svg>
+  ),
+  phone: (
+    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="7" y="3" width="10" height="18" rx="2.5" /><path d="M11 18h2" />
     </svg>
   ),
   close: (
@@ -114,6 +131,130 @@ function OtpBoxes({ digits, onChange, disabled, firstRef }: {
   );
 }
 
+
+const AADHAAR_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
+const AADHAAR_MAX = 5 * 1024 * 1024;
+
+// Shown when the one-time code was valid but the number/email has no staff role yet.
+// They tell us who they are; an Admin reviews it and picks their role.
+function AccessRequestPanel({ token, me, signedInWith, onDone }: { token: string; me: Me; signedInWith: string; onDone: () => void }) {
+  const looksGeneric = (n: string) => !n || n === 'User' || n === me.email || n === me.mobile;
+  const [submitted, setSubmitted] = useState(me.approvalStatus === 'PENDING');
+  const [name, setName] = useState(looksGeneric(me.name) ? '' : me.name);
+  const [email, setEmail] = useState(me.email ?? '');
+  const [mobile, setMobile] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [sentAadhaar, setSentAadhaar] = useState(false);
+
+  const needsEmail = !me.email;
+  const needsMobile = !me.mobile;
+
+  const pick = (f: File | undefined) => {
+    setError('');
+    if (!f) return setFile(null);
+    if (!AADHAAR_TYPES.includes(f.type)) return setError('Aadhaar must be a JPG, PNG or PDF file');
+    if (f.size > AADHAAR_MAX) return setError('Aadhaar file must be 5 MB or smaller');
+    setFile(f);
+  };
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (name.trim().length < 2) return setError('Enter your full name');
+    if (needsEmail && !EMAIL.test(email.trim())) return setError('Enter a valid email address');
+    if (needsMobile && mobile && !/^[6-9]\d{9}$/.test(mobile)) return setError('Enter a valid 10-digit mobile number');
+    setBusy(true);
+    setError('');
+    try {
+      const aadhaarKey = file ? await accessRequestApi.uploadAadhaar(token, file) : undefined;
+      await accessRequestApi.submit(token, {
+        name: name.trim(),
+        email: needsEmail ? email.trim() : undefined,
+        mobile: needsMobile && mobile ? mobile : undefined,
+        aadhaarKey,
+      });
+      setSentAadhaar(!!file);
+      setSubmitted(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not send your request. Please try again.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (submitted) {
+    return (
+      <div className="slm-done">
+        <div className="slm-done-badge" aria-hidden>{Icon.check}</div>
+        <h2 id="slm-title" className="slm-title">Request received</h2>
+        <span className="slm-status">Pending admin review</span>
+        <blockquote className="slm-quote">
+          “Your request is in process. Once an admin approves you, you will be able to log in.”
+        </blockquote>
+        <dl className="slm-summary">
+          <div><dt>Name</dt><dd>{name.trim() || me.name}</dd></div>
+          <div><dt>Signed in as</dt><dd>{signedInWith}</dd></div>
+          {(email || me.email) && <div><dt>Email</dt><dd>{me.email ?? email}</dd></div>}
+          <div><dt>Aadhaar</dt><dd>{sentAadhaar || me.approvalStatus === 'PENDING' ? 'Submitted' : 'Not provided'}</dd></div>
+        </dl>
+        <button type="button" className="slm-cta" onClick={onDone}>Done</button>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <h2 id="slm-title" className="slm-title">Request staff access</h2>
+      <p className="slm-sub">
+        We could not find a staff account for <strong>{signedInWith}</strong>. Share a few details and an Admin will review your request.
+      </p>
+      {me.approvalStatus === 'REJECTED' && (
+        <div className="slm-note">Your earlier request was not approved. You can update your details and send it again.</div>
+      )}
+      <form onSubmit={submit} noValidate>
+        <label className="slm-label" htmlFor="slm-name">Full name</label>
+        <div className="slm-field">
+          <span className="slm-ico">{Icon.user}</span>
+          <input id="slm-name" className="slm-input" type="text" autoComplete="name" placeholder="As on your ID" value={name} onChange={(e) => { setName(e.target.value); setError(''); }} />
+        </div>
+
+        {needsEmail && (
+          <>
+            <label className="slm-label" htmlFor="slm-email">Email address</label>
+            <div className="slm-field">
+              <span className="slm-ico">{Icon.mail}</span>
+              <input id="slm-email" className="slm-input" type="email" autoComplete="email" placeholder="name@askussolutions.in" value={email} onChange={(e) => { setEmail(e.target.value); setError(''); }} />
+            </div>
+          </>
+        )}
+
+        {!needsEmail && needsMobile && (
+          <>
+            <label className="slm-label" htmlFor="slm-mobile">Mobile number <span className="slm-opt">optional</span></label>
+            <div className="slm-field">
+              <span className="slm-ico">{Icon.phone}</span>
+              <input id="slm-mobile" className="slm-input" type="tel" inputMode="numeric" maxLength={10} autoComplete="tel-national" placeholder="10-digit number" value={mobile} onChange={(e) => { setMobile(e.target.value.replace(/\D/g, '')); setError(''); }} />
+            </div>
+          </>
+        )}
+
+        <span className="slm-label">Aadhaar image <span className="slm-opt">optional</span></span>
+        <label className={`slm-drop${file ? ' has' : ''}`}>
+          <input type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(e) => pick(e.target.files?.[0])} />
+          <span className="slm-drop-ico">{Icon.upload}</span>
+          <span className="slm-drop-text">
+            {file ? <><strong>{file.name}</strong><em>{(file.size / 1024).toFixed(0)} KB · click to replace</em></> : <><strong>Upload a photo or PDF</strong><em>JPG, PNG or PDF, up to 5 MB. Stored privately.</em></>}
+          </span>
+        </label>
+
+        <div className="slm-error" role="alert" aria-live="polite">{error}</div>
+        <button type="submit" className="slm-cta" disabled={busy}>{busy ? 'Sending…' : 'Send request'}</button>
+      </form>
+    </>
+  );
+}
+
 // Staff sign-in dialog shared by the landing page and the site chrome.
 // Live (API) mode: one-time code to an email or mobile number, or a password.
 // Demo mode (no API configured): the original username + password form.
@@ -129,6 +270,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
   const [cooldown, setCooldown] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [access, setAccess] = useState<{ token: string; me: Me } | null>(null);
   const idRef = useRef<HTMLInputElement>(null);
   const firstDigitRef = useRef<HTMLInputElement>(null);
 
@@ -142,7 +284,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
 
   const reset = useCallback(() => {
     setIdentifier(''); setPassword(''); setShowPw(false); setDigits(Array(6).fill(''));
-    setCodeSent(false); setCooldown(0); setBusy(false); setError('');
+    setCodeSent(false); setCooldown(0); setBusy(false); setError(''); setAccess(null);
     setMode(USE_REAL_API ? 'otp' : 'password');
   }, []);
 
@@ -177,6 +319,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
     try {
       await fn();
     } catch (err: unknown) {
+      if (err instanceof NotStaffError) { setAccess({ token: err.token, me: err.me }); return; }
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       onFail?.();
     } finally {
@@ -249,6 +392,10 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
         <section className="slm-main">
           <button type="button" className="slm-close" aria-label="Close" onClick={onClose}>{Icon.close}</button>
           <img className="slm-mobile-logo" src="/askus-wordmark.png" alt="Askus" />
+          {access ? (
+            <AccessRequestPanel token={access.token} me={access.me} signedInWith={cleanId()} onDone={onClose} />
+          ) : (
+          <>
           <h2 id="slm-title" className="slm-title">{mode === 'otp' && codeSent ? 'Enter your code' : 'Welcome back'}</h2>
           <p className="slm-sub">
             {mode === 'otp' && codeSent
@@ -312,6 +459,8 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
             <button type="submit" className="slm-cta" disabled={busy}>{cta}</button>
             <div className="slm-foot">{contact}</div>
           </form>
+          </>
+          )}
         </section>
       </div>
     </div>
@@ -382,6 +531,26 @@ const CSS = `
 .slm-cta:disabled{ opacity:.65; cursor:default; box-shadow:none; }
 .slm-foot{ margin-top:16px; text-align:center; font-size:13px; }
 .slm-foot a{ color:#0a6fa8; font-weight:600; text-decoration:none; } .slm-foot a:hover{ text-decoration:underline; }
+
+.slm-opt{ margin-left:6px; font-size:11.5px; font-weight:600; color:#7b8aa0; }
+.slm-note{ margin:0 0 16px; padding:11px 14px; border-radius:10px; background:#fff6e5; color:#8a5a00; font-size:13px; line-height:1.5; }
+.slm-drop{ display:flex; align-items:center; gap:14px; margin-bottom:16px; padding:14px 16px; border:1.5px dashed #b9c8da; border-radius:12px; background:#f8fbfe; cursor:pointer; transition:border-color .15s, background .15s; }
+.slm-drop:hover, .slm-drop:focus-within{ border-color:#1d9bd6; background:#f0f9fe; }
+.slm-drop.has{ border-style:solid; border-color:#1d9bd6; background:#f0f9fe; }
+.slm-drop input{ position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
+.slm-drop-ico{ flex:none; width:40px; height:40px; border-radius:10px; background:#e4f4fc; color:#0a6fa8; display:grid; place-items:center; }
+.slm-drop-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.slm-drop-text strong{ font-size:14px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.slm-drop-text em{ font-style:normal; font-size:12.5px; color:var(--muted); }
+.slm-done{ display:flex; flex-direction:column; align-items:flex-start; }
+.slm-done-badge{ width:46px; height:46px; margin-bottom:14px; border-radius:50%; background:#e3f7ec; color:#17995a; display:grid; place-items:center; }
+.slm-done-badge svg{ width:22px; height:22px; }
+.slm-status{ display:inline-block; margin:2px 0 18px; padding:4px 11px; border-radius:999px; background:#fff3d6; color:#8a5a00; font-size:12px; font-weight:700; letter-spacing:.02em; }
+.slm-quote{ margin:0 0 20px; padding:14px 18px; border-left:4px solid #3cc3f2; border-radius:0 12px 12px 0; background:#f0f9fe; color:#18314d; font-size:15.5px; line-height:1.6; font-weight:500; }
+.slm-summary{ width:100%; margin:0 0 22px; padding:4px 16px; border:1px solid var(--line); border-radius:12px; }
+.slm-summary div{ display:flex; justify-content:space-between; gap:16px; padding:10px 0; font-size:13.5px; }
+.slm-summary div + div{ border-top:1px solid #edf1f6; }
+.slm-summary dt{ color:var(--muted); } .slm-summary dd{ margin:0; font-weight:600; text-align:right; word-break:break-all; }
 
 @media (max-width:760px){
   .slm{ grid-template-columns:1fr; max-width:440px; }

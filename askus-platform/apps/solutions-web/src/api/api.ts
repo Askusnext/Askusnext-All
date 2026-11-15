@@ -4,8 +4,43 @@
 import type {
   Ticket, DashboardKPIs, PaginatedResponse, AuthResponse, User,
 } from '../types';
-import { STAFF_KEYS, authFetch, requestOtp, signInWithOtp, signInWithPassword } from './session';
+import { BASE, STAFF_KEYS, authFetch, requestOtp, signInWithOtp, signInWithPassword } from './session';
 import type { Me } from './session';
+
+// The code was valid but the person has no staff role yet. Carries the short-lived token (in memory
+// only, never stored) so they can submit an access request for an Admin to review.
+export class NotStaffError extends Error {
+  constructor(readonly token: string, readonly me: Me) {
+    super('This account does not have staff access');
+  }
+}
+
+async function bearerJson<T>(token: string, path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error((Array.isArray(err.message) ? err.message.join(', ') : err.message) || 'Request failed');
+  }
+  return res.json() as Promise<T>;
+}
+
+export const accessRequestApi = {
+  /** Optional Aadhaar image: signed upload straight to private storage, then its key goes with the request. */
+  async uploadAadhaar(token: string, file: File): Promise<string> {
+    const { key, uploadUrl } = await bearerJson<{ key: string; uploadUrl: string }>(
+      token, '/users/access-request/aadhaar-upload-url', { contentType: file.type, size: file.size },
+    );
+    const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+    if (!put.ok) throw new Error('Aadhaar upload failed. Please try again.');
+    return key;
+  },
+  submit: (token: string, body: { name: string; email?: string; mobile?: string; aadhaarKey?: string }) =>
+    bearerJson<User>(token, '/users/access-request', body),
+};
 
 // Customers sign in through the portal; the staff app only admits staff roles.
 function toStaffAuth(token: string, me: Me): AuthResponse {
@@ -13,7 +48,7 @@ function toStaffAuth(token: string, me: Me): AuthResponse {
     localStorage.removeItem(STAFF_KEYS.access);
     localStorage.removeItem(STAFF_KEYS.refresh);
     localStorage.removeItem(`${STAFF_KEYS.access}_exp`);
-    throw new Error('This account does not have staff access');
+    throw new NotStaffError(token, me);
   }
   return {
     token,
@@ -145,8 +180,8 @@ export const apiClient = {
   deleteUser: (id: string) =>
     del<void>(`/users/${id}`),
 
-  approveUser: (id: string) =>
-    post<User>(`/users/${id}/approve`, {}),
+  approveUser: (id: string, data: { role?: string; permissions?: string[] } = {}) =>
+    post<User>(`/users/${id}/approve`, data),
 
   rejectUser: (id: string) =>
     post<User>(`/users/${id}/reject`, {}),

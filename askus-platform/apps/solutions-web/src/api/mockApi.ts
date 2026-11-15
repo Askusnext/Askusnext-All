@@ -155,9 +155,9 @@ export const userApi = {
   },
 
   // Super Admin only (API enforces it): sign off on staff an Admin created.
-  review: async (id: string, approve: boolean): Promise<void> => {
+  review: async (id: string, approve: boolean, choice: { role?: string; permissions?: string[] } = {}): Promise<void> => {
     if (!USE_REAL_API) throw new Error('Approvals need the API');
-    if (approve) await apiClient.approveUser(id);
+    if (approve) await apiClient.approveUser(id, choice);
     else await apiClient.rejectUser(id);
   },
 
