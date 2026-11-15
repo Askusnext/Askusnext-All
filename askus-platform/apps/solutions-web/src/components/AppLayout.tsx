@@ -17,6 +17,9 @@ const navItems: NavItem[] = [
 	{ to: '/analytics', label: 'Analytics', roles: ['Admin', 'Employee'] },
 	{ to: '/calendar', label: 'Calendar', roles: ['Admin', 'Employee'] },
 	{ to: '/timesheet', label: 'Timesheet', roles: ['Admin', 'Employee', 'Agent'] },
+	{ to: '/insurance-requests', label: 'Insurance Requests', roles: ['Admin', 'Employee'] },
+	{ to: '/loans', label: 'Askus Loans', roles: ['Admin', 'Employee'] },
+	{ to: '/activity', label: 'Activity', roles: ['Admin', 'Employee', 'Agent'] },
 	{ to: '/renewals', label: 'Renewals', roles: ['Admin'] },
 	{ to: '/users', label: 'User Management', roles: ['Admin'] },
 ];

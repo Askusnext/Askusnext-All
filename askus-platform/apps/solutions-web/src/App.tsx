@@ -30,6 +30,9 @@ import AnalyticsPage from './views/AnalyticsPage';
 import CalendarPage from './views/CalendarPage';
 import TimesheetPage from './views/TimesheetPage';
 import UserManagementPage from './views/UserManagementPage';
+import LoansPage from './views/LoansPage';
+import InsuranceRequestsPage from './views/InsuranceRequestsPage';
+import ActivityPage from './views/ActivityPage';
 import type { UserRole } from './types';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -164,6 +167,21 @@ export default function App() {
               <Route path="timesheet" element={
                 <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee', 'Agent']}>
                   <TimesheetPage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="insurance-requests" element={
+                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee']}>
+                  <InsuranceRequestsPage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="activity" element={
+                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee', 'Agent']}>
+                  <ActivityPage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="loans" element={
+                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee']}>
+                  <LoansPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="renewals" element={

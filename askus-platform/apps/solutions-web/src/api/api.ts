@@ -130,6 +130,17 @@ export const apiClient = {
   saveTimesheet: (weekStart: string, entries: { date: string; status: string; hours: number }[]) =>
     post<unknown>('/timesheet', { weekStart, entries }),
 
+  /** The whole team for one week (one row per staff member, with that week's entries). */
+  getTimesheetWeek: (weekStart: string) =>
+    get<{
+      userId: string; employeeName: string; employeeId: string; role: 'Admin' | 'Employee' | 'Agent';
+      sheetId: string | null; entries: { date: string; status: string; hours: number }[];
+    }[]>(`/timesheet/week?weekStart=${weekStart}`),
+
+  /** Record a week of attendance for another staff member (admin / employee). */
+  saveTimesheetFor: (userId: string, weekStart: string, entries: { date: string; status: string; hours: number }[]) =>
+    post<unknown>(`/timesheet/for/${userId}`, { weekStart, entries }),
+
   // ── Knowledge base (Admin authoring) ────────────────────────────────────────
   getAllArticles: () =>
     get<KBArticle[]>('/kb/admin/all'),

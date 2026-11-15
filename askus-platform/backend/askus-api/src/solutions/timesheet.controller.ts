@@ -31,6 +31,11 @@ class UpsertTimesheetDto {
   entries: DayEntryDto[];
 }
 
+class WeekQueryDto {
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  weekStart: string;
+}
+
 class UpdateEntriesDto {
   @IsArray()
   @ArrayMaxSize(31)
@@ -52,9 +57,21 @@ export class TimesheetController {
     return this.timesheets.findAll(weekStart, user);
   }
 
+  /** The whole team (or just yourself, for an agent) for one week, including people with no entries yet. */
+  @Get('week')
+  week(@Query() q: WeekQueryDto, @CurrentUser() user: AuthUser) {
+    return this.timesheets.week(q.weekStart, user);
+  }
+
   @Post()
   upsert(@Body() dto: UpsertTimesheetDto, @CurrentUser() user: AuthUser) {
     return this.timesheets.upsert(user, dto.weekStart, dto.entries);
+  }
+
+  /** Record attendance for another staff member (admin or employee only). */
+  @Post('for/:userId')
+  upsertFor(@Param('userId', ParseUUIDPipe) userId: string, @Body() dto: UpsertTimesheetDto, @CurrentUser() user: AuthUser) {
+    return this.timesheets.upsertFor(user, userId, dto.weekStart, dto.entries);
   }
 
   @Put(':id')

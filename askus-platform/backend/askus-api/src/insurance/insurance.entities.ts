@@ -67,6 +67,17 @@ export class InsuranceRequest {
   @Column({ type: 'jsonb', default: () => `'[]'` })
   documents: DocRef[];
 
+  /** The staff member working on this request. */
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  assignedToId: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  assignedToName: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  assignedAt: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

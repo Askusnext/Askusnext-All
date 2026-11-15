@@ -5,6 +5,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { ActivityModule } from './activity/activity.module';
 import { AdminModule } from './admin/admin.module';
 import { AuditModule } from './audit/audit.module';
 import { CustomerModule } from './customer/customer.module';
@@ -48,6 +49,7 @@ class HealthController {
     CustomerModule,
     AdminModule,
     AuditModule,
+    ActivityModule,
     NotificationModule,
     StorageModule,
     TaxiModule,

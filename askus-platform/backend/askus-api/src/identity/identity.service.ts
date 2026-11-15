@@ -6,6 +6,7 @@ import { createHash, createHmac, randomBytes, randomInt, randomUUID, timingSafeE
 import { IsNull, MoreThan, Repository } from 'typeorm';
 import { normalizeIdentifier } from '../common/identifier';
 import { Role } from '../common/roles';
+import { ActivityService } from '../activity/activity.service';
 import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notification/notification.service';
 import { OtpCode, Session, User } from './identity.entities';
@@ -29,10 +30,12 @@ export class IdentityService implements OnApplicationBootstrap {
     private readonly config: ConfigService,
     private readonly notifications: NotificationService,
     private readonly audit: AuditService,
+    private readonly activity: ActivityService,
   ) {}
 
   // Without this, a fresh database has no staff able to sign in.
   async onApplicationBootstrap() {
+    if (this.config.get<string>('DUMMY_OTP_CODE')) this.logger.warn('DUMMY_OTP_CODE is set: logins use a fixed test code. Do not use this for real customers.');
     const raw = this.config.get<string>('SUPER_ADMIN_IDENTIFIER');
     if (!raw) return;
     const user = await this.findOrCreateUser(normalizeIdentifier(raw));
@@ -45,7 +48,7 @@ export class IdentityService implements OnApplicationBootstrap {
 
   async requestOtp(rawIdentifier: string) {
     const identifier = normalizeIdentifier(rawIdentifier);
-    const code = String(randomInt(100000, 1000000));
+    const code = (await this.dummyCode(identifier)) ?? String(randomInt(100000, 1000000));
     await this.otps.save(
       this.otps.create({
         identifier,
@@ -59,6 +62,25 @@ export class IdentityService implements OnApplicationBootstrap {
       message: `Your AskUs verification code is ${code}. It is valid for 5 minutes.`,
     });
     return { sent: true };
+  }
+
+  /**
+   * Test mode: when DUMMY_OTP_CODE is set (for example 123456) every login uses that code and no SMS is needed.
+   * Outside production it applies to every identifier. In production it applies only to mobile numbers of
+   * customer-only accounts, so a staff account (admin, employee, agent) can never be opened with a known code.
+   */
+  private async dummyCode(identifier: string): Promise<string | null> {
+    const code = this.config.get<string>('DUMMY_OTP_CODE')?.trim();
+    if (!code) return null;
+    if (!/^\d{6}$/.test(code)) {
+      this.logger.warn('DUMMY_OTP_CODE must be exactly 6 digits; ignoring it.');
+      return null;
+    }
+    if (this.config.get<string>('NODE_ENV') !== 'production') return code;
+    if (identifier.includes('@')) return null;
+    const user = await this.users.findOne({ where: { mobile: identifier } });
+    const staff = user?.roles.some((r) => r !== Role.Customer) ?? false;
+    return staff ? null : code;
   }
 
   async verifyOtp(rawIdentifier: string, code: string) {
@@ -83,6 +105,10 @@ export class IdentityService implements OnApplicationBootstrap {
     if (!user.isActive) throw new ForbiddenException('Account disabled');
 
     await this.audit.log({ actorId: user.id, action: 'auth.login', resource: `user:${user.id}` });
+    // customers sign in all the time; only staff sign-ins go to the activity screen
+    if (user.roles.some((r) => r !== Role.Customer)) {
+      await this.activity.log({ id: user.id, name: user.fullName ?? user.email ?? user.mobile ?? 'User', roles: user.roles }, { module: 'auth', action: 'auth.login', summary: 'Signed in' });
+    }
     return this.issueTokens(user, randomUUID());
   }
 

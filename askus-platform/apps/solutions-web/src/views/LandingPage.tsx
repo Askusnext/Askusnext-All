@@ -123,6 +123,9 @@ export default function LandingPage() {
 	const [password, setPassword] = useState('');
 	const [remember, setRemember] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
+	// With the real backend there are no passwords: the first submit sends a one-time code, the second checks it.
+	const live = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
+	const [codeSent, setCodeSent] = useState(false);
 
 	const closeLogin = () => {
 		if (submitting) return;
@@ -131,8 +134,26 @@ export default function LandingPage() {
 
 	const handleAdminLogin = async (e: FormEvent) => {
 		e.preventDefault();
-		if (!username.trim() || !password.trim()) {
-			message.error('Enter username and password');
+		if (!username.trim()) {
+			message.error(live ? 'Enter your email or mobile number' : 'Enter username and password');
+			return;
+		}
+		if (live && !codeSent) {
+			setSubmitting(true);
+			try {
+				await api.sendOTP(username.trim());
+				setCodeSent(true);
+				setPassword('');
+				message.success('Verification code sent. Enter it below.');
+			} catch (err: unknown) {
+				message.error(err instanceof Error ? err.message : 'Could not send the code');
+			} finally {
+				setSubmitting(false);
+			}
+			return;
+		}
+		if (!password.trim()) {
+			message.error(live ? 'Enter the 6-digit code' : 'Enter username and password');
 			return;
 		}
 		setSubmitting(true);
@@ -395,10 +416,12 @@ export default function LandingPage() {
 						</div>
 						<h3 className="lp-modal-title">Admin Sign In</h3>
 						<p className="lp-modal-sub">
-							Access is provisioned by an Admin or Super Admin. Use the username and password issued to you.
+							{live
+								? 'Access is provisioned by an Admin or Super Admin. Enter your email, we send you a one-time code.'
+								: 'Access is provisioned by an Admin or Super Admin. Use the username and password issued to you.'}
 						</p>
 						<form onSubmit={handleAdminLogin}>
-							<label className="lp-modal-label" htmlFor="lp-username">Username</label>
+							<label className="lp-modal-label" htmlFor="lp-username">{live ? 'Email or mobile' : 'Username'}</label>
 							<input
 								id="lp-username"
 								className="lp-modal-input"
@@ -409,16 +432,18 @@ export default function LandingPage() {
 								onChange={(e) => setUsername(e.target.value)}
 								autoFocus
 							/>
-							<label className="lp-modal-label" htmlFor="lp-password">Password</label>
-							<input
-								id="lp-password"
-								className="lp-modal-input"
-								type="password"
-								placeholder="••••••••"
-								autoComplete="current-password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-							/>
+							{(!live || codeSent) && <label className="lp-modal-label" htmlFor="lp-password">{live ? 'One-time code' : 'Password'}</label>}
+							{(!live || codeSent) && (
+								<input
+									id="lp-password"
+									className="lp-modal-input"
+									type="password"
+									placeholder="••••••••"
+									autoComplete="current-password"
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+								/>
+								)}
 							<div className="lp-modal-row">
 								<label className="lp-modal-remember">
 									<input
@@ -433,7 +458,7 @@ export default function LandingPage() {
 								</a>
 							</div>
 							<button type="submit" className="lp-modal-submit" disabled={submitting}>
-								{submitting ? 'Signing in…' : 'Sign In'}
+								{submitting ? (live && !codeSent ? 'Sending code…' : 'Signing in…') : live && !codeSent ? 'Send code' : 'Sign In'}
 							</button>
 						</form>
 					</div>

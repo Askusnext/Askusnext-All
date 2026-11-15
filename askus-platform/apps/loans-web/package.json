@@ -11,23 +11,25 @@
     "@askus/api-client": "*",
     "@askus/authentication": "*",
     "@askus/shared-types": "*",
-    "@askus/ui-components": "*",
-    "@askus/validation": "*",
-    "@hookform/resolvers": "^3.10.0",
-    "@tanstack/react-query": "^5.107.1",
+    "@hookform/resolvers": "^7.0.2",
+    "framer-motion": "^14.9.0",
+    "lottie-web": "^5.13.0",
+    "lucide-react": "^1.69.0",
     "next": "14.2.35",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-hook-form": "^7.92.0",
-    "zod": "^3.25.76"
+    "react-hook-form": "^7.91.0",
+    "react-router-dom": "^7.18.5",
+    "recharts": "^3.10.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.4",
     "@types/node": "^20.12.7",
     "@types/react": "18.3.3",
     "@types/react-dom": "18.3.0",
-    "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",
-    "tailwindcss": "^3.4.13",
+    "tailwindcss": "^4.3.4",
     "typescript": "^5.5.4"
   }
 }

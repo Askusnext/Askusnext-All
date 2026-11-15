@@ -31,6 +31,9 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 	const [password, setPassword] = useState('');
 	const [remember, setRemember] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
+	// With the real backend there are no passwords: the first submit sends a one-time code, the second checks it.
+	const live = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
+	const [codeSent, setCodeSent] = useState(false);
 
 	const closeLogin = () => {
 		if (submitting) return;
@@ -39,8 +42,26 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 
 	const handleAdminLogin = async (e: FormEvent) => {
 		e.preventDefault();
-		if (!username.trim() || !password.trim()) {
-			message.error('Enter username and password');
+		if (!username.trim()) {
+			message.error(live ? 'Enter your email or mobile number' : 'Enter username and password');
+			return;
+		}
+		if (live && !codeSent) {
+			setSubmitting(true);
+			try {
+				await api.sendOTP(username.trim());
+				setCodeSent(true);
+				setPassword('');
+				message.success('Verification code sent. Enter it below.');
+			} catch (err: unknown) {
+				message.error(err instanceof Error ? err.message : 'Could not send the code');
+			} finally {
+				setSubmitting(false);
+			}
+			return;
+		}
+		if (!password.trim()) {
+			message.error(live ? 'Enter the 6-digit code' : 'Enter username and password');
 			return;
 		}
 		setSubmitting(true);
@@ -165,10 +186,12 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 						</div>
 						<h3 className="sc-modal-title">Admin Sign In</h3>
 						<p className="sc-modal-sub">
-							Access is provisioned by an Admin or Super Admin. Use the username and password issued to you.
+							{live
+								? 'Access is provisioned by an Admin or Super Admin. Enter your email, we send you a one-time code.'
+								: 'Access is provisioned by an Admin or Super Admin. Use the username and password issued to you.'}
 						</p>
 						<form onSubmit={handleAdminLogin}>
-							<label className="sc-modal-label" htmlFor="sc-username">Username</label>
+							<label className="sc-modal-label" htmlFor="sc-username">{live ? 'Email or mobile' : 'Username'}</label>
 							<input
 								id="sc-username"
 								className="sc-modal-input"
@@ -179,16 +202,18 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 								onChange={(e) => setUsername(e.target.value)}
 								autoFocus
 							/>
-							<label className="sc-modal-label" htmlFor="sc-password">Password</label>
-							<input
-								id="sc-password"
-								className="sc-modal-input"
-								type="password"
-								placeholder="••••••••"
-								autoComplete="current-password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-							/>
+							{(!live || codeSent) && <label className="sc-modal-label" htmlFor="sc-password">{live ? 'One-time code' : 'Password'}</label>}
+							{(!live || codeSent) && (
+								<input
+									id="sc-password"
+									className="sc-modal-input"
+									type="password"
+									placeholder="••••••••"
+									autoComplete="current-password"
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+								/>
+								)}
 							<div className="sc-modal-row">
 								<label className="sc-modal-remember">
 									<input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
@@ -199,7 +224,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 								</Link>
 							</div>
 							<button type="submit" className="sc-modal-submit" disabled={submitting}>
-								{submitting ? 'Signing in…' : 'Sign In'}
+								{submitting ? (live && !codeSent ? 'Sending code…' : 'Signing in…') : live && !codeSent ? 'Send code' : 'Sign In'}
 							</button>
 						</form>
 					</div>

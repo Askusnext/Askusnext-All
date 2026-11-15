@@ -1,6 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ActivityService } from '../activity/activity.service';
 import { AuditService } from '../audit/audit.service';
 import { AuthUser } from '../common/access';
 import { Role } from '../common/roles';
@@ -30,6 +31,7 @@ export class RequestsService {
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly storage: StorageService,
     private readonly audit: AuditService,
+    private readonly activity: ActivityService,
   ) {}
 
   toDto(r: InsuranceRequest) {
@@ -52,7 +54,16 @@ export class RequestsService {
       mobile: r.contactMobile ?? undefined,
       type: r.docType ?? undefined,
       documents: r.documents ?? [],
+      assignedToId: r.assignedToId ?? undefined,
+      assignedToName: r.assignedToName ?? undefined,
+      assignedAt: r.assignedAt ?? undefined,
     };
+  }
+
+  private label(r: InsuranceRequest) {
+    const who = r.kind === 'offline' ? r.applicant?.name : r.contactName;
+    const what = r.kind === 'offline' ? `${r.vehicleType ?? ''} insurance`.trim() : 'documents';
+    return `${who ?? 'Customer'} (${what})`;
   }
 
   private async requireVerifiedMobile(userId: string) {
@@ -111,6 +122,10 @@ export class RequestsService {
         documents: this.cleanDocs(body.documents, user.id, body.id),
       }),
     );
+    await this.activity.log(user, {
+      module: 'insurance', action: 'insurance.submitted', entityType: 'insurance_request', entityId: saved.id, entityLabel: this.label(saved),
+      summary: `${this.label(saved)}: customer submitted an insurance request`,
+    });
     return { id: saved.id };
   }
 
@@ -131,6 +146,10 @@ export class RequestsService {
         documents: this.cleanDocs(body.documents, user.id, body.id),
       }),
     );
+    await this.activity.log(user, {
+      module: 'insurance', action: 'insurance.documents_sent', entityType: 'insurance_request', entityId: saved.id, entityLabel: this.label(saved),
+      summary: `${this.label(saved)}: customer sent insurance documents`,
+    });
     return { id: saved.id };
   }
 
@@ -156,22 +175,57 @@ export class RequestsService {
       actorId: staff.id, action: 'insurance.update_request', resource: `insurance.requests/${id}`,
       metadata: { from, to: patch.status, note: patch.adminNote.slice(0, 300) },
     });
+    await this.activity.log(staff, {
+      module: 'insurance', action: 'insurance.status_changed', entityType: 'insurance_request', entityId: id, entityLabel: this.label(row),
+      summary: from === patch.status ? `${this.label(row)}: updated the note` : `${this.label(row)}: moved from ${from} to ${patch.status}`,
+      metadata: { from, to: patch.status, note: patch.adminNote.slice(0, 300) },
+    });
     return this.toDto(row);
   }
 
-  signUpload(user: AuthUser, body: { requestId: string; index: number; extension: string; size: number }) {
+  /** Give a request to a staff member, or release it (assigneeId null). */
+  async assign(id: string, assigneeId: string | null, actor: AuthUser) {
+    const row = await this.requests.findOne({ where: { id } });
+    if (!row) throw new NotFoundException('Request not found');
+    const who = await this.activity.assignee(actor, assigneeId, row.assignedToId);
+    row.assignedToId = who?.id ?? null;
+    row.assignedToName = who?.name ?? null;
+    row.assignedAt = who ? new Date() : null;
+    await this.requests.save(row);
+    await this.activity.log(actor, {
+      module: 'insurance', action: who ? 'insurance.assigned' : 'insurance.released', entityType: 'insurance_request', entityId: id, entityLabel: this.label(row),
+      summary: who ? `${this.label(row)}: assigned to ${who.name}` : `${this.label(row)}: released (no one assigned)`,
+      metadata: { assigneeId: who?.id ?? null },
+    });
+    return this.toDto(row);
+  }
+
+  /** `baseUrl` is this API's public address, used for the local fallback links when R2 is not configured. */
+  signUpload(user: AuthUser, body: { requestId: string; index: number; extension: string; size: number }, baseUrl: string) {
     const ext = body.extension.toLowerCase();
     const contentType = MIME[ext];
     if (!contentType) throw new BadRequestException('Upload a photo or a PDF.');
     if (body.size < 1 || body.size > MAX_UPLOAD_BYTES) throw new BadRequestException('Files must be under 10 MB.');
     const key = `insurance/${user.id}/${body.requestId}/doc_${body.index}.${ext === 'jpeg' ? 'jpg' : ext}`;
-    return { key, contentType, url: this.storage.signUpload(key, contentType, body.size) };
+    const url = this.storage.configured
+      ? this.storage.signUpload(key, contentType, body.size)
+      : this.storage.signLocal('PUT', key, body.size, baseUrl);
+    return { key, contentType, url };
   }
 
-  signDownload(user: AuthUser, key: string) {
+  async signDownload(user: AuthUser, key: string, baseUrl: string) {
     if (!KEY.test(key)) throw new BadRequestException('That document reference is not valid.');
-    const staff = user.roles.includes(Role.SuperAdmin) || user.roles.includes(Role.InsuranceAdmin);
+    const staff = user.roles.includes(Role.SuperAdmin) || user.roles.includes(Role.InsuranceAdmin) || user.roles.includes(Role.Employee);
     if (!staff && key.split('/')[1] !== user.id) throw new ForbiddenException('You cannot open this document.');
-    return { url: this.storage.signDownload(key, key.split('/').pop() as string) };
+    if (staff && key.split('/')[1] !== user.id) {
+      await this.activity.log(user, {
+        module: 'insurance', action: 'insurance.document_viewed', entityType: 'insurance_file', entityId: key, entityLabel: key.split('/').pop(),
+        summary: `Opened customer document ${key.split('/').pop()}`, metadata: { customerId: key.split('/')[1] },
+      });
+    }
+    const url = this.storage.configured
+      ? this.storage.signDownload(key, key.split('/').pop() as string)
+      : this.storage.signLocal('GET', key, 0, baseUrl);
+    return { url };
   }
 }

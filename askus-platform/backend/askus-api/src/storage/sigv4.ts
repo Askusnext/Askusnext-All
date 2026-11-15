@@ -1,7 +1,7 @@
 import { createHash, createHmac } from 'crypto';
 
 export interface PresignInput {
-  method: 'GET' | 'PUT';
+  method: 'GET' | 'PUT' | 'DELETE';
   host: string;
   /** Raw (unencoded) object path, starting with "/". */
   path: string;

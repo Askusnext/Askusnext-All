@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import {
   Card, Table, Button, Input, Select, DatePicker, Tag, message,
   Tabs, Row, Col, Popconfirm, Tooltip, Modal, Form, Avatar, Badge, Alert,
@@ -7,14 +7,20 @@ import {
   PlusOutlined, DownloadOutlined, DeleteOutlined, SaveOutlined,
   FileExcelOutlined, UserOutlined, ClockCircleOutlined, LockOutlined,
   CalendarOutlined, CheckCircleOutlined, TeamOutlined,
-  EditOutlined, EyeOutlined,
+  EditOutlined, EyeOutlined, EnvironmentOutlined,
 } from '@ant-design/icons';
 import dayjs, { Dayjs } from 'dayjs';
 import isoWeek from 'dayjs/plugin/isoWeek';
 import { useAppSelector } from '../store';
+import { apiClient } from '../api/api';
+import WorkSessionPanel from '../components/WorkSessionPanel';
+import LiveTrackingPanel from '../components/LiveTrackingPanel';
 import type { UserRole } from '../types';
 
 dayjs.extend(isoWeek);
+
+/** With the real backend, attendance is stored in the database; without it, in this browser only. */
+const LIVE = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Status = 'Present' | 'Absent' | 'Half Day' | 'Holiday' | 'Leave';
@@ -164,10 +170,15 @@ function DayCell({
 }
 
 // ── My Entry Card (single user — Mon to Sat, current week only) ───────────────
-function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false }: {
+function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, onEdit, onSave, onWeekChange }: {
   userId: string; userName: string;
   allRows: StaffRow[]; setAllRows: React.Dispatch<React.SetStateAction<StaffRow[]>>;
   isAdmin?: boolean;
+  /** Called after a day is changed, so it can be saved. */
+  onEdit?: (rowId: string, dateKey: string) => void;
+  /** Saves the shown week now; resolves true on success. */
+  onSave?: (rowId: string, weekStart: string) => Promise<boolean>;
+  onWeekChange?: (weekStart: Dayjs) => void;
 }) {
   const [saved, setSaved] = useState(false);
   const [myWeekStart, setMyWeekStart] = useState(currentWkStart);
@@ -176,17 +187,25 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false }: 
   const weekLabel = `${myWeekStart.format('DD MMM')} – ${myWeekStart.add(6, 'day').format('DD MMM YYYY')}`;
   const isCurrentWk = myWeekStart.isSame(currentWkStart, 'day');
 
-  const handleSave = () => {
-    localStorage.setItem('tms_timesheet_v3', JSON.stringify(allRows));
+  const handleSave = async () => {
+    if (LIVE && onSave) {
+      if (!(await onSave(userId, fmtDate(myWeekStart)))) return;
+    } else {
+      localStorage.setItem('tms_timesheet_v3', JSON.stringify(allRows));
+    }
     setSaved(true);
     message.success('Timesheet saved successfully!');
     setTimeout(() => setSaved(false), 3000);
   };
 
-  const updateDay = (dateKey: string, entry: DayEntry) =>
+  useEffect(() => { onWeekChange?.(myWeekStart); }, [myWeekStart]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const updateDay = (dateKey: string, entry: DayEntry) => {
     setAllRows(prev => prev.map(r =>
       r.id === userId ? { ...r, days: { ...r.days, [dateKey]: entry } } : r
     ));
+    onEdit?.(userId, dateKey);
+  };
 
   // If the row is missing (e.g. after a data clear), auto-restore it silently
   useEffect(() => {
@@ -452,16 +471,79 @@ export default function TimesheetPage() {
   const [filterRole, setFilterRole] = useState<string>('All');
   const [showAdd, setShowAdd]     = useState(false);
   const [allRows, setAllRows]     = useState<StaffRow[]>(() => {
+    if (LIVE) return [];
     try {
       const stored = localStorage.getItem('tms_timesheet_v3');
       return stored ? JSON.parse(stored) : INITIAL_STAFF;
     } catch { return INITIAL_STAFF; }
   });
 
-  // Auto-save to localStorage whenever rows change
+  // Browser-only mode: keep everything in localStorage.
   useEffect(() => {
-    localStorage.setItem('tms_timesheet_v3', JSON.stringify(allRows));
+    if (!LIVE) localStorage.setItem('tms_timesheet_v3', JSON.stringify(allRows));
   }, [allRows]);
+
+  // ── Database mode: load each week from the API, save edits (debounced) ──────
+  const rowsRef = useRef(allRows);
+  rowsRef.current = allRows;
+  const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const unsaved = useRef(new Set<string>()); // "rowId|date" edits not yet stored
+
+  const loadWeek = useCallback(async (ws: Dayjs) => {
+    if (!LIVE) return;
+    try {
+      const rows = await apiClient.getTimesheetWeek(fmtDate(ws));
+      setAllRows(prev => {
+        const next: StaffRow[] = rows.map(r => {
+          const old = prev.find(p => p.id === r.userId);
+          const days: Record<string, DayEntry> = { ...(old?.days ?? {}) };
+          for (const e of r.entries) {
+            // an edit that is still waiting to be saved wins over what the server has
+            if (unsaved.current.has(r.userId + '|' + e.date)) continue;
+            days[e.date] = { status: e.status as Status, hours: e.hours };
+          }
+          return { id: r.userId, employeeName: r.employeeName, employeeId: r.employeeId, role: r.role, days };
+        });
+        const me = prev.find(p => p.id === userId);
+        return me && !next.some(n => n.id === userId) ? [...next, me] : next;
+      });
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : 'Could not load the timesheet');
+    }
+  }, [userId]);
+
+  const saveWeek = useCallback(async (rowId: string, wk: string): Promise<boolean> => {
+    const row = rowsRef.current.find(r => r.id === rowId);
+    if (!row) return true;
+    const keys = getWkDates(dayjs(wk)).map(fmtDate).filter(k => row.days[k]);
+    const entries = keys.map(k => ({ date: k, status: row.days[k].status, hours: row.days[k].hours }));
+    try {
+      if (rowId === userId) await apiClient.saveTimesheet(wk, entries);
+      else await apiClient.saveTimesheetFor(rowId, wk, entries);
+      keys.forEach(k => unsaved.current.delete(rowId + '|' + k));
+      return true;
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : 'Could not save the timesheet');
+      return false;
+    }
+  }, [userId]);
+
+  /** Called after a day changes: saves that person's week a moment later (one request per burst of edits). */
+  const queueSave = useCallback((rowId: string, dateKey: string) => {
+    if (!LIVE) return;
+    const wk = fmtDate(getWkStart(dayjs(dateKey)));
+    const key = rowId + '|' + wk;
+    unsaved.current.add(rowId + '|' + dateKey);
+    clearTimeout(saveTimers.current[key]);
+    saveTimers.current[key] = setTimeout(() => void saveWeek(rowId, wk), 800);
+  }, [saveWeek]);
+
+  const saveNow = useCallback(async (rowId: string, wk: string) => {
+    clearTimeout(saveTimers.current[rowId + '|' + wk]);
+    return saveWeek(rowId, wk);
+  }, [saveWeek]);
+
+  useEffect(() => { void loadWeek(weekStart); }, [weekStart, loadWeek]);
 
   // Guarantee the logged-in user always has a row — re-runs if user changes
   useEffect(() => {
@@ -488,12 +570,19 @@ export default function TimesheetPage() {
     return allRows.filter(r => r.role === filterRole);
   }, [allRows, filterRole]);
 
-  const updateDay = (rowId: string, dateKey: string, entry: DayEntry) =>
+  const updateDay = (rowId: string, dateKey: string, entry: DayEntry) => {
     setAllRows(prev => prev.map(r =>
       r.id === rowId ? { ...r, days: { ...r.days, [dateKey]: entry } } : r
     ));
+    queueSave(rowId, dateKey);
+  };
 
   const fillDefaults = () => {
+    for (const r of allRows) {
+      getWkDates(currentWkStart).forEach((d, i) => {
+        if (i < 6 && !r.days[fmtDate(d)]) queueSave(r.id, fmtDate(d));
+      });
+    }
     setAllRows(prev => prev.map(r => {
       const days = { ...r.days };
       // Only fill Mon-Sat of current week
@@ -605,14 +694,17 @@ export default function TimesheetPage() {
                   Fill Defaults
                 </Button>
               </Tooltip>
+              {!LIVE && (
               <Button size="small" icon={<PlusOutlined />} type="primary"
                 style={{ background: '#C8102E', borderColor: '#C8102E' }}
                 onClick={() => setShowAdd(true)}>
                 Add Staff
               </Button>
+              )}
               <Button size="small" icon={<DownloadOutlined />} onClick={() => exportXlsx(visibleRows, dates, weekLabel)}>
                 Export XLSX
               </Button>
+              {!LIVE && (
               <Popconfirm
                 title="Clear all timesheet data?"
                 description="This will reset all attendance entries for all staff."
@@ -630,6 +722,7 @@ export default function TimesheetPage() {
                   Clear All Data
                 </Button>
               </Popconfirm>
+              )}
             </div>
           </div>
           <div style={{ marginBottom: 10, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -637,6 +730,7 @@ export default function TimesheetPage() {
               <TeamOutlined /> {visibleRows.length} staff &nbsp;·&nbsp;
               Total hours this week: <strong style={{ color: '#C8102E' }}>{totalHoursAll}h</strong>
             </span>
+            {LIVE && <span style={{ fontSize: 12, color: '#8c8c8c' }}>Saved to the database · staff come from User Management</span>}
           </div>
           <Table
             columns={adminColumns}
@@ -660,9 +754,23 @@ export default function TimesheetPage() {
           allRows={allRows}
           setAllRows={setAllRows}
           isAdmin={userRole === 'Admin'}
+          onEdit={queueSave}
+          onSave={saveNow}
+          onWeekChange={loadWeek}
         />
       ),
     },
+    // Work sessions with location tracking need the real backend.
+    ...(LIVE ? [{
+      key: 'work',
+      label: <span><EnvironmentOutlined /> Work Session</span>,
+      children: <WorkSessionPanel />,
+    }] : []),
+    ...(LIVE && userRole !== 'Agent' ? [{
+      key: 'live',
+      label: <span><TeamOutlined /> Live Tracking</span>,
+      children: <LiveTrackingPanel />,
+    }] : []),
   ];
 
   return (

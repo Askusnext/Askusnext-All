@@ -19,6 +19,12 @@ function pickWritable(body: Record<string, unknown>) {
   return out;
 }
 
+/** Stand-in policy for tickets that are not about insurance (General, Support, Daily Activity, ...). */
+const EMPTY_POLICY = {
+  insurer: '', policyType: 'Comprehensive' as const, netPremium: 0, gst: 0, totalPremium: 0, ncbPercent: 0,
+  startDate: '', expiryDate: '', insuranceStatus: 'NewPolicy' as const,
+};
+
 export const logEntry = (action: string, by: string, note?: string): IActivityLog => ({
   id: randomUUID(),
   action,
@@ -37,7 +43,8 @@ export class TicketsService {
   ) {}
 
   format(t: Ticket) {
-    return { ...t, documents: t.documents ?? [], activityLog: t.activityLog ?? [] };
+    // Only insurance tickets carry a policy. Everything else gets an empty one so no screen has to special-case null.
+    return { ...t, policy: t.policy ?? EMPTY_POLICY, documents: t.documents ?? [], activityLog: t.activityLog ?? [] };
   }
 
   async findAll(query: {
