@@ -11,15 +11,7 @@ const navLinks = [
 	{ to: '/contact', label: 'Contact' },
 ];
 
-const brandLogo = (
-	<svg className="sc-logo" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-		<polygon points="24,3 43,13.5 43,34.5 24,45 5,34.5 5,13.5" fill="none" stroke="#ffffff" strokeWidth="2.2" />
-		<path d="M24 15 L31 28 H17 Z" fill="none" stroke="#5ad4ff" strokeWidth="2" />
-		<circle cx="24" cy="15" r="2.4" fill="#5ad4ff" />
-		<circle cx="17" cy="28" r="2.4" fill="#5ad4ff" />
-		<circle cx="31" cy="28" r="2.4" fill="#5ad4ff" />
-	</svg>
-);
+const brandLogo = <img className="sc-logo-img" src="/askus-wordmark.png" alt="Askus" />;
 
 export default function SiteChrome({ children }: { children: ReactNode }) {
 	const [showLogin, setShowLogin] = useState(false);
@@ -33,7 +25,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 				<div className="sc-header-inner">
 					<Link to="/home" className="sc-brand">
 						{brandLogo}
-						ASK&nbsp;US&nbsp;SOLUTIONS
+						SOLUTIONS
 					</Link>
 					<nav className="sc-nav">
 						{navLinks.map((n) => (
@@ -60,7 +52,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 						<div>
 							<div className="sc-footer-brand">
 								{brandLogo}
-								ASK US SOLUTIONS
+								SOLUTIONS
 							</div>
 							<p className="sc-footer-tagline">
 								Building the intelligence layer behind mobility, insurance, lending, and AI-driven support — one
@@ -133,6 +125,8 @@ const CSS = `
 
 .sc-header{ position:sticky; top:0; z-index:50; background:rgba(6,10,20,0.86); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border-bottom:1px solid rgba(90,212,255,0.16); }
 .sc-header-inner{ max-width:1400px; margin:0 auto; padding:14px 6vw; display:flex; align-items:center; gap:clamp(12px,2.2vw,42px); }
+.sc-logo-img{ height:clamp(32px,3.6vw,50px); width:auto; display:block; flex-shrink:0; }
+.sc-footer-brand .sc-logo-img{ height:30px; }
 .sc-brand{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-weight:700; letter-spacing:0.05em; font-size:clamp(16px,2vw,26px); color:var(--white); text-decoration:none; white-space:nowrap; }
 .sc-logo{ width:26px; height:26px; flex-shrink:0; filter:drop-shadow(0 0 8px rgba(255,255,255,0.5)); }
 .sc-nav{ display:flex; flex-wrap:nowrap; justify-content:flex-end; gap:clamp(8px,1.2vw,20px); margin-left:auto; }

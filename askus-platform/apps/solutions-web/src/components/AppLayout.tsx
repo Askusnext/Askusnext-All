@@ -47,6 +47,7 @@ export default function AppLayout() {
 		<div style={styles.shell}>
 			<aside style={styles.sidebar}>
 				<div style={styles.brandBlock}>
+					<img src="/askus-wordmark.png" alt="Askus" style={{ height: 38, width: 'auto', display: 'block', marginBottom: 14 }} />
 					<div style={styles.brand}>AskusNext Global Solutions Private Limited</div>
 					<div style={styles.meta}>Insurance Management System</div>
 				</div>

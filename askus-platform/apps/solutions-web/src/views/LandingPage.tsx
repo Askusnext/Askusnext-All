@@ -98,15 +98,7 @@ const navLinks = [
 	{ to: '/contact', label: 'Contact' },
 ];
 
-const brandLogo = (
-	<svg className="lp-logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-		<polygon points="24,3 43,13.5 43,34.5 24,45 5,34.5 5,13.5" fill="none" stroke="#ffffff" strokeWidth="2.2" />
-		<path d="M24 15 L31 28 H17 Z" fill="none" stroke="#5ad4ff" strokeWidth="2" />
-		<circle cx="24" cy="15" r="2.4" fill="#5ad4ff" />
-		<circle cx="17" cy="28" r="2.4" fill="#5ad4ff" />
-		<circle cx="31" cy="28" r="2.4" fill="#5ad4ff" />
-	</svg>
-);
+const brandLogo = <img className="lp-logo-img" src="/askus-wordmark.png" alt="Askus" />;
 
 export default function LandingPage() {
 	const netRef = useRef<SVGSVGElement | null>(null);
@@ -200,7 +192,7 @@ export default function LandingPage() {
 				<div className="lp-topbar">
 					<Link to="/home" className="lp-brand" aria-label="AskusNext Global Solutions Private Limited — Home">
 						{brandLogo}
-						ASK&nbsp;US&nbsp;SOLUTIONS
+						SOLUTIONS
 					</Link>
 					<nav className="lp-nav">
 						{navLinks.map((n) => (
@@ -289,7 +281,7 @@ export default function LandingPage() {
 						<div>
 							<div className="lp-footer-brand">
 								{brandLogo}
-								ASK US SOLUTIONS
+								SOLUTIONS
 							</div>
 							<p className="lp-footer-tagline">
 								Building the intelligence layer behind mobility, insurance, lending, and AI-driven support — one
@@ -399,6 +391,8 @@ const CSS = `
 	display:flex; flex-wrap:nowrap; align-items:center; justify-content:flex-start;
 	gap:clamp(12px,2.2vw,42px); width:92vw; max-width:1400px;
 }
+.lp-logo-img{ height:clamp(32px,3.6vw,50px); width:auto; display:block; flex-shrink:0; }
+.lp-footer-brand .lp-logo-img{ height:30px; }
 .lp-brand{
 	font-family:var(--mono); font-size:clamp(16px,2vw,26px); font-weight:700; letter-spacing:0.05em;
 	color:var(--white); display:flex; align-items:center; gap:10px; white-space:nowrap; text-decoration:none; cursor:pointer;

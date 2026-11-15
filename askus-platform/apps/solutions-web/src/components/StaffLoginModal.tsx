@@ -235,12 +235,8 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
       <style>{CSS}</style>
       <div className="slm" role="dialog" aria-modal="true" aria-labelledby="slm-title" onMouseDown={(e) => e.stopPropagation()}>
         <aside className="slm-brand" aria-hidden>
-          <svg className="slm-logo" viewBox="0 0 48 48" fill="none">
-            <polygon points="24,3 43,13.5 43,34.5 24,45 5,34.5 5,13.5" stroke="#fff" strokeWidth="2.2" />
-            <path d="M24 15 L31 28 H17 Z" stroke="#5ad4ff" strokeWidth="2" />
-            <circle cx="24" cy="15" r="2.4" fill="#5ad4ff" /><circle cx="17" cy="28" r="2.4" fill="#5ad4ff" /><circle cx="31" cy="28" r="2.4" fill="#5ad4ff" />
-          </svg>
-          <div className="slm-wordmark">ASK US SOLUTIONS</div>
+          <img className="slm-logo-img" src="/askus-wordmark.png" alt="Askus" />
+          <div className="slm-wordmark">SOLUTIONS</div>
           <h3 className="slm-pitch">One secure sign-in for your whole operation.</h3>
           <ul className="slm-points">
             <li><span>{Icon.check}</span>Sign in with a one-time code. No password to remember.</li>
@@ -252,6 +248,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
 
         <section className="slm-main">
           <button type="button" className="slm-close" aria-label="Close" onClick={onClose}>{Icon.close}</button>
+          <img className="slm-mobile-logo" src="/askus-wordmark.png" alt="Askus" />
           <h2 id="slm-title" className="slm-title">{mode === 'otp' && codeSent ? 'Enter your code' : 'Welcome back'}</h2>
           <p className="slm-sub">
             {mode === 'otp' && codeSent
@@ -339,6 +336,8 @@ const CSS = `
   background-size:34px 34px; mask-image:radial-gradient(80% 70% at 30% 20%, #000, transparent); -webkit-mask-image:radial-gradient(80% 70% at 30% 20%, #000, transparent); }
 .slm-brand > *{ position:relative; }
 .slm-logo{ width:44px; height:44px; }
+.slm-logo-img{ height:46px; width:auto; align-self:flex-start; }
+.slm-mobile-logo{ display:none; height:34px; width:auto; margin:0 0 14px; }
 .slm-wordmark{ font-family:'SFMono-Regular',Consolas,monospace; font-weight:700; letter-spacing:.14em; font-size:13px; color:var(--accent); }
 .slm-pitch{ margin:6px 0 0; font-size:25px; line-height:1.25; font-weight:700; letter-spacing:-.01em; }
 .slm-points{ list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; font-size:14px; line-height:1.5; color:#c9daf0; }
@@ -387,6 +386,7 @@ const CSS = `
 @media (max-width:760px){
   .slm{ grid-template-columns:1fr; max-width:440px; }
   .slm-brand{ display:none; }
+  .slm-mobile-logo{ display:block; }
   .slm-main{ padding:34px 22px 24px; }
   .slm-title{ font-size:23px; }
   .slm-otp{ gap:7px; } .slm-otp-box{ font-size:21px; }
