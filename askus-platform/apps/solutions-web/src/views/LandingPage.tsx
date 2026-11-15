@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { message } from 'antd';
-import { api } from '../api/mockApi';
-import { useAppDispatch, loginSuccess } from '../store';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import StaffLoginForm from '../components/StaffLoginForm';
 import heroSlide1 from '../assets/hero-slide-1.png';
 import heroSlide2 from '../assets/hero-slide-2.png';
 import heroSlide3 from '../assets/hero-slide-3.png';
@@ -116,38 +114,8 @@ export default function LandingPage() {
 	const [slide, setSlide] = useState(0);
 
 	// ── Admin Sign In modal ───────────────────────────────────────────────────
-	const dispatch = useAppDispatch();
-	const navigate = useNavigate();
 	const [showLogin, setShowLogin] = useState(false);
-	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
-	const [remember, setRemember] = useState(false);
-	const [submitting, setSubmitting] = useState(false);
-
-	const closeLogin = () => {
-		if (submitting) return;
-		setShowLogin(false);
-	};
-
-	const handleAdminLogin = async (e: FormEvent) => {
-		e.preventDefault();
-		if (!username.trim() || !password.trim()) {
-			message.error('Enter username and password');
-			return;
-		}
-		setSubmitting(true);
-		try {
-			const res = await api.verifyOTP(username.trim(), password.trim(), '');
-			dispatch(loginSuccess({ token: res.token, user: res.user }));
-			message.success(`Welcome, ${res.user.name}!`);
-			setShowLogin(false);
-			navigate(res.user.role === 'Agent' ? '/timesheet' : '/dashboard', { replace: true });
-		} catch (err: unknown) {
-			message.error(err instanceof Error ? err.message : 'Invalid credentials');
-		} finally {
-			setSubmitting(false);
-		}
-	};
+	const closeLogin = () => setShowLogin(false);
 
 	useEffect(() => {
 		if (heroSlides.length < 2) return;
@@ -395,47 +363,11 @@ export default function LandingPage() {
 						</div>
 						<h3 className="lp-modal-title">Admin Sign In</h3>
 						<p className="lp-modal-sub">
-							Access is provisioned by an Admin or Super Admin. Use the username and password issued to you.
+							Access is provisioned by an Admin or Super Admin. Sign in with a one-time code or your password.
 						</p>
-						<form onSubmit={handleAdminLogin}>
-							<label className="lp-modal-label" htmlFor="lp-username">Username</label>
-							<input
-								id="lp-username"
-								className="lp-modal-input"
-								type="text"
-								placeholder="Enter username"
-								autoComplete="username"
-								value={username}
-								onChange={(e) => setUsername(e.target.value)}
-								autoFocus
-							/>
-							<label className="lp-modal-label" htmlFor="lp-password">Password</label>
-							<input
-								id="lp-password"
-								className="lp-modal-input"
-								type="password"
-								placeholder="••••••••"
-								autoComplete="current-password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-							/>
-							<div className="lp-modal-row">
-								<label className="lp-modal-remember">
-									<input
-										type="checkbox"
-										checked={remember}
-										onChange={(e) => setRemember(e.target.checked)}
-									/>
-									Remember me
-								</label>
-								<a className="lp-modal-contact" href="#contact" onClick={closeLogin}>
-									Contact Admin for access
-								</a>
-							</div>
-							<button type="submit" className="lp-modal-submit" disabled={submitting}>
-								{submitting ? 'Signing in…' : 'Sign In'}
-							</button>
-						</form>
+						<StaffLoginForm prefix="lp" onDone={() => setShowLogin(false)} footer={
+							<a className="lp-modal-contact" href="#contact" onClick={closeLogin}>Contact Admin for access</a>
+						} />
 					</div>
 				</div>
 			)}

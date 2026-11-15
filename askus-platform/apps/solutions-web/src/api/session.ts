@@ -51,6 +51,14 @@ export async function signInWithOtp(keys: SessionKeys, identifier: string, code:
   return { token: tokens.accessToken, me };
 }
 
+// Mobile number (or email) + password, for accounts that have a password set.
+export async function signInWithPassword(keys: SessionKeys, identifier: string, password: string): Promise<{ token: string; me: Me }> {
+  const tokens = await postJson<Tokens>('/auth/login-password', { identifier, password });
+  saveTokens(keys, tokens);
+  const me = await authFetch<Me>(keys, '/users/me');
+  return { token: tokens.accessToken, me };
+}
+
 export function clearSession(keys: SessionKeys) {
   const refresh = sessionStorage.getItem(keys.refresh);
   if (refresh) void postJson('/auth/logout', { refreshToken: refresh }).catch(() => undefined);

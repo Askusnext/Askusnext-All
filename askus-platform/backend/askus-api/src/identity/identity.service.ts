@@ -1,10 +1,19 @@
-import { ForbiddenException, Injectable, Logger, OnApplicationBootstrap, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, createHmac, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'crypto';
 import { IsNull, MoreThan, Repository } from 'typeorm';
 import { normalizeIdentifier } from '../common/identifier';
+import { verifyAgainstDummy, verifyPassword } from '../common/password';
 import { Role } from '../common/roles';
 import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notification/notification.service';
@@ -14,6 +23,8 @@ const OTP_TTL_MS = 5 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const ACCESS_TTL_SECONDS = 15 * 60;
+const PASSWORD_MAX_FAILURES = 5;
+const PASSWORD_LOCK_MS = 15 * 60 * 1000;
 
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
 
@@ -84,6 +95,43 @@ export class IdentityService implements OnApplicationBootstrap {
     if (!user.isActive) throw new ForbiddenException('Account disabled');
 
     await this.audit.log({ actorId: user.id, action: 'auth.login', resource: `user:${user.id}` });
+    return this.issueTokens(user, randomUUID());
+  }
+
+  // Mobile number (or email) + password. One generic error for every failure so the response
+  // never reveals whether an account exists; repeated failures lock the account for a while.
+  async loginWithPassword(rawIdentifier: string, password: string) {
+    const identifier = normalizeIdentifier(rawIdentifier);
+    const user = await this.users
+      .createQueryBuilder('u')
+      .addSelect('u.passwordHash')
+      .where(identifier.includes('@') ? 'u.email = :id' : 'u.mobile = :id', { id: identifier })
+      .getOne();
+
+    if (!user || !user.passwordHash || !user.isActive) {
+      await verifyAgainstDummy(password);
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      throw new HttpException('Too many failed attempts. Try again later.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    if (!(await verifyPassword(password, user.passwordHash))) {
+      user.failedLogins += 1;
+      if (user.failedLogins >= PASSWORD_MAX_FAILURES) {
+        user.lockedUntil = new Date(Date.now() + PASSWORD_LOCK_MS);
+        user.failedLogins = 0;
+      }
+      await this.users.save(user);
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.failedLogins !== 0 || user.lockedUntil) {
+      user.failedLogins = 0;
+      user.lockedUntil = null;
+      await this.users.save(user);
+    }
+    await this.audit.log({ actorId: user.id, action: 'auth.login.password', resource: `user:${user.id}` });
     return this.issueTokens(user, randomUUID());
   }
 

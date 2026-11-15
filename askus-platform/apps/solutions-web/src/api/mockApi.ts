@@ -2,7 +2,7 @@ import type { Ticket, DashboardKPIs, PaginatedResponse, User, UserRole, OTPRespo
 import { apiClient } from './api';
 
 // ── Feature flag: use real backend when VITE_API_BASE_URL is set ──────────────
-const USE_REAL_API = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
+export const USE_REAL_API = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
 
 const delay = (ms = 400) => new Promise(r => setTimeout(r, ms));
 
@@ -88,7 +88,7 @@ export const userApi = {
   create: async (data: { name: string; email: string; mobile: string; role: UserRole; password?: string }): Promise<ManagedUser> => {
     if (!isAllowedEmail(data.email)) throw new Error(`Only @${ALLOWED_EMAIL_DOMAIN} accounts are allowed`);
     if (USE_REAL_API) {
-      const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role });
+      const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role, password: data.password || undefined });
       return { ...u, isActive: true, createdAt: new Date().toISOString() };
     }
     await delay(300);
@@ -152,7 +152,10 @@ export const userApi = {
   },
 
   resetPassword: async (id: string, newPassword: string): Promise<void> => {
-    if (USE_REAL_API) throw new Error('Sign-in uses one-time codes; there is no password to reset');
+    if (USE_REAL_API) {
+      await apiClient.setUserPassword(id, newPassword);
+      return;
+    }
     await delay(250);
     const list = loadManagedUsers();
     const idx = list.findIndex(u => u.id === id);
@@ -342,6 +345,10 @@ const mockImpl = {
     await delay(600);
     return { success: true, sessionId: 'mock-session-' + Date.now(), message: 'OTP sent' };
   },
+
+  // Demo mode only: the password form reuses the credential check below.
+  loginWithPassword: (identifier: string, password: string): Promise<AuthResponse> =>
+    mockImpl.verifyOTP(identifier, password, ''),
 
   verifyOTP: async (emailOrMobile: string, otpOrPassword: string, sessionId: string): Promise<AuthResponse> => {
     await delay(800);
@@ -534,6 +541,8 @@ export const api: typeof mockImpl & {
       },
       verifyOTP: (identifier: string, code: string, _sessionId: string) =>
         apiClient.verifyOtp(identifier, code),
+      loginWithPassword: (identifier: string, password: string) =>
+        apiClient.loginWithPassword(identifier, password),
 
       // Dashboard
       getKPIs:         () => apiClient.getKPIs(),

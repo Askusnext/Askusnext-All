@@ -23,6 +23,16 @@ export class User {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  // Optional password sign-in alongside OTP. Never selected by default; the login query opts in.
+  @Column({ type: 'varchar', name: 'password_hash', nullable: true, select: false })
+  passwordHash: string | null;
+
+  @Column({ name: 'failed_logins', default: 0 })
+  failedLogins: number;
+
+  @Column({ type: 'timestamptz', name: 'locked_until', nullable: true })
+  lockedUntil: Date | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

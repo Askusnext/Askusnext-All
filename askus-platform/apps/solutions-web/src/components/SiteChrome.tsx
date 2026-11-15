@@ -1,8 +1,6 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { message } from 'antd';
-import { api } from '../api/mockApi';
-import { useAppDispatch, loginSuccess } from '../store';
+import { useState, type ReactNode } from 'react';
+import { Link, NavLink } from 'react-router-dom';
+import StaffLoginForm from './StaffLoginForm';
 
 const navLinks = [
 	{ to: '/home', label: 'Home' },
@@ -24,38 +22,8 @@ const brandLogo = (
 );
 
 export default function SiteChrome({ children }: { children: ReactNode }) {
-	const dispatch = useAppDispatch();
-	const navigate = useNavigate();
 	const [showLogin, setShowLogin] = useState(false);
-	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
-	const [remember, setRemember] = useState(false);
-	const [submitting, setSubmitting] = useState(false);
-
-	const closeLogin = () => {
-		if (submitting) return;
-		setShowLogin(false);
-	};
-
-	const handleAdminLogin = async (e: FormEvent) => {
-		e.preventDefault();
-		if (!username.trim() || !password.trim()) {
-			message.error('Enter username and password');
-			return;
-		}
-		setSubmitting(true);
-		try {
-			const res = await api.verifyOTP(username.trim(), password.trim(), '');
-			dispatch(loginSuccess({ token: res.token, user: res.user }));
-			message.success(`Welcome, ${res.user.name}!`);
-			setShowLogin(false);
-			navigate(res.user.role === 'Agent' ? '/timesheet' : '/dashboard', { replace: true });
-		} catch (err: unknown) {
-			message.error(err instanceof Error ? err.message : 'Invalid credentials');
-		} finally {
-			setSubmitting(false);
-		}
-	};
+	const closeLogin = () => setShowLogin(false);
 
 	return (
 		<div className="sc">
@@ -165,43 +133,11 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 						</div>
 						<h3 className="sc-modal-title">Admin Sign In</h3>
 						<p className="sc-modal-sub">
-							Access is provisioned by an Admin or Super Admin. Use the username and password issued to you.
+							Access is provisioned by an Admin or Super Admin. Sign in with a one-time code or your password.
 						</p>
-						<form onSubmit={handleAdminLogin}>
-							<label className="sc-modal-label" htmlFor="sc-username">Username</label>
-							<input
-								id="sc-username"
-								className="sc-modal-input"
-								type="text"
-								placeholder="Enter username"
-								autoComplete="username"
-								value={username}
-								onChange={(e) => setUsername(e.target.value)}
-								autoFocus
-							/>
-							<label className="sc-modal-label" htmlFor="sc-password">Password</label>
-							<input
-								id="sc-password"
-								className="sc-modal-input"
-								type="password"
-								placeholder="••••••••"
-								autoComplete="current-password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-							/>
-							<div className="sc-modal-row">
-								<label className="sc-modal-remember">
-									<input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-									Remember me
-								</label>
-								<Link className="sc-modal-contact" to="/contact" onClick={closeLogin}>
-									Contact Admin for access
-								</Link>
-							</div>
-							<button type="submit" className="sc-modal-submit" disabled={submitting}>
-								{submitting ? 'Signing in…' : 'Sign In'}
-							</button>
-						</form>
+						<StaffLoginForm prefix="sc" onDone={() => setShowLogin(false)} footer={
+							<Link className="sc-modal-contact" to="/contact" onClick={closeLogin}>Contact Admin for access</Link>
+						} />
 					</div>
 				</div>
 			)}

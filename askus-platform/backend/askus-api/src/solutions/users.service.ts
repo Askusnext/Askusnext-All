@@ -2,6 +2,7 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { normalizeIdentifier } from '../common/identifier';
+import { hashPassword } from '../common/password';
 import { Role } from '../common/roles';
 import { User } from '../identity/identity.entities';
 
@@ -50,7 +51,13 @@ export class UsersService {
     return rows.map(toTmsUser);
   }
 
-  async create(body: { name: string; email?: string; mobile?: string; role: Exclude<TmsRole, 'Customer'> }) {
+  async create(body: {
+    name: string;
+    email?: string;
+    mobile?: string;
+    role: Exclude<TmsRole, 'Customer'>;
+    password?: string;
+  }) {
     const email = body.email ? normalizeIdentifier(body.email) : null;
     const mobile = body.mobile ? normalizeIdentifier(body.mobile) : null;
     const clash = await this.users.findOne({
@@ -59,9 +66,26 @@ export class UsersService {
     if (clash) throw new ConflictException('A user with this email or mobile already exists');
 
     const user = await this.users.save(
-      this.users.create({ fullName: body.name, email, mobile, roles: [FROM_TMS[body.role]] }),
+      this.users.create({
+        fullName: body.name,
+        email,
+        mobile,
+        roles: [FROM_TMS[body.role]],
+        passwordHash: body.password ? await hashPassword(body.password) : null,
+      }),
     );
     return toTmsUser(user);
+  }
+
+  // Sets (or replaces) a user's password and clears any lockout.
+  async setPassword(id: string, password: string) {
+    const user = await this.users.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('Not found');
+    user.passwordHash = await hashPassword(password);
+    user.failedLogins = 0;
+    user.lockedUntil = null;
+    await this.users.save(user);
+    return { message: 'Password updated' };
   }
 
   async update(id: string, body: { name?: string; mobile?: string; role?: Exclude<TmsRole, 'Customer'> }) {

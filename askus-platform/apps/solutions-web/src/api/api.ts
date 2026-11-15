@@ -4,7 +4,22 @@
 import type {
   Ticket, DashboardKPIs, PaginatedResponse, AuthResponse, User,
 } from '../types';
-import { STAFF_KEYS, authFetch, requestOtp, signInWithOtp } from './session';
+import { STAFF_KEYS, authFetch, requestOtp, signInWithOtp, signInWithPassword } from './session';
+import type { Me } from './session';
+
+// Customers sign in through the portal; the staff app only admits staff roles.
+function toStaffAuth(token: string, me: Me): AuthResponse {
+  if (me.role === 'Customer') {
+    sessionStorage.removeItem(STAFF_KEYS.access);
+    sessionStorage.removeItem(STAFF_KEYS.refresh);
+    throw new Error('This account does not have staff access');
+  }
+  return {
+    token,
+    expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+    user: { id: me.id, name: me.name, email: me.email ?? undefined, mobile: me.mobile ?? '', role: me.role, branchId: me.branchId },
+  };
+}
 
 const request = <T>(method: string, endpoint: string, body?: unknown, isFormData = false) =>
   authFetch<T>(STAFF_KEYS, endpoint, { method, body, isFormData });
@@ -30,16 +45,12 @@ export const apiClient = {
 
   verifyOtp: async (identifier: string, code: string): Promise<AuthResponse> => {
     const { token, me } = await signInWithOtp(STAFF_KEYS, identifier, code);
-    if (me.role === 'Customer') {
-      sessionStorage.removeItem(STAFF_KEYS.access);
-      sessionStorage.removeItem(STAFF_KEYS.refresh);
-      throw new Error('This account does not have staff access');
-    }
-    return {
-      token,
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-      user: { id: me.id, name: me.name, email: me.email ?? undefined, mobile: me.mobile ?? '', role: me.role, branchId: me.branchId },
-    };
+    return toStaffAuth(token, me);
+  },
+
+  loginWithPassword: async (identifier: string, password: string): Promise<AuthResponse> => {
+    const { token, me } = await signInWithPassword(STAFF_KEYS, identifier, password);
+    return toStaffAuth(token, me);
   },
 
   // ── Dashboard ──────────────────────────────────────────────────────────────
@@ -112,8 +123,11 @@ export const apiClient = {
   getUsers: () =>
     get<User[]>('/users'),
 
-  createUser: (data: { name: string; email: string; mobile: string; role: string }) =>
+  createUser: (data: { name: string; email: string; mobile: string; role: string; password?: string }) =>
     post<User>('/users', data),
+
+  setUserPassword: (id: string, password: string) =>
+    put<{ message: string }>(`/users/${id}/password`, { password }),
 
   updateUser: (id: string, data: { name?: string; mobile?: string; role?: string }) =>
     put<User>(`/users/${id}`, data),

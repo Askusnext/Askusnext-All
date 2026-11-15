@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { IsEmail, IsIn, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Roles } from '../common/access';
 import { Role } from '../common/roles';
 import { UsersService } from './users.service';
@@ -23,6 +23,19 @@ class CreateStaffDto {
 
   @IsIn(STAFF_ROLES)
   role: (typeof STAFF_ROLES)[number];
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  password?: string;
+}
+
+class SetPasswordDto {
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  password: string;
 }
 
 class UpdateStaffDto {
@@ -68,6 +81,11 @@ export class UsersController {
   @Put(':id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateStaffDto) {
     return this.users.update(id, dto);
+  }
+
+  @Put(':id/password')
+  setPassword(@Param('id', ParseUUIDPipe) id: string, @Body() dto: SetPasswordDto) {
+    return this.users.setPassword(id, dto.password);
   }
 
   @Delete(':id')
