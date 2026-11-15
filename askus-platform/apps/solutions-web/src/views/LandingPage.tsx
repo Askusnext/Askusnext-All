@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import StaffLoginForm from '../components/StaffLoginForm';
+import StaffLoginModal from '../components/StaffLoginModal';
 import heroSlide1 from '../assets/hero-slide-1.png';
 import heroSlide2 from '../assets/hero-slide-2.png';
 import heroSlide3 from '../assets/hero-slide-3.png';
@@ -351,26 +351,7 @@ export default function LandingPage() {
 			</footer>
 
 			{/* ---------- ADMIN SIGN IN MODAL ---------- */}
-			{showLogin && (
-				<div className="lp-modal-overlay" onClick={closeLogin}>
-					<div className="lp-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-						<button type="button" className="lp-modal-close" aria-label="Close" onClick={closeLogin}>
-							&times;
-						</button>
-						<div className="lp-modal-eyebrow">
-							<span className="lp-modal-sq" />
-							RESTRICTED ACCESS
-						</div>
-						<h3 className="lp-modal-title">Admin Sign In</h3>
-						<p className="lp-modal-sub">
-							Access is provisioned by an Admin or Super Admin. Sign in with a one-time code or your password.
-						</p>
-						<StaffLoginForm prefix="lp" onDone={() => setShowLogin(false)} footer={
-							<a className="lp-modal-contact" href="#contact" onClick={closeLogin}>Contact Admin for access</a>
-						} />
-					</div>
-				</div>
-			)}
+			<StaffLoginModal open={showLogin} onClose={closeLogin} contact={<a href="#contact" onClick={closeLogin}>Need access? Contact Admin</a>} />
 		</div>
 	);
 }

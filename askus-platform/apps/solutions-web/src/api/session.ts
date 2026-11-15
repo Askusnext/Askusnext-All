@@ -1,8 +1,9 @@
 import { notification } from 'antd';
+import { markSignedIn } from './sessionLife';
 
 // Shared OTP session handling for the staff app and the customer portal.
 // Both talk to the central AskUs identity API (/auth/*); they only differ in
-// which sessionStorage keys hold the tokens.
+// which localStorage keys hold the tokens.
 export const BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
 
 export interface SessionKeys { access: string; refresh: string }
@@ -40,13 +41,14 @@ const postJson = <T>(path: string, body: unknown) =>
 export const requestOtp = (identifier: string) => postJson<{ sent: boolean }>('/auth/request-otp', { identifier });
 
 export function saveTokens(keys: SessionKeys, t: Tokens) {
-  sessionStorage.setItem(keys.access, t.accessToken);
-  sessionStorage.setItem(keys.refresh, t.refreshToken);
+  localStorage.setItem(keys.access, t.accessToken);
+  localStorage.setItem(keys.refresh, t.refreshToken);
 }
 
 export async function signInWithOtp(keys: SessionKeys, identifier: string, code: string): Promise<{ token: string; me: Me }> {
   const tokens = await postJson<Tokens>('/auth/verify-otp', { identifier, code });
   saveTokens(keys, tokens);
+  markSignedIn(keys.access);
   const me = await authFetch<Me>(keys, '/users/me');
   return { token: tokens.accessToken, me };
 }
@@ -55,15 +57,17 @@ export async function signInWithOtp(keys: SessionKeys, identifier: string, code:
 export async function signInWithPassword(keys: SessionKeys, identifier: string, password: string): Promise<{ token: string; me: Me }> {
   const tokens = await postJson<Tokens>('/auth/login-password', { identifier, password });
   saveTokens(keys, tokens);
+  markSignedIn(keys.access);
   const me = await authFetch<Me>(keys, '/users/me');
   return { token: tokens.accessToken, me };
 }
 
 export function clearSession(keys: SessionKeys) {
-  const refresh = sessionStorage.getItem(keys.refresh);
+  const refresh = localStorage.getItem(keys.refresh);
   if (refresh) void postJson('/auth/logout', { refreshToken: refresh }).catch(() => undefined);
-  sessionStorage.removeItem(keys.access);
-  sessionStorage.removeItem(keys.refresh);
+  localStorage.removeItem(keys.access);
+  localStorage.removeItem(keys.refresh);
+  localStorage.removeItem(`${keys.access}_exp`);
 }
 
 // One refresh in flight per session so concurrent 401s do not rotate the token twice.
@@ -73,15 +77,16 @@ function refreshTokens(keys: SessionKeys): Promise<boolean> {
   const pending = refreshing.get(keys.refresh);
   if (pending) return pending;
 
-  const refreshToken = sessionStorage.getItem(keys.refresh);
+  const refreshToken = localStorage.getItem(keys.refresh);
   const run = (async () => {
     if (!refreshToken) return false;
     try {
       saveTokens(keys, await postJson<Tokens>('/auth/refresh', { refreshToken }));
       return true;
     } catch {
-      sessionStorage.removeItem(keys.access);
-      sessionStorage.removeItem(keys.refresh);
+      localStorage.removeItem(keys.access);
+      localStorage.removeItem(keys.refresh);
+      localStorage.removeItem(`${keys.access}_exp`);
       return false;
     }
   })().finally(() => refreshing.delete(keys.refresh));
@@ -96,7 +101,7 @@ export async function authFetch<T>(
 ): Promise<T> {
   const send = () => {
     const headers: Record<string, string> = {};
-    const token = sessionStorage.getItem(keys.access);
+    const token = localStorage.getItem(keys.access);
     if (token) headers.Authorization = `Bearer ${token}`;
     if (!init.isFormData && init.body !== undefined) headers['Content-Type'] = 'application/json';
     return fetch(`${BASE}${path}`, {

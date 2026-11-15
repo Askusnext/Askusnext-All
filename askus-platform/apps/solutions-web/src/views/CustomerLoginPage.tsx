@@ -35,7 +35,7 @@ export default function CustomerLoginPage() {
 		setLoading(true);
 		try {
 			const { customer } = await customerApi.verifyOtp(identifier.trim(), code.trim());
-			sessionStorage.setItem('askus_customer', JSON.stringify(customer));
+			localStorage.setItem('askus_customer', JSON.stringify(customer));
 			navigate('/customer/tickets', { replace: true });
 		} catch (err) {
 			message.error((err as Error).message || 'Login failed');

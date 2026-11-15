@@ -10,8 +10,9 @@ import type { Me } from './session';
 // Customers sign in through the portal; the staff app only admits staff roles.
 function toStaffAuth(token: string, me: Me): AuthResponse {
   if (me.role === 'Customer') {
-    sessionStorage.removeItem(STAFF_KEYS.access);
-    sessionStorage.removeItem(STAFF_KEYS.refresh);
+    localStorage.removeItem(STAFF_KEYS.access);
+    localStorage.removeItem(STAFF_KEYS.refresh);
+    localStorage.removeItem(`${STAFF_KEYS.access}_exp`);
     throw new Error('This account does not have staff access');
   }
   return {

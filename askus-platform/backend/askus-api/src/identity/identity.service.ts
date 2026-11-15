@@ -21,7 +21,8 @@ import { OtpCode, Session, User } from './identity.entities';
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
-const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+// A sign-in lasts 12 hours in total: refresh rotation never extends it.
+const REFRESH_TTL_MS = 12 * 60 * 60 * 1000;
 const ACCESS_TTL_SECONDS = 15 * 60;
 const PASSWORD_MAX_FAILURES = 5;
 const PASSWORD_LOCK_MS = 15 * 60 * 1000;
@@ -151,14 +152,15 @@ export class IdentityService implements OnApplicationBootstrap {
 
     const user = await this.users.findOne({ where: { id: session.userId } });
     if (!user || !user.isActive) throw new UnauthorizedException();
-    return this.issueTokens(user, session.familyId);
+    return this.issueTokens(user, session.familyId, session.expiresAt);
   }
 
   async logout(refreshToken: string) {
     await this.sessions.update({ refreshHash: sha256(refreshToken), revokedAt: IsNull() }, { revokedAt: new Date() });
   }
 
-  private async issueTokens(user: User, familyId: string) {
+  // sessionEnd carries the original sign-in expiry through refresh rotations.
+  private async issueTokens(user: User, familyId: string, sessionEnd?: Date) {
     const accessToken = await this.jwt.signAsync({
       sub: user.id,
       roles: user.roles,
@@ -170,7 +172,7 @@ export class IdentityService implements OnApplicationBootstrap {
         userId: user.id,
         familyId,
         refreshHash: sha256(refreshToken),
-        expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
+        expiresAt: sessionEnd ?? new Date(Date.now() + REFRESH_TTL_MS),
         revokedAt: null,
       }),
     );

@@ -26,7 +26,7 @@ export default function AppLayout() {
 	const navigate = useNavigate();
 	const user = useAppSelector((state) => state.auth.user);
 	const role = user?.role ?? 'Agent';
-	const isAuthenticated = Boolean(sessionStorage.getItem('tms_token'));
+	const isAuthenticated = Boolean(localStorage.getItem('tms_token'));
 
 	const visibleItems = navItems.filter((item) => item.roles.includes(role));
 

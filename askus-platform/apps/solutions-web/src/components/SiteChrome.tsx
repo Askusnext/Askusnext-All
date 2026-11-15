@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import StaffLoginForm from './StaffLoginForm';
+import StaffLoginModal from './StaffLoginModal';
 
 const navLinks = [
 	{ to: '/home', label: 'Home' },
@@ -121,26 +121,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 				</div>
 			</footer>
 
-			{showLogin && (
-				<div className="sc-modal-overlay" onClick={closeLogin}>
-					<div className="sc-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-						<button type="button" className="sc-modal-close" aria-label="Close" onClick={closeLogin}>
-							&times;
-						</button>
-						<div className="sc-modal-eyebrow">
-							<span className="sc-modal-sq" />
-							RESTRICTED ACCESS
-						</div>
-						<h3 className="sc-modal-title">Admin Sign In</h3>
-						<p className="sc-modal-sub">
-							Access is provisioned by an Admin or Super Admin. Sign in with a one-time code or your password.
-						</p>
-						<StaffLoginForm prefix="sc" onDone={() => setShowLogin(false)} footer={
-							<Link className="sc-modal-contact" to="/contact" onClick={closeLogin}>Contact Admin for access</Link>
-						} />
-					</div>
-				</div>
-			)}
+			<StaffLoginModal open={showLogin} onClose={closeLogin} contact={<Link to="/contact" onClick={closeLogin}>Need access? Contact Admin</Link>} />
 		</div>
 	);
 }

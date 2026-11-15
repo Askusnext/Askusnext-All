@@ -33,12 +33,12 @@ import UserManagementPage from './views/UserManagementPage';
 import type { UserRole } from './types';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = sessionStorage.getItem('tms_token');
+  const token = localStorage.getItem('tms_token');
   return token ? <>{children}</> : <Navigate to="/home" replace />;
 }
 
 function RoleRoute({ allowed, children }: { allowed: UserRole[]; children: React.ReactNode }) {
-  const userRaw = sessionStorage.getItem('tms_user');
+  const userRaw = localStorage.getItem('tms_user');
   const user = userRaw ? JSON.parse(userRaw) : null;
   const role: UserRole = user?.role ?? 'Agent';
   if (!allowed.includes(role)) {
@@ -48,19 +48,19 @@ function RoleRoute({ allowed, children }: { allowed: UserRole[]; children: React
 }
 
 function RoleHome() {
-  const userRaw = sessionStorage.getItem('tms_user');
+  const userRaw = localStorage.getItem('tms_user');
   const user = userRaw ? JSON.parse(userRaw) : null;
   const role: UserRole = user?.role ?? 'Agent';
   return <Navigate to={role === 'Agent' ? '/timesheet' : '/dashboard'} replace />;
 }
 
 function HomeGate() {
-  const token = sessionStorage.getItem('tms_token');
+  const token = localStorage.getItem('tms_token');
   return token ? <RoleHome /> : <Navigate to="/home" replace />;
 }
 
 function CustomerProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = sessionStorage.getItem('askus_customer_token');
+  const token = localStorage.getItem('askus_customer_token');
   return token ? <>{children}</> : <Navigate to="/customer/login" replace />;
 }
 
