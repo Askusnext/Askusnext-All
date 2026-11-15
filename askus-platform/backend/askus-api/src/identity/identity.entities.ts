@@ -20,8 +20,32 @@ export class User {
   @Column('simple-array', { default: Role.Customer })
   roles: Role[];
 
+  @Column('simple-array', { default: '' })
+  permissions: string[];
+
+  // Private R2 object key of the uploaded Aadhaar document; only Super Admin/Admin can open it.
+  @Column({ type: 'varchar', name: 'aadhaar_key', nullable: true })
+  aadhaarKey: string | null;
+
+  @Column({ type: 'uuid', name: 'created_by', nullable: true })
+  createdBy: string | null;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
+  // Staff created by an Admin stay PENDING (and inactive) until a Super Admin approves them.
+  @Column({ type: 'varchar', name: 'approval_status', default: 'APPROVED' })
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+
+  // Optional password sign-in alongside OTP. Never selected by default; the login query opts in.
+  @Column({ type: 'varchar', name: 'password_hash', nullable: true, select: false })
+  passwordHash: string | null;
+
+  @Column({ name: 'failed_logins', default: 0 })
+  failedLogins: number;
+
+  @Column({ type: 'timestamptz', name: 'locked_until', nullable: true })
+  lockedUntil: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

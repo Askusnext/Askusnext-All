@@ -4,6 +4,7 @@ import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useAppSelector } from '../store';
+import { isAdminRole } from '../access';
 import {
   ACTIVITY_LIVE, AREA_LABEL, activityApi, ago, timeOnly, whenFull,
   type ActivityArea, type ActivityItem, type StaffMember, type SummaryRow, type WorkloadRow,
@@ -23,7 +24,7 @@ function AreaTag({ area }: { area: ActivityArea }) {
 
 export default function ActivityPage() {
   const me = useAppSelector((s) => s.auth.user);
-  const isAdmin = me?.role === 'Admin';
+  const isAdmin = isAdminRole(me?.role);
 
   const [range, setRange] = useState<[Dayjs, Dayjs]>([dayjs(), dayjs()]);
   const [staff, setStaff] = useState<StaffMember[]>([]);

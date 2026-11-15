@@ -4,7 +4,58 @@
 import type {
   Ticket, DashboardKPIs, PaginatedResponse, AuthResponse, User,
 } from '../types';
-import { STAFF_KEYS, authFetch, requestOtp, signInWithOtp } from './session';
+import { BASE, STAFF_KEYS, authFetch, requestOtp, signInWithOtp, signInWithPassword } from './session';
+import type { Me } from './session';
+
+// The code was valid but the person has no staff role yet. Carries the short-lived token (in memory
+// only, never stored) so they can submit an access request for an Admin to review.
+export class NotStaffError extends Error {
+  constructor(readonly token: string, readonly me: Me) {
+    super('This account does not have staff access');
+  }
+}
+
+async function bearerJson<T>(token: string, path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error((Array.isArray(err.message) ? err.message.join(', ') : err.message) || 'Request failed');
+  }
+  return res.json() as Promise<T>;
+}
+
+export const accessRequestApi = {
+  /** Optional Aadhaar image: signed upload straight to private storage, then its key goes with the request. */
+  async uploadAadhaar(token: string, file: File): Promise<string> {
+    const { key, uploadUrl } = await bearerJson<{ key: string; uploadUrl: string }>(
+      token, '/users/access-request/aadhaar-upload-url', { contentType: file.type, size: file.size },
+    );
+    const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+    if (!put.ok) throw new Error('Aadhaar upload failed. Please try again.');
+    return key;
+  },
+  submit: (token: string, body: { name: string; email?: string; mobile?: string; aadhaarKey?: string }) =>
+    bearerJson<User>(token, '/users/access-request', body),
+};
+
+// Customers sign in through the portal; the staff app only admits staff roles.
+function toStaffAuth(token: string, me: Me): AuthResponse {
+  if (me.role === 'Customer') {
+    localStorage.removeItem(STAFF_KEYS.access);
+    localStorage.removeItem(STAFF_KEYS.refresh);
+    localStorage.removeItem(`${STAFF_KEYS.access}_exp`);
+    throw new NotStaffError(token, me);
+  }
+  return {
+    token,
+    expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+    user: { id: me.id, name: me.name, email: me.email ?? undefined, mobile: me.mobile ?? '', role: me.role, permissions: me.permissions ?? [], branchId: me.branchId },
+  };
+}
 
 const request = <T>(method: string, endpoint: string, body?: unknown, isFormData = false) =>
   authFetch<T>(STAFF_KEYS, endpoint, { method, body, isFormData });
@@ -30,16 +81,12 @@ export const apiClient = {
 
   verifyOtp: async (identifier: string, code: string): Promise<AuthResponse> => {
     const { token, me } = await signInWithOtp(STAFF_KEYS, identifier, code);
-    if (me.role === 'Customer') {
-      sessionStorage.removeItem(STAFF_KEYS.access);
-      sessionStorage.removeItem(STAFF_KEYS.refresh);
-      throw new Error('This account does not have staff access');
-    }
-    return {
-      token,
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-      user: { id: me.id, name: me.name, email: me.email ?? undefined, mobile: me.mobile ?? '', role: me.role, branchId: me.branchId },
-    };
+    return toStaffAuth(token, me);
+  },
+
+  loginWithPassword: async (identifier: string, password: string): Promise<AuthResponse> => {
+    const { token, me } = await signInWithPassword(STAFF_KEYS, identifier, password);
+    return toStaffAuth(token, me);
   },
 
   // ── Dashboard ──────────────────────────────────────────────────────────────
@@ -112,14 +159,32 @@ export const apiClient = {
   getUsers: () =>
     get<User[]>('/users'),
 
-  createUser: (data: { name: string; email: string; mobile: string; role: string }) =>
+  createUser: (data: { name: string; email: string; mobile: string; role: string; aadhaarKey: string; permissions?: string[]; password?: string }) =>
     post<User>('/users', data),
+
+  getAadhaarUploadUrl: (contentType: string, size: number) =>
+    post<{ key: string; uploadUrl: string }>('/users/aadhaar-upload-url', { contentType, size }),
+
+  getAadhaarUrl: (id: string) =>
+    get<{ url: string }>(`/users/${id}/aadhaar`),
+
+  setUserPermissions: (id: string, permissions: string[]) =>
+    put<User>(`/users/${id}/permissions`, { permissions }),
+
+  setUserPassword: (id: string, password: string) =>
+    put<{ message: string }>(`/users/${id}/password`, { password }),
 
   updateUser: (id: string, data: { name?: string; mobile?: string; role?: string }) =>
     put<User>(`/users/${id}`, data),
 
   deleteUser: (id: string) =>
     del<void>(`/users/${id}`),
+
+  approveUser: (id: string, data: { role?: string; permissions?: string[] } = {}) =>
+    post<User>(`/users/${id}/approve`, data),
+
+  rejectUser: (id: string) =>
+    post<User>(`/users/${id}/reject`, {}),
 
   // ── Timesheet ──────────────────────────────────────────────────────────────
   getTimesheet: (weekStart?: string) => {

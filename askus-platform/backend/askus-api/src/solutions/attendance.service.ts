@@ -22,7 +22,7 @@ export interface Fix {
   accuracy?: number | null;
 }
 
-const canSeeAll = (u: AuthUser) => u.roles.includes(Role.SuperAdmin) || u.roles.includes(Role.Employee);
+const canSeeAll = (u: AuthUser) => u.roles.includes(Role.SuperAdmin) || u.roles.includes(Role.Admin) || u.roles.includes(Role.Employee);
 export const istDay = (d: Date) => new Date(d.getTime() + IST_OFFSET_MS).toISOString().slice(0, 10);
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
 
@@ -187,7 +187,7 @@ export class AttendanceService {
     const date = day ?? istDay(new Date());
     const staff = await this.users
       .createQueryBuilder('u')
-      .where(`(u.roles LIKE '%SUPER_ADMIN%' OR u.roles LIKE '%EMPLOYEE%' OR u.roles LIKE '%AGENT%')`)
+      .where(`u.roles ~ '(^|,)(SUPER_ADMIN|ADMIN|EMPLOYEE|AGENT)(,|$)'`)
       .andWhere('u.isActive = true')
       .orderBy('u.fullName', 'ASC', 'NULLS LAST')
       .getMany();

@@ -8,7 +8,7 @@ import { User } from '../identity/identity.entities';
 import { IDayEntry, Timesheet } from './solutions.entities';
 import { toTmsRole } from './users.service';
 
-const canSeeAll = (u: AuthUser) => u.roles.includes(Role.SuperAdmin) || u.roles.includes(Role.Employee);
+const canSeeAll = (u: AuthUser) => u.roles.includes(Role.SuperAdmin) || u.roles.includes(Role.Admin) || u.roles.includes(Role.Employee);
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -57,7 +57,7 @@ export class TimesheetService {
     if (canSeeAll(user)) {
       staff = await this.users
         .createQueryBuilder('u')
-        .where(`(u.roles LIKE '%SUPER_ADMIN%' OR u.roles LIKE '%EMPLOYEE%' OR u.roles LIKE '%AGENT%')`)
+        .where(`u.roles ~ '(^|,)(SUPER_ADMIN|ADMIN|EMPLOYEE|AGENT)(,|$)'`)
         .andWhere('u.isActive = true')
         .orderBy('u.fullName', 'ASC', 'NULLS LAST')
         .getMany();

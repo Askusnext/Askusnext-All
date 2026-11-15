@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Query, UseGuard
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsIn, IsNumber, IsOptional, IsString, Matches, Max, Min, ValidateNested } from 'class-validator';
-import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Roles } from '../common/access';
+import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Permissions, Roles } from '../common/access';
 import { Role } from '../common/roles';
 import { AttendanceStatus } from './solutions.entities';
 import { TimesheetService } from './timesheet.service';
@@ -49,6 +49,7 @@ class UpdateEntriesDto {
 @Controller('timesheet')
 @UseGuards(JwtAuthGuard, AccessGuard)
 @Roles(Role.Employee, Role.Agent)
+@Permissions('timesheet')
 export class TimesheetController {
   constructor(private readonly timesheets: TimesheetService) {}
 

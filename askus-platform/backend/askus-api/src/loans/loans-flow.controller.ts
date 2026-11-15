@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 import type { Response } from 'express';
 import { memoryStorage } from 'multer';
-import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Roles } from '../common/access';
+import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Permissions, Roles } from '../common/access';
 import { Role } from '../common/roles';
 import { ActivityService } from '../activity/activity.service';
 import { LoansFilesService, MAX_LOAN_FILE_BYTES } from './loans-files.service';
@@ -273,6 +273,7 @@ export class LoansFilesController {
 @Controller('loans/admin')
 @UseGuards(JwtAuthGuard, AccessGuard)
 @Roles(Role.Employee, Role.LoansAdmin)
+@Permissions('loans')
 export class LoansAdminController {
   constructor(private readonly flow: LoansFlowService) {}
 

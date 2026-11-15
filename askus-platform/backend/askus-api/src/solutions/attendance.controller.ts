@@ -2,7 +2,7 @@ import { Body, Controller, Get, HttpCode, Post, Query, UseGuards } from '@nestjs
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { IsIn, IsNumber, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from 'class-validator';
-import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Roles } from '../common/access';
+import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Permissions, Roles } from '../common/access';
 import { Role } from '../common/roles';
 import { AttendanceService } from './attendance.service';
 
@@ -36,6 +36,7 @@ class TrailQuery {
 @Controller('attendance')
 @UseGuards(JwtAuthGuard, AccessGuard)
 @Roles(Role.Employee, Role.Agent)
+@Permissions('timesheet')
 export class AttendanceController {
   constructor(private readonly attendance: AttendanceService) {}
 

@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
-import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Roles } from '../common/access';
+import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Permissions, Roles } from '../common/access';
 import { Role } from '../common/roles';
 import { REQUEST_STATUSES, RequestStatus } from './insurance.entities';
 import { RequestsService } from './requests.service';
@@ -21,6 +21,7 @@ class AssignDto {
 @Controller('insurance/admin')
 @UseGuards(JwtAuthGuard, AccessGuard)
 @Roles(Role.Employee, Role.InsuranceAdmin)
+@Permissions('insurance')
 export class InsuranceAdminController {
   constructor(private readonly requests: RequestsService) {}
 

@@ -30,14 +30,15 @@ export interface ActivityFilter {
 
 /** Display role of an account, as the screens know it. */
 export function roleLabel(roles: Role[]): string {
-  if (roles.includes(Role.SuperAdmin)) return 'Admin';
+  if (roles.includes(Role.SuperAdmin)) return 'Super Admin';
+  if (roles.includes(Role.Admin)) return 'Admin';
   if (roles.includes(Role.Employee)) return 'Employee';
   if (roles.includes(Role.Agent)) return 'Agent';
   if (roles.some((r) => r !== Role.Customer)) return 'Staff';
   return 'Customer';
 }
 
-export const isAdmin = (u: AuthUser) => u.roles.includes(Role.SuperAdmin);
+export const isAdmin = (u: AuthUser) => u.roles.includes(Role.SuperAdmin) || u.roles.includes(Role.Admin);
 const isTeam = (u: AuthUser) => isAdmin(u) || u.roles.includes(Role.Employee);
 
 /** A staff view of the same item twice within this time is recorded once. */
@@ -173,7 +174,7 @@ export class ActivityService {
     if (!isTeam(viewer)) throw new ForbiddenException();
     const list = await this.users
       .createQueryBuilder('u')
-      .where(`(u.roles LIKE '%SUPER_ADMIN%' OR u.roles LIKE '%EMPLOYEE%' OR u.roles LIKE '%AGENT%')`)
+      .where(`u.roles ~ '(^|,)(SUPER_ADMIN|ADMIN|EMPLOYEE|AGENT)(,|$)'`)
       .andWhere('u.isActive = true')
       .orderBy('u.fullName', 'ASC', 'NULLS LAST')
       .getMany();
@@ -212,7 +213,7 @@ export class ActivityService {
     }
     if (!isAdmin(actor) && assigneeId !== actor.id) throw new ForbiddenException('You can assign work to yourself. Ask an admin to assign it to someone else.');
     const u = await this.users.findOneBy({ id: assigneeId });
-    const ok = u?.isActive && u.roles.some((r) => r === Role.SuperAdmin || r === Role.Employee || r === Role.Agent);
+    const ok = u?.isActive && u.roles.some((r) => r === Role.SuperAdmin || r === Role.Admin || r === Role.Employee || r === Role.Agent);
     if (!u || !ok) throw new ForbiddenException('That person cannot be given work.');
     return { id: u.id, name: u.fullName ?? u.email ?? u.mobile ?? u.id };
   }

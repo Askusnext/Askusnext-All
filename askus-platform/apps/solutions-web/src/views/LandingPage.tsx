@@ -1,8 +1,6 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { message } from 'antd';
-import { api } from '../api/mockApi';
-import { useAppDispatch, loginSuccess } from '../store';
+import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
+import StaffLoginModal from '../components/StaffLoginModal';
 import heroSlide1 from '../assets/hero-slide-1.png';
 import heroSlide2 from '../assets/hero-slide-2.png';
 import heroSlide3 from '../assets/hero-slide-3.png';
@@ -100,15 +98,7 @@ const navLinks = [
 	{ to: '/contact', label: 'Contact' },
 ];
 
-const brandLogo = (
-	<svg className="lp-logo" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-		<polygon points="24,3 43,13.5 43,34.5 24,45 5,34.5 5,13.5" fill="none" stroke="#ffffff" strokeWidth="2.2" />
-		<path d="M24 15 L31 28 H17 Z" fill="none" stroke="#5ad4ff" strokeWidth="2" />
-		<circle cx="24" cy="15" r="2.4" fill="#5ad4ff" />
-		<circle cx="17" cy="28" r="2.4" fill="#5ad4ff" />
-		<circle cx="31" cy="28" r="2.4" fill="#5ad4ff" />
-	</svg>
-);
+const brandLogo = <img className="lp-logo-img" src="/askus-wordmark.png" alt="Askus" />;
 
 export default function LandingPage() {
 	const netRef = useRef<SVGSVGElement | null>(null);
@@ -116,59 +106,8 @@ export default function LandingPage() {
 	const [slide, setSlide] = useState(0);
 
 	// ── Admin Sign In modal ───────────────────────────────────────────────────
-	const dispatch = useAppDispatch();
-	const navigate = useNavigate();
 	const [showLogin, setShowLogin] = useState(false);
-	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
-	const [remember, setRemember] = useState(false);
-	const [submitting, setSubmitting] = useState(false);
-	// With the real backend there are no passwords: the first submit sends a one-time code, the second checks it.
-	const live = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
-	const [codeSent, setCodeSent] = useState(false);
-
-	const closeLogin = () => {
-		if (submitting) return;
-		setShowLogin(false);
-	};
-
-	const handleAdminLogin = async (e: FormEvent) => {
-		e.preventDefault();
-		if (!username.trim()) {
-			message.error(live ? 'Enter your email or mobile number' : 'Enter username and password');
-			return;
-		}
-		if (live && !codeSent) {
-			setSubmitting(true);
-			try {
-				await api.sendOTP(username.trim());
-				setCodeSent(true);
-				setPassword('');
-				message.success('Verification code sent. Enter it below.');
-			} catch (err: unknown) {
-				message.error(err instanceof Error ? err.message : 'Could not send the code');
-			} finally {
-				setSubmitting(false);
-			}
-			return;
-		}
-		if (!password.trim()) {
-			message.error(live ? 'Enter the 6-digit code' : 'Enter username and password');
-			return;
-		}
-		setSubmitting(true);
-		try {
-			const res = await api.verifyOTP(username.trim(), password.trim(), '');
-			dispatch(loginSuccess({ token: res.token, user: res.user }));
-			message.success(`Welcome, ${res.user.name}!`);
-			setShowLogin(false);
-			navigate(res.user.role === 'Agent' ? '/timesheet' : '/dashboard', { replace: true });
-		} catch (err: unknown) {
-			message.error(err instanceof Error ? err.message : 'Invalid credentials');
-		} finally {
-			setSubmitting(false);
-		}
-	};
+	const closeLogin = () => setShowLogin(false);
 
 	useEffect(() => {
 		if (heroSlides.length < 2) return;
@@ -253,7 +192,7 @@ export default function LandingPage() {
 				<div className="lp-topbar">
 					<Link to="/home" className="lp-brand" aria-label="AskusNext Global Solutions Private Limited — Home">
 						{brandLogo}
-						ASK&nbsp;US&nbsp;SOLUTIONS
+						SOLUTIONS
 					</Link>
 					<nav className="lp-nav">
 						{navLinks.map((n) => (
@@ -342,7 +281,7 @@ export default function LandingPage() {
 						<div>
 							<div className="lp-footer-brand">
 								{brandLogo}
-								ASK US SOLUTIONS
+								SOLUTIONS
 							</div>
 							<p className="lp-footer-tagline">
 								Building the intelligence layer behind mobility, insurance, lending, and AI-driven support — one
@@ -404,66 +343,7 @@ export default function LandingPage() {
 			</footer>
 
 			{/* ---------- ADMIN SIGN IN MODAL ---------- */}
-			{showLogin && (
-				<div className="lp-modal-overlay" onClick={closeLogin}>
-					<div className="lp-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-						<button type="button" className="lp-modal-close" aria-label="Close" onClick={closeLogin}>
-							&times;
-						</button>
-						<div className="lp-modal-eyebrow">
-							<span className="lp-modal-sq" />
-							RESTRICTED ACCESS
-						</div>
-						<h3 className="lp-modal-title">Admin Sign In</h3>
-						<p className="lp-modal-sub">
-							{live
-								? 'Access is provisioned by an Admin or Super Admin. Enter your email, we send you a one-time code.'
-								: 'Access is provisioned by an Admin or Super Admin. Use the username and password issued to you.'}
-						</p>
-						<form onSubmit={handleAdminLogin}>
-							<label className="lp-modal-label" htmlFor="lp-username">{live ? 'Email or mobile' : 'Username'}</label>
-							<input
-								id="lp-username"
-								className="lp-modal-input"
-								type="text"
-								placeholder="Enter username"
-								autoComplete="username"
-								value={username}
-								onChange={(e) => setUsername(e.target.value)}
-								autoFocus
-							/>
-							{(!live || codeSent) && <label className="lp-modal-label" htmlFor="lp-password">{live ? 'One-time code' : 'Password'}</label>}
-							{(!live || codeSent) && (
-								<input
-									id="lp-password"
-									className="lp-modal-input"
-									type="password"
-									placeholder="••••••••"
-									autoComplete="current-password"
-									value={password}
-									onChange={(e) => setPassword(e.target.value)}
-								/>
-								)}
-							<div className="lp-modal-row">
-								<label className="lp-modal-remember">
-									<input
-										type="checkbox"
-										checked={remember}
-										onChange={(e) => setRemember(e.target.checked)}
-									/>
-									Remember me
-								</label>
-								<a className="lp-modal-contact" href="#contact" onClick={closeLogin}>
-									Contact Admin for access
-								</a>
-							</div>
-							<button type="submit" className="lp-modal-submit" disabled={submitting}>
-								{submitting ? (live && !codeSent ? 'Sending code…' : 'Signing in…') : live && !codeSent ? 'Send code' : 'Sign In'}
-							</button>
-						</form>
-					</div>
-				</div>
-			)}
+			<StaffLoginModal open={showLogin} onClose={closeLogin} contact={<a href="#contact" onClick={closeLogin}>Need access? Contact Admin</a>} />
 		</div>
 	);
 }
@@ -511,6 +391,8 @@ const CSS = `
 	display:flex; flex-wrap:nowrap; align-items:center; justify-content:flex-start;
 	gap:clamp(12px,2.2vw,42px); width:92vw; max-width:1400px;
 }
+.lp-logo-img{ height:clamp(32px,3.6vw,50px); width:auto; display:block; flex-shrink:0; }
+.lp-footer-brand .lp-logo-img{ height:30px; }
 .lp-brand{
 	font-family:var(--mono); font-size:clamp(16px,2vw,26px); font-weight:700; letter-spacing:0.05em;
 	color:var(--white); display:flex; align-items:center; gap:10px; white-space:nowrap; text-decoration:none; cursor:pointer;

@@ -215,7 +215,7 @@ export class RequestsService {
 
   async signDownload(user: AuthUser, key: string, baseUrl: string) {
     if (!KEY.test(key)) throw new BadRequestException('That document reference is not valid.');
-    const staff = user.roles.includes(Role.SuperAdmin) || user.roles.includes(Role.InsuranceAdmin) || user.roles.includes(Role.Employee);
+    const staff = user.roles.includes(Role.SuperAdmin) || user.roles.includes(Role.Admin) || user.roles.includes(Role.InsuranceAdmin) || user.roles.includes(Role.Employee);
     if (!staff && key.split('/')[1] !== user.id) throw new ForbiddenException('You cannot open this document.');
     if (staff && key.split('/')[1] !== user.id) {
       await this.activity.log(user, {

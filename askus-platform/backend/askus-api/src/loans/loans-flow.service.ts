@@ -55,7 +55,7 @@ const iso = (d: Date | null | undefined) => (d ? d.toISOString() : undefined);
 const hex = (bytes: number) => randomBytes(bytes).toString('hex').toUpperCase();
 
 export const isLoansReviewer = (user: AuthUser) =>
-  user.roles.includes(Role.SuperAdmin) || user.roles.includes(Role.LoansAdmin) || user.roles.includes(Role.Employee);
+  user.roles.includes(Role.SuperAdmin) || user.roles.includes(Role.Admin) || user.roles.includes(Role.LoansAdmin) || user.roles.includes(Role.Employee);
 
 @Injectable()
 export class LoansFlowService {

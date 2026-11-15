@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button, Select, Space, Tag, Typography, message } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import { useAppSelector } from '../store';
+import { isAdminRole } from '../access';
 import { activityApi, type StaffMember } from '../api/activity';
 
 const { Text } = Typography;
@@ -19,7 +20,7 @@ export default function AssignBox({
   onAssign: (assigneeId: string | null) => Promise<void>;
 }) {
   const me = useAppSelector((s) => s.auth.user);
-  const isAdmin = me?.role === 'Admin';
+  const isAdmin = isAdminRole(me?.role);
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [busy, setBusy] = useState(false);
 
