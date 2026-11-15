@@ -57,6 +57,7 @@ export class IdentityService implements OnApplicationBootstrap {
       channel: identifier.includes('@') ? 'email' : 'sms',
       to: identifier,
       message: `Your AskUs verification code is ${code}. It is valid for 5 minutes.`,
+      otp: code,
     });
     return { sent: true };
   }
