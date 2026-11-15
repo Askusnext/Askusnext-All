@@ -13,7 +13,7 @@ export class IdentityController {
   @Post('request-otp')
   @HttpCode(200)
   requestOtp(@Body() dto: RequestOtpDto) {
-    return this.identity.requestOtp(dto.identifier);
+    return this.identity.requestOtp(dto.identifier, dto.app);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })

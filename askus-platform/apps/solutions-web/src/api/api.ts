@@ -77,7 +77,7 @@ export type KBArticle = {
 
 // ── Auth (passwordless: OTP to mobile or email) ───────────────────────────────
 export const apiClient = {
-  requestOtp: (identifier: string) => requestOtp(identifier),
+  requestOtp: (identifier: string) => requestOtp(identifier, 'staff'),
 
   verifyOtp: async (identifier: string, code: string): Promise<AuthResponse> => {
     const { token, me } = await signInWithOtp(STAFF_KEYS, identifier, code);

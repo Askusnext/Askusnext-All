@@ -40,7 +40,8 @@ const postJson = <T>(path: string, body: unknown) =>
     body: JSON.stringify(body),
   }).then((r) => parse<T>(r));
 
-export const requestOtp = (identifier: string) => postJson<{ sent: boolean }>('/auth/request-otp', { identifier });
+export const requestOtp = (identifier: string, app?: 'staff') =>
+  postJson<{ sent: boolean; status?: 'PENDING' | 'REJECTED' }>('/auth/request-otp', { identifier, app });
 
 export function saveTokens(keys: SessionKeys, t: Tokens) {
   localStorage.setItem(keys.access, t.accessToken);

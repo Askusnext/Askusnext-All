@@ -270,6 +270,7 @@ export interface AuthResponse {
 
 export interface OTPResponse {
   success: boolean;
+  status?: 'PENDING' | 'REJECTED';
   sessionId: string;
   message: string;
 }

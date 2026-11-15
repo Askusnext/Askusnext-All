@@ -65,8 +65,20 @@ export class IdentityService implements OnApplicationBootstrap {
     }
   }
 
-  async requestOtp(rawIdentifier: string) {
+  async requestOtp(rawIdentifier: string, app?: 'staff') {
     const identifier = normalizeIdentifier(rawIdentifier);
+
+    // Staff sign-in: someone whose request is still waiting (or was declined) is told so up front
+    // instead of being sent a code that cannot get them in. Only these two states are revealed.
+    if (app === 'staff') {
+      const existing = await this.users.findOne({
+        where: identifier.includes('@') ? { email: identifier } : { mobile: identifier },
+      });
+      if (existing && (existing.approvalStatus === 'PENDING' || existing.approvalStatus === 'REJECTED')) {
+        return { sent: false, status: existing.approvalStatus };
+      }
+    }
+
     const code = String(randomInt(100000, 1000000));
     await this.otps.save(
       this.otps.create({

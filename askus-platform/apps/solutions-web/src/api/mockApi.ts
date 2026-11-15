@@ -567,8 +567,8 @@ export const api: typeof mockImpl & {
   ? {
       // Auth
       sendOTP: async (identifier: string) => {
-        await apiClient.requestOtp(identifier);
-        return { success: true, sessionId: 'otp-requested', message: 'OTP sent' };
+        const r = await apiClient.requestOtp(identifier);
+        return { success: r.sent, sessionId: 'otp-requested', message: r.sent ? 'OTP sent' : 'No code sent', status: r.status };
       },
       verifyOTP: (identifier: string, code: string, _sessionId: string) =>
         apiClient.verifyOtp(identifier, code),
