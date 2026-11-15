@@ -103,6 +103,7 @@ export class IdentityService implements OnApplicationBootstrap {
     await this.otps.save(otp);
 
     const user = await this.findOrCreateUser(identifier);
+    if (user.approvalStatus === 'PENDING') throw new ForbiddenException('Awaiting Super Admin approval');
     if (!user.isActive) throw new ForbiddenException('Account disabled');
 
     await this.audit.log({ actorId: user.id, action: 'auth.login', resource: `user:${user.id}` });

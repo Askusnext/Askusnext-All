@@ -40,6 +40,8 @@ export const toTmsUser = (u: User) => ({
   role: toTmsRole(u.roles),
   permissions: u.permissions ?? [],
   hasAadhaar: !!u.aadhaarKey,
+  approvalStatus: u.approvalStatus,
+  createdBy: u.createdBy,
   branchId: 'branch-001',
 });
 
@@ -83,7 +85,7 @@ export class UsersService {
     const roles = this.assignable(actor).map((r) => FROM_TMS[r]);
     const rows = await this.users
       .createQueryBuilder('u')
-      .where('u.isActive = true')
+      .where("(u.isActive = true OR u.approvalStatus = 'PENDING')")
       .andWhere(
         '(' + roles.map((_, i) => `u.roles LIKE :r${i}`).join(' OR ') + ')',
         Object.fromEntries(roles.map((r, i) => [`r${i}`, `%${r}%`])),
@@ -123,6 +125,7 @@ export class UsersService {
   ) {
     if (!this.assignable(actor).includes(body.role)) throw new ForbiddenException(`You cannot create a ${body.role}`);
     if (!AADHAAR_KEY.test(body.aadhaarKey)) throw new BadRequestException('Upload the Aadhaar document first');
+    const isSuper = actor.roles.includes(Role.SuperAdmin);
     const permissions = this.cleanPermissions(body.role, body.permissions);
     const email = normalizeIdentifier(body.email);
     const mobile = body.mobile ? normalizeIdentifier(body.mobile) : null;
@@ -138,10 +141,39 @@ export class UsersService {
         permissions,
         aadhaarKey: body.aadhaarKey,
         createdBy: actor.id,
+        // Admins need a Super Admin's sign-off; Super Admin creations are live immediately.
+        approvalStatus: isSuper ? 'APPROVED' : 'PENDING',
+        isActive: isSuper,
         passwordHash: body.password ? await hashPassword(body.password) : null,
       }),
     );
-    await this.audit.log({ actorId: actor.id, action: 'staff.create', resource: `user:${user.id}`, metadata: { role: body.role } });
+    await this.audit.log({
+      actorId: actor.id,
+      action: isSuper ? 'staff.create' : 'staff.request',
+      resource: `user:${user.id}`,
+      metadata: { role: body.role },
+    });
+    return toTmsUser(user);
+  }
+
+  /** Super Admin only: staff created by Admins that are waiting for sign-off. */
+  async findPending() {
+    const rows = await this.users.find({ where: { approvalStatus: 'PENDING' }, order: { createdAt: 'ASC' } });
+    return rows.map(toTmsUser);
+  }
+
+  async review(actor: AuthUser, id: string, approve: boolean) {
+    const user = await this.users.findOne({ where: { id } });
+    if (!user) throw new NotFoundException('Not found');
+    if (user.approvalStatus !== 'PENDING') throw new BadRequestException('This request is not pending');
+    user.approvalStatus = approve ? 'APPROVED' : 'REJECTED';
+    user.isActive = approve;
+    await this.users.save(user);
+    await this.audit.log({
+      actorId: actor.id,
+      action: approve ? 'staff.approve' : 'staff.reject',
+      resource: `user:${id}`,
+    });
     return toTmsUser(user);
   }
 

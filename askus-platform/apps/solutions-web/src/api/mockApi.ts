@@ -79,7 +79,7 @@ export const userApi = {
   list: async (): Promise<ManagedUser[]> => {
     if (USE_REAL_API) {
       const users = await apiClient.getUsers();
-      return users.map(u => ({ ...u, isActive: true, createdAt: new Date().toISOString() }));
+      return users.map(u => ({ ...u, isActive: u.approvalStatus !== 'PENDING', createdAt: new Date().toISOString() }));
     }
     await delay(200);
     return loadManagedUsers().map(stripPassword);
@@ -93,7 +93,7 @@ export const userApi = {
       const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': data.aadhaar.type }, body: data.aadhaar });
       if (!put.ok) throw new Error('Aadhaar upload failed');
       const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role, aadhaarKey: key, permissions: data.permissions, password: data.password || undefined });
-      return { ...u, isActive: true, createdAt: new Date().toISOString() };
+      return { ...u, isActive: u.approvalStatus !== 'PENDING', createdAt: new Date().toISOString() };
     }
     await delay(300);
     const list = loadManagedUsers();
@@ -152,6 +152,13 @@ export const userApi = {
     if (idx === -1) throw new Error('User not found');
     list[idx].permissions = permissions;
     saveManagedUsers(list);
+  },
+
+  // Super Admin only (API enforces it): sign off on staff an Admin created.
+  review: async (id: string, approve: boolean): Promise<void> => {
+    if (!USE_REAL_API) throw new Error('Approvals need the API');
+    if (approve) await apiClient.approveUser(id);
+    else await apiClient.rejectUser(id);
   },
 
   aadhaarUrl: async (id: string): Promise<string> => {

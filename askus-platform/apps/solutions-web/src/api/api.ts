@@ -145,6 +145,12 @@ export const apiClient = {
   deleteUser: (id: string) =>
     del<void>(`/users/${id}`),
 
+  approveUser: (id: string) =>
+    post<User>(`/users/${id}/approve`, {}),
+
+  rejectUser: (id: string) =>
+    post<User>(`/users/${id}/reject`, {}),
+
   // ── Timesheet ──────────────────────────────────────────────────────────────
   getTimesheet: (weekStart?: string) => {
     const q = weekStart ? `?weekStart=${weekStart}` : '';

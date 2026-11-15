@@ -40,6 +40,7 @@ export interface User {
   role: UserRole;
   permissions?: string[];
   hasAadhaar?: boolean;
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   branchId: string;
 }
 

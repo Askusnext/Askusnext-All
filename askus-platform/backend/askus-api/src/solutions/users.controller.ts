@@ -101,6 +101,24 @@ export class UsersController {
     return this.users.findStaff(actor);
   }
 
+  @Roles(Role.SuperAdmin)
+  @Get('pending')
+  pending() {
+    return this.users.findPending();
+  }
+
+  @Roles(Role.SuperAdmin)
+  @Post(':id/approve')
+  approve(@CurrentUser() actor: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.users.review(actor, id, true);
+  }
+
+  @Roles(Role.SuperAdmin)
+  @Post(':id/reject')
+  reject(@CurrentUser() actor: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.users.review(actor, id, false);
+  }
+
   @Post('aadhaar-upload-url')
   aadhaarUploadUrl(@Body() dto: AadhaarUploadDto) {
     return this.users.aadhaarUploadUrl(dto);

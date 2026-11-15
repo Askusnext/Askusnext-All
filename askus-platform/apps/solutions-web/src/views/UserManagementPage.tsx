@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   Table, Button, Modal, Form, Input, Select, Tag, message,
-  Space, Switch, Typography, Tooltip, Upload, Checkbox,
+  Space, Switch, Typography, Tooltip, Upload, Checkbox, Alert, Popconfirm,
 } from 'antd';
 import {
-  PlusOutlined, EditOutlined, ReloadOutlined, UploadOutlined, FileSearchOutlined,
+  PlusOutlined, EditOutlined, ReloadOutlined, UploadOutlined, FileSearchOutlined, CheckOutlined, CloseOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -109,7 +109,9 @@ export default function UserManagementPage() {
           aadhaar: values.aadhaar?.[0]?.originFileObj as File | undefined,
           permissions: values.role === 'Admin' ? [] : values.permissions ?? [],
         });
-        message.success('User created');
+        message.success(
+          isSuperAdmin ? 'User created' : 'Sent to Super Admin for approval. They can sign in once approved.',
+        );
       }
       setModalOpen(false);
       await loadUsers();
@@ -127,6 +129,18 @@ export default function UserManagementPage() {
       message.error(err instanceof Error ? err.message : 'Could not open Aadhaar');
     }
   };
+
+  const handleReview = async (user: ManagedUser, approve: boolean) => {
+    try {
+      await userApi.review(user.id, approve);
+      message.success(approve ? `${user.name} approved` : `${user.name} rejected`);
+      await loadUsers();
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : 'Update failed');
+    }
+  };
+
+  const pendingCount = users.filter((u) => u.approvalStatus === 'PENDING').length;
 
   const handleToggleActive = async (user: ManagedUser, next: boolean) => {
     try {
@@ -178,6 +192,7 @@ export default function UserManagementPage() {
       dataIndex: 'isActive',
       key: 'isActive',
       render: (isActive: boolean, u) => {
+        if (u.approvalStatus === 'PENDING') return <Tag color="orange">Pending approval</Tag>;
         const isSuper = u.email?.toLowerCase() === SUPER_ADMIN_EMAIL;
         return (
           <Space>
@@ -198,6 +213,16 @@ export default function UserManagementPage() {
       key: 'actions',
       render: (_, u) => (
         <Space>
+          {isSuperAdmin && u.approvalStatus === 'PENDING' && (
+            <>
+              <Popconfirm title={`Approve ${u.name}?`} okText="Approve" onConfirm={() => handleReview(u, true)}>
+                <Button size="small" type="primary" icon={<CheckOutlined />}>Approve</Button>
+              </Popconfirm>
+              <Popconfirm title={`Reject ${u.name}?`} okText="Reject" okButtonProps={{ danger: true }} onConfirm={() => handleReview(u, false)}>
+                <Button size="small" danger icon={<CloseOutlined />}>Reject</Button>
+              </Popconfirm>
+            </>
+          )}
           <Tooltip title="Edit">
             <Button size="small" icon={<EditOutlined />} onClick={() => openEdit(u)} />
           </Tooltip>
@@ -223,6 +248,17 @@ export default function UserManagementPage() {
           <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>Add User</Button>
         </Space>
       </div>
+
+      {pendingCount > 0 && (
+        <Alert
+          type="warning"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message={isSuperAdmin
+            ? `${pendingCount} staff account${pendingCount > 1 ? 's' : ''} waiting for your approval`
+            : `${pendingCount} account${pendingCount > 1 ? 's' : ''} waiting for Super Admin approval`}
+        />
+      )}
 
       <Input.Search
         placeholder="Search by name, email, mobile or role"

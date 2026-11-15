@@ -33,6 +33,10 @@ export class User {
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 
+  // Staff created by an Admin stay PENDING (and inactive) until a Super Admin approves them.
+  @Column({ type: 'varchar', name: 'approval_status', default: 'APPROVED' })
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+
   // Optional password sign-in alongside OTP. Never selected by default; the login query opts in.
   @Column({ type: 'varchar', name: 'password_hash', nullable: true, select: false })
   passwordHash: string | null;
