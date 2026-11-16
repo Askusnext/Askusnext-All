@@ -7,6 +7,7 @@ import { UsersService } from './users.service';
 
 const STAFF_ROLES = ['Admin', 'Employee', 'Agent'] as const;
 const MOBILE = /^(\+?\d{10,15})$/;
+const PAN = /^[A-Za-z]{5}[0-9]{4}[A-Za-z]$/;
 
 class CreateStaffDto {
   @IsString()
@@ -26,6 +27,13 @@ class CreateStaffDto {
   // Object key returned by POST /users/aadhaar-upload-url after the file was uploaded.
   @IsString()
   aadhaarKey: string;
+
+  @Matches(PAN, { message: 'Enter a valid PAN number (for example ABCDE1234F)' })
+  panNumber: string;
+
+  // Object key returned by POST /users/pan-upload-url after the file was uploaded.
+  @IsString()
+  panKey: string;
 
   @IsOptional()
   @IsArray()
@@ -47,6 +55,16 @@ class AadhaarUploadDto {
   @Min(1)
   @Max(5 * 1024 * 1024)
   size: number;
+}
+
+class UpdatePanDto {
+  @IsOptional()
+  @Matches(PAN, { message: 'Enter a valid PAN number (for example ABCDE1234F)' })
+  panNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  panKey?: string;
 }
 
 class PermissionsDto {
@@ -168,6 +186,26 @@ export class UsersController {
   @Get(':id/aadhaar')
   aadhaar(@CurrentUser() actor: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
     return this.users.aadhaarDownloadUrl(actor, id);
+  }
+
+  @Post('pan-upload-url')
+  panUploadUrl(@Body() dto: AadhaarUploadDto) {
+    return this.users.panUploadUrl(dto);
+  }
+
+  @Get(':id/pan')
+  pan(@CurrentUser() actor: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.users.panDetails(actor, id);
+  }
+
+  @Put(':id/pan')
+  updatePan(@CurrentUser() actor: AuthUser, @Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdatePanDto) {
+    return this.users.updatePan(actor, id, dto);
+  }
+
+  @Delete(':id/pan')
+  deletePan(@CurrentUser() actor: AuthUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.users.deletePan(actor, id);
   }
 
   @Post()

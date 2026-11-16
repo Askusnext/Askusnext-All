@@ -27,6 +27,13 @@ export class User {
   @Column({ type: 'varchar', name: 'aadhaar_key', nullable: true })
   aadhaarKey: string | null;
 
+  // PAN number and the private R2 key of its image; only Super Admin/Admin can read them.
+  @Column({ type: 'varchar', name: 'pan_number', nullable: true })
+  panNumber: string | null;
+
+  @Column({ type: 'varchar', name: 'pan_key', nullable: true })
+  panKey: string | null;
+
   @Column({ type: 'uuid', name: 'created_by', nullable: true })
   createdBy: string | null;
 

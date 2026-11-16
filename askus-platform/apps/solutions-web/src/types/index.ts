@@ -40,6 +40,9 @@ export interface User {
   role: UserRole;
   permissions?: string[];
   hasAadhaar?: boolean;
+  hasPan?: boolean;
+  /** Masked PAN (for example AB******4F); the full number is only fetched on demand. */
+  panMasked?: string | null;
   approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   branchId: string;
 }

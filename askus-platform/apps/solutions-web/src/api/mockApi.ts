@@ -47,6 +47,8 @@ export interface ManagedUser extends User {
   isActive: boolean;
   createdAt: string;
   password?: string;
+  /** Demo (mock) mode only; with the API the full number is fetched on demand. */
+  panNumber?: string;
 }
 
 const USERS_STORAGE_KEY = 'tms_managed_users';
@@ -76,6 +78,15 @@ function saveManagedUsers(list: ManagedUser[]): void {
 
 const stripPassword = (u: ManagedUser): ManagedUser => ({ ...u, password: undefined });
 
+async function uploadToStorage(file: File, getUrl: (type: string, size: number) => Promise<{ key: string; uploadUrl: string }>, label: string) {
+  const { key, uploadUrl } = await getUrl(file.type, file.size);
+  const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+  if (!put.ok) throw new Error(`${label} upload failed`);
+  return key;
+}
+
+const maskPan = (n: string) => `${n.slice(0, 2)}******${n.slice(-2)}`;
+
 export const userApi = {
   list: async (): Promise<ManagedUser[]> => {
     if (USE_REAL_API) {
@@ -86,14 +97,14 @@ export const userApi = {
     return loadManagedUsers().map(stripPassword);
   },
 
-  create: async (data: { name: string; email: string; mobile: string; role: UserRole; aadhaar?: File; permissions?: string[]; password?: string }): Promise<ManagedUser> => {
+  create: async (data: { name: string; email: string; mobile: string; role: UserRole; aadhaar?: File; panNumber: string; panImage?: File; permissions?: string[]; password?: string }): Promise<ManagedUser> => {
     if (!isAllowedEmail(data.email)) throw new Error(`Only @${ALLOWED_EMAIL_DOMAIN} accounts are allowed`);
     if (USE_REAL_API) {
       if (!data.aadhaar) throw new Error('Upload the Aadhaar document');
-      const { key, uploadUrl } = await apiClient.getAadhaarUploadUrl(data.aadhaar.type, data.aadhaar.size);
-      const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': data.aadhaar.type }, body: data.aadhaar });
-      if (!put.ok) throw new Error('Aadhaar upload failed');
-      const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role, aadhaarKey: key, permissions: data.permissions, password: data.password || undefined });
+      if (!data.panImage) throw new Error('Upload the PAN image');
+      const aadhaarKey = await uploadToStorage(data.aadhaar, apiClient.getAadhaarUploadUrl, 'Aadhaar');
+      const panKey = await uploadToStorage(data.panImage, apiClient.getPanUploadUrl, 'PAN');
+      const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role, aadhaarKey, panNumber: data.panNumber, panKey, permissions: data.permissions, password: data.password || undefined });
       return { ...u, isActive: u.approvalStatus !== 'PENDING', createdAt: new Date().toISOString() };
     }
     await delay(300);
@@ -109,6 +120,9 @@ export const userApi = {
       role: data.email.trim().toLowerCase() === SUPER_ADMIN_EMAIL ? 'SuperAdmin' : data.role,
       permissions: data.role === 'Admin' ? [] : data.permissions ?? [],
       hasAadhaar: !!data.aadhaar,
+      hasPan: !!data.panImage,
+      panNumber: data.panNumber.trim().toUpperCase(),
+      panMasked: maskPan(data.panNumber.trim().toUpperCase()),
       branchId: 'branch-001',
       isActive: true,
       createdAt: new Date().toISOString(),
@@ -165,6 +179,44 @@ export const userApi = {
   aadhaarUrl: async (id: string): Promise<string> => {
     if (!USE_REAL_API) throw new Error('Aadhaar documents are only stored when connected to the API');
     return (await apiClient.getAadhaarUrl(id)).url;
+  },
+
+  // Full PAN number and a link to its image (Admin/Super Admin only on the API).
+  panDetails: async (id: string): Promise<{ panNumber: string | null; url: string | null }> => {
+    if (USE_REAL_API) return apiClient.getPan(id);
+    const u = loadManagedUsers().find(x => x.id === id);
+    if (!u) throw new Error('User not found');
+    return { panNumber: u.panNumber ?? null, url: null };
+  },
+
+  // Edit the number, replace the image, or both.
+  updatePan: async (id: string, data: { panNumber?: string; panImage?: File }): Promise<void> => {
+    if (USE_REAL_API) {
+      const panKey = data.panImage ? await uploadToStorage(data.panImage, apiClient.getPanUploadUrl, 'PAN') : undefined;
+      await apiClient.updatePan(id, { panNumber: data.panNumber, panKey });
+      return;
+    }
+    const list = loadManagedUsers();
+    const idx = list.findIndex(u => u.id === id);
+    if (idx === -1) throw new Error('User not found');
+    if (data.panNumber) {
+      list[idx].panNumber = data.panNumber.trim().toUpperCase();
+      list[idx].panMasked = maskPan(list[idx].panNumber as string);
+    }
+    if (data.panImage) list[idx].hasPan = true;
+    saveManagedUsers(list);
+  },
+
+  deletePan: async (id: string): Promise<void> => {
+    if (USE_REAL_API) {
+      await apiClient.deletePan(id);
+      return;
+    }
+    const list = loadManagedUsers();
+    const idx = list.findIndex(u => u.id === id);
+    if (idx === -1) throw new Error('User not found');
+    list[idx] = { ...list[idx], panNumber: undefined, panMasked: null, hasPan: false };
+    saveManagedUsers(list);
   },
 
   setActive: async (id: string, isActive: boolean): Promise<void> => {
