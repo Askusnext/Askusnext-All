@@ -97,14 +97,11 @@ export const userApi = {
     return loadManagedUsers().map(stripPassword);
   },
 
-  create: async (data: { name: string; email: string; mobile: string; role: UserRole; aadhaar?: File; panNumber: string; panImage?: File; permissions?: string[]; password?: string }): Promise<ManagedUser> => {
-    if (!isAllowedEmail(data.email)) throw new Error(`Only @${ALLOWED_EMAIL_DOMAIN} accounts are allowed`);
+  create: async (data: { name: string; email: string; mobile: string; role: UserRole; aadhaar?: File; panNumber?: string; panImage?: File; permissions?: string[]; password?: string }): Promise<ManagedUser> => {
     if (USE_REAL_API) {
-      if (!data.aadhaar) throw new Error('Upload the Aadhaar document');
-      if (!data.panImage) throw new Error('Upload the PAN image');
-      const aadhaarKey = await uploadToStorage(data.aadhaar, apiClient.getAadhaarUploadUrl, 'Aadhaar');
-      const panKey = await uploadToStorage(data.panImage, apiClient.getPanUploadUrl, 'PAN');
-      const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role, aadhaarKey, panNumber: data.panNumber, panKey, permissions: data.permissions, password: data.password || undefined });
+      const aadhaarKey = data.aadhaar ? await uploadToStorage(data.aadhaar, apiClient.getAadhaarUploadUrl, 'Aadhaar') : undefined;
+      const panKey = data.panImage ? await uploadToStorage(data.panImage, apiClient.getPanUploadUrl, 'PAN') : undefined;
+      const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role, aadhaarKey, panNumber: data.panNumber || undefined, panKey, permissions: data.permissions, password: data.password || undefined });
       return { ...u, isActive: u.approvalStatus !== 'PENDING', createdAt: new Date().toISOString() };
     }
     await delay(300);
