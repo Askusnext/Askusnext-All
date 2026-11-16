@@ -20,8 +20,46 @@ export class User {
   @Column('simple-array', { default: Role.Customer })
   roles: Role[];
 
+  @Column('simple-array', { default: '' })
+  permissions: string[];
+
+  // Private R2 object key of the uploaded Aadhaar document; only Super Admin/Admin can open it.
+  @Column({ type: 'varchar', name: 'aadhaar_key', nullable: true })
+  aadhaarKey: string | null;
+
+  // PAN number and the private R2 key of its image; only Super Admin/Admin can read them.
+  @Column({ type: 'varchar', name: 'pan_number', nullable: true })
+  panNumber: string | null;
+
+  @Column({ type: 'varchar', name: 'pan_key', nullable: true })
+  panKey: string | null;
+
+  @Column({ type: 'uuid', name: 'created_by', nullable: true })
+  createdBy: string | null;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
+
+  // Staff created by an Admin stay PENDING (and inactive) until a Super Admin approves them.
+  @Column({ type: 'varchar', name: 'approval_status', default: 'APPROVED' })
+  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
+
+  // Optional password sign-in alongside OTP. Never selected by default; the login query opts in.
+  @Column({ type: 'varchar', name: 'password_hash', nullable: true, select: false })
+  passwordHash: string | null;
+
+  // Set once each contact is proven by OTP; sign-in OTPs go to email only after both are set.
+  @Column({ type: 'timestamptz', name: 'mobile_verified_at', nullable: true })
+  mobileVerifiedAt: Date | null;
+
+  @Column({ type: 'timestamptz', name: 'email_verified_at', nullable: true })
+  emailVerifiedAt: Date | null;
+
+  @Column({ name: 'failed_logins', default: 0 })
+  failedLogins: number;
+
+  @Column({ type: 'timestamptz', name: 'locked_until', nullable: true })
+  lockedUntil: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

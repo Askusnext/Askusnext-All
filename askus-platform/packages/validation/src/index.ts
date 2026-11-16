@@ -5,10 +5,14 @@ export const identifierSchema = z
   .trim()
   .regex(/^(\+?\d{10,15}|[^\s@]+@[^\s@]+\.[^\s@]+)$/, 'Enter a valid mobile number or email');
 
-export const requestOtpSchema = z.object({ identifier: identifierSchema });
+export const requestOtpSchema = z.object({
+  identifier: identifierSchema,
+  otherIdentifier: identifierSchema.optional().or(z.literal('')),
+});
 export type RequestOtpInput = z.infer<typeof requestOtpSchema>;
 
 export const verifyOtpSchema = requestOtpSchema.extend({
   code: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code'),
+  otherCode: z.string().regex(/^\d{6}$/, 'Enter the 6-digit code').optional().or(z.literal('')),
 });
 export type VerifyOtpInput = z.infer<typeof verifyOtpSchema>;

@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { IsBoolean, IsIn, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
-import { AccessGuard, JwtAuthGuard, Roles } from '../common/access';
+import { AccessGuard, JwtAuthGuard, Permissions, Roles } from '../common/access';
 import { Role } from '../common/roles';
 import { KBCategory } from './solutions.entities';
 import { KbService } from './kb.service';
@@ -58,7 +58,8 @@ export class KbController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @Roles(Role.SuperAdmin)
+  @Roles(Role.Employee)
+  @Permissions('kb')
   @Get('admin/all')
   findAllAdmin() {
     return this.kb.findAllAdmin();
@@ -71,7 +72,8 @@ export class KbController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @Roles(Role.SuperAdmin)
+  @Roles(Role.Employee)
+  @Permissions('kb')
   @Post()
   create(@Body() dto: CreateArticleDto) {
     return this.kb.create(dto);
@@ -79,7 +81,8 @@ export class KbController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @Roles(Role.SuperAdmin)
+  @Roles(Role.Employee)
+  @Permissions('kb')
   @Put(':id')
   update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateArticleDto) {
     return this.kb.update(id, dto);
@@ -87,7 +90,8 @@ export class KbController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, AccessGuard)
-  @Roles(Role.SuperAdmin)
+  @Roles(Role.Employee)
+  @Permissions('kb')
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.kb.remove(id);

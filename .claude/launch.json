@@ -1,0 +1,44 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "insurance-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "askus-platform",
+        "-w",
+        "@askus/insurance-web"
+      ],
+      "port": 3002
+    },
+    {
+      "name": "loans-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "askus-platform",
+        "-w",
+        "@askus/loans-web"
+      ],
+      "port": 3003
+    },
+    {
+      "name": "solutions-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "askus-platform",
+        "-w",
+        "@askus/solutions-web"
+      ],
+      "port": 3005
+    }
+  ]
+}

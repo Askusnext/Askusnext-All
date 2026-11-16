@@ -15,6 +15,8 @@
     "@askus/shared-types": "*",
     "@askus/ui-components": "*",
     "@askus/validation": "*",
+    "@hookform/resolvers": "^3.10.0",
+    "@tanstack/react-query": "^5.107.1",
     "heic-to": "^1.6.7",
     "lucide-react": "^1.69.0",
     "next": "14.2.35",
@@ -23,7 +25,9 @@
     "ppu-paddle-ocr": "^6.6.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "utif2": "^4.1.0"
+    "react-hook-form": "^7.92.0",
+    "utif2": "^4.1.0",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.4",
