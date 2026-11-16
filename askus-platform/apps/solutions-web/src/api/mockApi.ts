@@ -1,8 +1,9 @@
 import type { Ticket, DashboardKPIs, PaginatedResponse, User, UserRole, OTPResponse, AuthResponse, TicketStatus, Priority, PolicyType, InsuranceStatus, PaymentStatus } from '../types';
 import { apiClient } from './api';
+import type { OtherContact } from './session';
 
 // ── Feature flag: use real backend when VITE_API_BASE_URL is set ──────────────
-const USE_REAL_API = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
+export const USE_REAL_API = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
 
 const delay = (ms = 400) => new Promise(r => setTimeout(r, ms));
 
@@ -22,7 +23,7 @@ export const isAllowedEmail = (email: string): boolean =>
 export const MOCK_USERS: Record<string, User> = {
   admin: {
     id: 'user-001', name: 'Rajesh', mobile: '+919800000001',
-    email: 'rajesh@askussolutions.in', role: 'Admin', branchId: 'branch-001',
+    email: 'rajesh@askussolutions.in', role: 'SuperAdmin', branchId: 'branch-001',
   },
   employee: {
     id: 'user-002', name: 'Employee', mobile: '+919800000002',
@@ -46,6 +47,8 @@ export interface ManagedUser extends User {
   isActive: boolean;
   createdAt: string;
   password?: string;
+  /** Demo (mock) mode only; with the API the full number is fetched on demand. */
+  panNumber?: string;
 }
 
 const USERS_STORAGE_KEY = 'tms_managed_users';
@@ -75,21 +78,34 @@ function saveManagedUsers(list: ManagedUser[]): void {
 
 const stripPassword = (u: ManagedUser): ManagedUser => ({ ...u, password: undefined });
 
+async function uploadToStorage(file: File, getUrl: (type: string, size: number) => Promise<{ key: string; uploadUrl: string }>, label: string) {
+  const { key, uploadUrl } = await getUrl(file.type, file.size);
+  const put = await fetch(uploadUrl, { method: 'PUT', headers: { 'Content-Type': file.type }, body: file });
+  if (!put.ok) throw new Error(`${label} upload failed`);
+  return key;
+}
+
+const maskPan = (n: string) => `${n.slice(0, 2)}******${n.slice(-2)}`;
+
 export const userApi = {
   list: async (): Promise<ManagedUser[]> => {
     if (USE_REAL_API) {
       const users = await apiClient.getUsers();
-      return users.map(u => ({ ...u, isActive: true, createdAt: new Date().toISOString() }));
+      return users.map(u => ({ ...u, isActive: u.approvalStatus !== 'PENDING', createdAt: new Date().toISOString() }));
     }
     await delay(200);
     return loadManagedUsers().map(stripPassword);
   },
 
-  create: async (data: { name: string; email: string; mobile: string; role: UserRole; password?: string }): Promise<ManagedUser> => {
+  create: async (data: { name: string; email: string; mobile: string; role: UserRole; aadhaar?: File; panNumber: string; panImage?: File; permissions?: string[]; password?: string }): Promise<ManagedUser> => {
     if (!isAllowedEmail(data.email)) throw new Error(`Only @${ALLOWED_EMAIL_DOMAIN} accounts are allowed`);
     if (USE_REAL_API) {
-      const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role });
-      return { ...u, isActive: true, createdAt: new Date().toISOString() };
+      if (!data.aadhaar) throw new Error('Upload the Aadhaar document');
+      if (!data.panImage) throw new Error('Upload the PAN image');
+      const aadhaarKey = await uploadToStorage(data.aadhaar, apiClient.getAadhaarUploadUrl, 'Aadhaar');
+      const panKey = await uploadToStorage(data.panImage, apiClient.getPanUploadUrl, 'PAN');
+      const u = await apiClient.createUser({ name: data.name, email: data.email, mobile: data.mobile, role: data.role, aadhaarKey, panNumber: data.panNumber, panKey, permissions: data.permissions, password: data.password || undefined });
+      return { ...u, isActive: u.approvalStatus !== 'PENDING', createdAt: new Date().toISOString() };
     }
     await delay(300);
     const list = loadManagedUsers();
@@ -101,7 +117,12 @@ export const userApi = {
       name: data.name.trim(),
       email: data.email.trim().toLowerCase(),
       mobile: data.mobile.startsWith('+91') ? data.mobile : '+91' + data.mobile,
-      role: data.email.trim().toLowerCase() === SUPER_ADMIN_EMAIL ? 'Admin' : data.role,
+      role: data.email.trim().toLowerCase() === SUPER_ADMIN_EMAIL ? 'SuperAdmin' : data.role,
+      permissions: data.role === 'Admin' ? [] : data.permissions ?? [],
+      hasAadhaar: !!data.aadhaar,
+      hasPan: !!data.panImage,
+      panNumber: data.panNumber.trim().toUpperCase(),
+      panMasked: maskPan(data.panNumber.trim().toUpperCase()),
       branchId: 'branch-001',
       isActive: true,
       createdAt: new Date().toISOString(),
@@ -129,10 +150,73 @@ export const userApi = {
       mobile: data.mobile
         ? (data.mobile.startsWith('+91') ? data.mobile : '+91' + data.mobile)
         : list[idx].mobile,
-      role: isSuperAdmin ? 'Admin' : (data.role ?? list[idx].role),
+      role: isSuperAdmin ? 'SuperAdmin' : (data.role ?? list[idx].role),
     };
     saveManagedUsers(list);
     return stripPassword(list[idx]);
+  },
+
+  setPermissions: async (id: string, permissions: string[]): Promise<void> => {
+    if (USE_REAL_API) {
+      await apiClient.setUserPermissions(id, permissions);
+      return;
+    }
+    await delay(200);
+    const list = loadManagedUsers();
+    const idx = list.findIndex(u => u.id === id);
+    if (idx === -1) throw new Error('User not found');
+    list[idx].permissions = permissions;
+    saveManagedUsers(list);
+  },
+
+  // Super Admin only (API enforces it): sign off on staff an Admin created.
+  review: async (id: string, approve: boolean, choice: { role?: string; permissions?: string[] } = {}): Promise<void> => {
+    if (!USE_REAL_API) throw new Error('Approvals need the API');
+    if (approve) await apiClient.approveUser(id, choice);
+    else await apiClient.rejectUser(id);
+  },
+
+  aadhaarUrl: async (id: string): Promise<string> => {
+    if (!USE_REAL_API) throw new Error('Aadhaar documents are only stored when connected to the API');
+    return (await apiClient.getAadhaarUrl(id)).url;
+  },
+
+  // Full PAN number and a link to its image (Admin/Super Admin only on the API).
+  panDetails: async (id: string): Promise<{ panNumber: string | null; url: string | null }> => {
+    if (USE_REAL_API) return apiClient.getPan(id);
+    const u = loadManagedUsers().find(x => x.id === id);
+    if (!u) throw new Error('User not found');
+    return { panNumber: u.panNumber ?? null, url: null };
+  },
+
+  // Edit the number, replace the image, or both.
+  updatePan: async (id: string, data: { panNumber?: string; panImage?: File }): Promise<void> => {
+    if (USE_REAL_API) {
+      const panKey = data.panImage ? await uploadToStorage(data.panImage, apiClient.getPanUploadUrl, 'PAN') : undefined;
+      await apiClient.updatePan(id, { panNumber: data.panNumber, panKey });
+      return;
+    }
+    const list = loadManagedUsers();
+    const idx = list.findIndex(u => u.id === id);
+    if (idx === -1) throw new Error('User not found');
+    if (data.panNumber) {
+      list[idx].panNumber = data.panNumber.trim().toUpperCase();
+      list[idx].panMasked = maskPan(list[idx].panNumber as string);
+    }
+    if (data.panImage) list[idx].hasPan = true;
+    saveManagedUsers(list);
+  },
+
+  deletePan: async (id: string): Promise<void> => {
+    if (USE_REAL_API) {
+      await apiClient.deletePan(id);
+      return;
+    }
+    const list = loadManagedUsers();
+    const idx = list.findIndex(u => u.id === id);
+    if (idx === -1) throw new Error('User not found');
+    list[idx] = { ...list[idx], panNumber: undefined, panMasked: null, hasPan: false };
+    saveManagedUsers(list);
   },
 
   setActive: async (id: string, isActive: boolean): Promise<void> => {
@@ -152,7 +236,10 @@ export const userApi = {
   },
 
   resetPassword: async (id: string, newPassword: string): Promise<void> => {
-    if (USE_REAL_API) throw new Error('Sign-in uses one-time codes; there is no password to reset');
+    if (USE_REAL_API) {
+      await apiClient.setUserPassword(id, newPassword);
+      return;
+    }
     await delay(250);
     const list = loadManagedUsers();
     const idx = list.findIndex(u => u.id === id);
@@ -338,12 +425,16 @@ const CREDENTIALS: Record<string, { password: string; userKey: keyof typeof MOCK
 
 // ── Mock implementations ──────────────────────────────────────────────────────
 const mockImpl = {
-  sendOTP: async (_mobile: string): Promise<OTPResponse> => {
+  sendOTP: async (_mobile: string, _other?: string): Promise<OTPResponse> => {
     await delay(600);
     return { success: true, sessionId: 'mock-session-' + Date.now(), message: 'OTP sent' };
   },
 
-  verifyOTP: async (emailOrMobile: string, otpOrPassword: string, sessionId: string): Promise<AuthResponse> => {
+  // Demo mode only: the password form reuses the credential check below.
+  loginWithPassword: (identifier: string, password: string): Promise<AuthResponse> =>
+    mockImpl.verifyOTP(identifier, password, ''),
+
+  verifyOTP: async (emailOrMobile: string, otpOrPassword: string, sessionId: string, _other?: OtherContact): Promise<AuthResponse> => {
     await delay(800);
     // Company-email restriction: any email-based login must use @askussolutions.in
     if (emailOrMobile.includes('@') && !isAllowedEmail(emailOrMobile)) {
@@ -524,16 +615,26 @@ const mockImpl = {
 
 // ── Exported api — real backend when available, mock otherwise ────────────────
 export const api: typeof mockImpl & {
-  verifyOTP(email: string, password: string, sessionId: string): Promise<AuthResponse>;
+  verifyOTP(email: string, password: string, sessionId: string, other?: OtherContact): Promise<AuthResponse>;
 } = USE_REAL_API
   ? {
       // Auth
-      sendOTP: async (identifier: string) => {
-        await apiClient.requestOtp(identifier);
-        return { success: true, sessionId: 'otp-requested', message: 'OTP sent' };
+      sendOTP: async (identifier: string, other?: string) => {
+        const r = await apiClient.requestOtp(identifier, other);
+        return {
+          success: r.sent,
+          sessionId: 'otp-requested',
+          message: r.sent ? 'OTP sent' : 'No code sent',
+          status: r.status,
+          needs: r.needs,
+          channels: r.channels,
+          emailHint: r.emailHint,
+        };
       },
-      verifyOTP: (identifier: string, code: string, _sessionId: string) =>
-        apiClient.verifyOtp(identifier, code),
+      verifyOTP: (identifier: string, code: string, _sessionId: string, other?: OtherContact) =>
+        apiClient.verifyOtp(identifier, code, other),
+      loginWithPassword: (identifier: string, password: string) =>
+        apiClient.loginWithPassword(identifier, password),
 
       // Dashboard
       getKPIs:         () => apiClient.getKPIs(),

@@ -1,8 +1,9 @@
 import { notification } from 'antd';
+import { markSignedIn } from './sessionLife';
 
 // Shared OTP session handling for the staff app and the customer portal.
 // Both talk to the central AskUs identity API (/auth/*); they only differ in
-// which sessionStorage keys hold the tokens.
+// which localStorage keys hold the tokens.
 export const BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000/api';
 
 export interface SessionKeys { access: string; refresh: string }
@@ -16,7 +17,9 @@ export interface Me {
   name: string;
   email: string | null;
   mobile: string | null;
-  role: 'Admin' | 'Employee' | 'Agent' | 'Customer';
+  role: 'SuperAdmin' | 'Admin' | 'Employee' | 'Agent' | 'Customer';
+  permissions?: string[];
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   branchId: string;
 }
 
@@ -37,25 +40,50 @@ const postJson = <T>(path: string, body: unknown) =>
     body: JSON.stringify(body),
   }).then((r) => parse<T>(r));
 
-export const requestOtp = (identifier: string) => postJson<{ sent: boolean }>('/auth/request-otp', { identifier });
-
-export function saveTokens(keys: SessionKeys, t: Tokens) {
-  sessionStorage.setItem(keys.access, t.accessToken);
-  sessionStorage.setItem(keys.refresh, t.refreshToken);
+export interface OtpResult {
+  sent: boolean;
+  status?: 'PENDING' | 'REJECTED';
+  /** First sign-in: the other contact still has to be supplied. */
+  needs?: 'email' | 'mobile';
+  /** Both channels on a first sign-in, email only afterwards. */
+  channels?: ('sms' | 'email')[];
+  emailHint?: string;
 }
 
-export async function signInWithOtp(keys: SessionKeys, identifier: string, code: string): Promise<{ token: string; me: Me }> {
-  const tokens = await postJson<Tokens>('/auth/verify-otp', { identifier, code });
+/** Second contact of a first sign-in; `identifier` is omitted when the account already has it. */
+export interface OtherContact { identifier?: string; code: string }
+
+export const requestOtp = (identifier: string, app?: 'staff', otherIdentifier?: string) =>
+  postJson<OtpResult>('/auth/request-otp', { identifier, app, otherIdentifier });
+
+export function saveTokens(keys: SessionKeys, t: Tokens) {
+  localStorage.setItem(keys.access, t.accessToken);
+  localStorage.setItem(keys.refresh, t.refreshToken);
+}
+
+export async function signInWithOtp(keys: SessionKeys, identifier: string, code: string, other?: OtherContact): Promise<{ token: string; me: Me }> {
+  const tokens = await postJson<Tokens>('/auth/verify-otp', { identifier, code, otherIdentifier: other?.identifier, otherCode: other?.code });
   saveTokens(keys, tokens);
+  markSignedIn(keys.access);
+  const me = await authFetch<Me>(keys, '/users/me');
+  return { token: tokens.accessToken, me };
+}
+
+// Mobile number (or email) + password, for accounts that have a password set.
+export async function signInWithPassword(keys: SessionKeys, identifier: string, password: string): Promise<{ token: string; me: Me }> {
+  const tokens = await postJson<Tokens>('/auth/login-password', { identifier, password });
+  saveTokens(keys, tokens);
+  markSignedIn(keys.access);
   const me = await authFetch<Me>(keys, '/users/me');
   return { token: tokens.accessToken, me };
 }
 
 export function clearSession(keys: SessionKeys) {
-  const refresh = sessionStorage.getItem(keys.refresh);
+  const refresh = localStorage.getItem(keys.refresh);
   if (refresh) void postJson('/auth/logout', { refreshToken: refresh }).catch(() => undefined);
-  sessionStorage.removeItem(keys.access);
-  sessionStorage.removeItem(keys.refresh);
+  localStorage.removeItem(keys.access);
+  localStorage.removeItem(keys.refresh);
+  localStorage.removeItem(`${keys.access}_exp`);
 }
 
 // One refresh in flight per session so concurrent 401s do not rotate the token twice.
@@ -65,15 +93,16 @@ function refreshTokens(keys: SessionKeys): Promise<boolean> {
   const pending = refreshing.get(keys.refresh);
   if (pending) return pending;
 
-  const refreshToken = sessionStorage.getItem(keys.refresh);
+  const refreshToken = localStorage.getItem(keys.refresh);
   const run = (async () => {
     if (!refreshToken) return false;
     try {
       saveTokens(keys, await postJson<Tokens>('/auth/refresh', { refreshToken }));
       return true;
     } catch {
-      sessionStorage.removeItem(keys.access);
-      sessionStorage.removeItem(keys.refresh);
+      localStorage.removeItem(keys.access);
+      localStorage.removeItem(keys.refresh);
+      localStorage.removeItem(`${keys.access}_exp`);
       return false;
     }
   })().finally(() => refreshing.delete(keys.refresh));
@@ -88,7 +117,7 @@ export async function authFetch<T>(
 ): Promise<T> {
   const send = () => {
     const headers: Record<string, string> = {};
-    const token = sessionStorage.getItem(keys.access);
+    const token = localStorage.getItem(keys.access);
     if (token) headers.Authorization = `Bearer ${token}`;
     if (!init.isFormData && init.body !== undefined) headers['Content-Type'] = 'application/json';
     return fetch(`${BASE}${path}`, {

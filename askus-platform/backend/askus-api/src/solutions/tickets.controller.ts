@@ -9,7 +9,7 @@ import { randomUUID } from 'crypto';
 import { existsSync, mkdirSync } from 'fs';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
-import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Roles } from '../common/access';
+import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Permissions, Roles } from '../common/access';
 import { Role } from '../common/roles';
 import { TicketStatus } from './solutions.entities';
 import { TicketsService } from './tickets.service';
@@ -40,6 +40,7 @@ class CommentDto {
 @Controller('tickets')
 @UseGuards(JwtAuthGuard, AccessGuard)
 @Roles(Role.Employee, Role.Agent)
+@Permissions('tickets')
 export class TicketsController {
   constructor(private readonly tickets: TicketsService) {}
 

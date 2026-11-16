@@ -1,8 +1,6 @@
-import { useState, type FormEvent, type ReactNode } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { message } from 'antd';
-import { api } from '../api/mockApi';
-import { useAppDispatch, loginSuccess } from '../store';
+import { useState, type ReactNode } from 'react';
+import { Link, NavLink } from 'react-router-dom';
+import StaffLoginModal from './StaffLoginModal';
 
 const navLinks = [
 	{ to: '/home', label: 'Home' },
@@ -13,49 +11,11 @@ const navLinks = [
 	{ to: '/contact', label: 'Contact' },
 ];
 
-const brandLogo = (
-	<svg className="sc-logo" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-		<polygon points="24,3 43,13.5 43,34.5 24,45 5,34.5 5,13.5" fill="none" stroke="#ffffff" strokeWidth="2.2" />
-		<path d="M24 15 L31 28 H17 Z" fill="none" stroke="#5ad4ff" strokeWidth="2" />
-		<circle cx="24" cy="15" r="2.4" fill="#5ad4ff" />
-		<circle cx="17" cy="28" r="2.4" fill="#5ad4ff" />
-		<circle cx="31" cy="28" r="2.4" fill="#5ad4ff" />
-	</svg>
-);
+const brandLogo = <img className="sc-logo-img" src="/askus-wordmark.png" alt="Askus" />;
 
 export default function SiteChrome({ children }: { children: ReactNode }) {
-	const dispatch = useAppDispatch();
-	const navigate = useNavigate();
 	const [showLogin, setShowLogin] = useState(false);
-	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
-	const [remember, setRemember] = useState(false);
-	const [submitting, setSubmitting] = useState(false);
-
-	const closeLogin = () => {
-		if (submitting) return;
-		setShowLogin(false);
-	};
-
-	const handleAdminLogin = async (e: FormEvent) => {
-		e.preventDefault();
-		if (!username.trim() || !password.trim()) {
-			message.error('Enter username and password');
-			return;
-		}
-		setSubmitting(true);
-		try {
-			const res = await api.verifyOTP(username.trim(), password.trim(), '');
-			dispatch(loginSuccess({ token: res.token, user: res.user }));
-			message.success(`Welcome, ${res.user.name}!`);
-			setShowLogin(false);
-			navigate(res.user.role === 'Agent' ? '/timesheet' : '/dashboard', { replace: true });
-		} catch (err: unknown) {
-			message.error(err instanceof Error ? err.message : 'Invalid credentials');
-		} finally {
-			setSubmitting(false);
-		}
-	};
+	const closeLogin = () => setShowLogin(false);
 
 	return (
 		<div className="sc">
@@ -65,7 +25,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 				<div className="sc-header-inner">
 					<Link to="/home" className="sc-brand">
 						{brandLogo}
-						ASK&nbsp;US&nbsp;SOLUTIONS
+						SOLUTIONS
 					</Link>
 					<nav className="sc-nav">
 						{navLinks.map((n) => (
@@ -92,7 +52,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 						<div>
 							<div className="sc-footer-brand">
 								{brandLogo}
-								ASK US SOLUTIONS
+								SOLUTIONS
 							</div>
 							<p className="sc-footer-tagline">
 								Building the intelligence layer behind mobility, insurance, lending, and AI-driven support — one
@@ -153,58 +113,7 @@ export default function SiteChrome({ children }: { children: ReactNode }) {
 				</div>
 			</footer>
 
-			{showLogin && (
-				<div className="sc-modal-overlay" onClick={closeLogin}>
-					<div className="sc-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-						<button type="button" className="sc-modal-close" aria-label="Close" onClick={closeLogin}>
-							&times;
-						</button>
-						<div className="sc-modal-eyebrow">
-							<span className="sc-modal-sq" />
-							RESTRICTED ACCESS
-						</div>
-						<h3 className="sc-modal-title">Admin Sign In</h3>
-						<p className="sc-modal-sub">
-							Access is provisioned by an Admin or Super Admin. Use the username and password issued to you.
-						</p>
-						<form onSubmit={handleAdminLogin}>
-							<label className="sc-modal-label" htmlFor="sc-username">Username</label>
-							<input
-								id="sc-username"
-								className="sc-modal-input"
-								type="text"
-								placeholder="Enter username"
-								autoComplete="username"
-								value={username}
-								onChange={(e) => setUsername(e.target.value)}
-								autoFocus
-							/>
-							<label className="sc-modal-label" htmlFor="sc-password">Password</label>
-							<input
-								id="sc-password"
-								className="sc-modal-input"
-								type="password"
-								placeholder="••••••••"
-								autoComplete="current-password"
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-							/>
-							<div className="sc-modal-row">
-								<label className="sc-modal-remember">
-									<input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-									Remember me
-								</label>
-								<Link className="sc-modal-contact" to="/contact" onClick={closeLogin}>
-									Contact Admin for access
-								</Link>
-							</div>
-							<button type="submit" className="sc-modal-submit" disabled={submitting}>
-								{submitting ? 'Signing in…' : 'Sign In'}
-							</button>
-						</form>
-					</div>
-				</div>
-			)}
+			<StaffLoginModal open={showLogin} onClose={closeLogin} contact={<Link to="/contact" onClick={closeLogin}>Need access? Contact Admin</Link>} />
 		</div>
 	);
 }
@@ -216,6 +125,8 @@ const CSS = `
 
 .sc-header{ position:sticky; top:0; z-index:50; background:rgba(6,10,20,0.86); -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px); border-bottom:1px solid rgba(90,212,255,0.16); }
 .sc-header-inner{ max-width:1400px; margin:0 auto; padding:14px 6vw; display:flex; align-items:center; gap:clamp(12px,2.2vw,42px); }
+.sc-logo-img{ height:clamp(32px,3.6vw,50px); width:auto; display:block; flex-shrink:0; }
+.sc-footer-brand .sc-logo-img{ height:30px; }
 .sc-brand{ display:flex; align-items:center; gap:10px; font-family:var(--mono); font-weight:700; letter-spacing:0.05em; font-size:clamp(16px,2vw,26px); color:var(--white); text-decoration:none; white-space:nowrap; }
 .sc-logo{ width:26px; height:26px; flex-shrink:0; filter:drop-shadow(0 0 8px rgba(255,255,255,0.5)); }
 .sc-nav{ display:flex; flex-wrap:nowrap; justify-content:flex-end; gap:clamp(8px,1.2vw,20px); margin-left:auto; }

@@ -30,37 +30,51 @@ import AnalyticsPage from './views/AnalyticsPage';
 import CalendarPage from './views/CalendarPage';
 import TimesheetPage from './views/TimesheetPage';
 import UserManagementPage from './views/UserManagementPage';
-import type { UserRole } from './types';
+import type { Permission } from './types';
+import { hasPermission, homePath, isAdminRole } from './access';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = sessionStorage.getItem('tms_token');
+  const token = localStorage.getItem('tms_token');
   return token ? <>{children}</> : <Navigate to="/home" replace />;
 }
 
-function RoleRoute({ allowed, children }: { allowed: UserRole[]; children: React.ReactNode }) {
-  const userRaw = sessionStorage.getItem('tms_user');
-  const user = userRaw ? JSON.parse(userRaw) : null;
-  const role: UserRole = user?.role ?? 'Agent';
-  if (!allowed.includes(role)) {
-    return <Navigate to={role === 'Agent' ? '/timesheet' : '/dashboard'} replace />;
+function storedUser() {
+  const userRaw = localStorage.getItem('tms_user');
+  return userRaw ? JSON.parse(userRaw) : null;
+}
+
+// Admin-only routes use adminOnly; everything else is gated by the permission an Admin granted.
+function RoleRoute({ permission, adminOnly, children }: { permission?: Permission; adminOnly?: boolean; children: React.ReactNode }) {
+  const user = storedUser();
+  const allowed = adminOnly ? isAdminRole(user?.role) : hasPermission(user, permission);
+  if (!allowed) {
+    const home = homePath(user);
+    return home ? <Navigate to={home} replace /> : <NoAccess />;
   }
   return <>{children}</>;
 }
 
+function NoAccess() {
+  return (
+    <div style={{ padding: 48, textAlign: 'center' }}>
+      <h2>No access yet</h2>
+      <p>Your account has no permissions assigned. Please ask an Admin to grant you access.</p>
+    </div>
+  );
+}
+
 function RoleHome() {
-  const userRaw = sessionStorage.getItem('tms_user');
-  const user = userRaw ? JSON.parse(userRaw) : null;
-  const role: UserRole = user?.role ?? 'Agent';
-  return <Navigate to={role === 'Agent' ? '/timesheet' : '/dashboard'} replace />;
+  const home = homePath(storedUser());
+  return home ? <Navigate to={home} replace /> : <NoAccess />;
 }
 
 function HomeGate() {
-  const token = sessionStorage.getItem('tms_token');
+  const token = localStorage.getItem('tms_token');
   return token ? <RoleHome /> : <Navigate to="/home" replace />;
 }
 
 function CustomerProtectedRoute({ children }: { children: React.ReactNode }) {
-  const token = sessionStorage.getItem('askus_customer_token');
+  const token = localStorage.getItem('askus_customer_token');
   return token ? <>{children}</> : <Navigate to="/customer/login" replace />;
 }
 
@@ -122,57 +136,57 @@ export default function App() {
               <Route index element={<HomeGate />} />
 
               <Route path="dashboard" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee']}>
+                <ProtectedRoute><RoleRoute permission="reports">
                   <DashboardPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="board" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee']}>
+                <ProtectedRoute><RoleRoute permission="tickets">
                   <BoardPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="tickets" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee']}>
+                <ProtectedRoute><RoleRoute permission="tickets">
                   <TicketsPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="tickets/new" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee']}>
+                <ProtectedRoute><RoleRoute permission="tickets">
                   <TicketFormPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="tickets/:id/edit" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee']}>
+                <ProtectedRoute><RoleRoute permission="tickets">
                   <TicketFormPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="tickets/:id" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee']}>
+                <ProtectedRoute><RoleRoute permission="tickets">
                   <TicketDetailPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="analytics" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee']}>
+                <ProtectedRoute><RoleRoute permission="reports">
                   <AnalyticsPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="calendar" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee']}>
+                <ProtectedRoute><RoleRoute permission="tickets">
                   <CalendarPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="timesheet" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin', 'Employee', 'Agent']}>
+                <ProtectedRoute><RoleRoute permission="timesheet">
                   <TimesheetPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="renewals" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin']}>
+                <ProtectedRoute><RoleRoute adminOnly>
                   <Placeholder title="Renewals" />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="users" element={
-                <ProtectedRoute><RoleRoute allowed={['Admin']}>
+                <ProtectedRoute><RoleRoute adminOnly>
                   <UserManagementPage />
                 </RoleRoute></ProtectedRoute>
               } />

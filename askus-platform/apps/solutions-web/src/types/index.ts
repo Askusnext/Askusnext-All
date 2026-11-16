@@ -17,10 +17,20 @@ export type OwnerType = 'OWN' | 'CORPORATE';
 export type InsuranceStatus = 'Active' | 'ExpiringSoon' | 'Expired' | 'Cancelled' | 'NewPolicy';
 
 // ── Roles ─────────────────────────────────────────────────────────────────────
-// Admin    → full access to everything including user management
-// Employee → dashboard, tickets, board, analytics, calendar, all timesheets
-// Agent    → timesheet only (own attendance entry)
-export type UserRole = 'Admin' | 'Employee' | 'Agent';
+// SuperAdmin → everything; the only role that can create Admins
+// Admin      → everything except Super Admin powers; creates Employees/Agents and grants them permissions
+// Employee / Agent → only the permissions an Admin has granted them
+export type UserRole = 'SuperAdmin' | 'Admin' | 'Employee' | 'Agent';
+
+export const PERMISSION_OPTIONS = [
+  { value: 'tickets', label: 'Tickets, board & calendar' },
+  { value: 'payments', label: 'Payments' },
+  { value: 'timesheet', label: 'Timesheet' },
+  { value: 'kb', label: 'Knowledge base (edit)' },
+  { value: 'users', label: 'View staff list' },
+  { value: 'reports', label: 'Dashboard & reports' },
+] as const;
+export type Permission = (typeof PERMISSION_OPTIONS)[number]['value'];
 
 export interface User {
   id: string;
@@ -28,6 +38,12 @@ export interface User {
   mobile: string;
   email?: string;
   role: UserRole;
+  permissions?: string[];
+  hasAadhaar?: boolean;
+  hasPan?: boolean;
+  /** Masked PAN (for example AB******4F); the full number is only fetched on demand. */
+  panMasked?: string | null;
+  approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   branchId: string;
 }
 
@@ -257,6 +273,10 @@ export interface AuthResponse {
 
 export interface OTPResponse {
   success: boolean;
+  status?: 'PENDING' | 'REJECTED';
+  needs?: 'email' | 'mobile';
+  channels?: ('sms' | 'email')[];
+  emailHint?: string;
   sessionId: string;
   message: string;
 }

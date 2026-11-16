@@ -2,20 +2,24 @@ import { CanActivate, ExecutionContext, ForbiddenException, Injectable, SetMetad
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
-import { ADMIN_ROLE_PRODUCT, Product, Role } from './roles';
+import { ADMIN_ROLE_PRODUCT, Permission, Product, Role } from './roles';
 
 export interface AuthUser {
   id: string;
   name: string;
   roles: Role[];
+  permissions: string[];
 }
 
 export type AuthedRequest = Request & { user: AuthUser };
 
 const ROLES_KEY = 'roles';
 const PRODUCT_KEY = 'product';
+const PERMISSION_KEY = 'permission';
 
 export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
+// Employees/Agents need the permission granted; Admin and Super Admin pass.
+export const Permissions = (permission: Permission) => SetMetadata(PERMISSION_KEY, permission);
 export const ProductAccess = (product: Product) => SetMetadata(PRODUCT_KEY, product);
 
 export const CurrentUser = createParamDecorator(
@@ -31,8 +35,8 @@ export class JwtAuthGuard implements CanActivate {
     const [scheme, token] = (req.headers.authorization ?? '').split(' ');
     if (scheme !== 'Bearer' || !token) throw new UnauthorizedException();
     try {
-      const payload = await this.jwt.verifyAsync<{ sub: string; roles: Role[]; name?: string }>(token);
-      req.user = { id: payload.sub, name: payload.name ?? 'User', roles: payload.roles };
+      const payload = await this.jwt.verifyAsync<{ sub: string; roles: Role[]; permissions?: string[]; name?: string }>(token);
+      req.user = { id: payload.sub, name: payload.name ?? 'User', roles: payload.roles, permissions: payload.permissions ?? [] };
       return true;
     } catch {
       throw new UnauthorizedException();
@@ -40,7 +44,8 @@ export class JwtAuthGuard implements CanActivate {
   }
 }
 
-// SuperAdmin passes everything; product admins only reach their own product.
+// SuperAdmin passes everything. Admin passes everything except Super Admin-only routes. Product admins
+// only reach their own product; Employees/Agents also need the route's permission.
 @Injectable()
 export class AccessGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
@@ -54,7 +59,12 @@ export class AccessGuard implements CanActivate {
     const roles = this.reflector.getAllAndOverride<Role[] | undefined>(ROLES_KEY, targets);
     const product = this.reflector.getAllAndOverride<Product | undefined>(PRODUCT_KEY, targets);
 
-    if (roles?.length && !roles.some((r) => user.roles.includes(r))) throw new ForbiddenException();
+    const isAdmin = user.roles.includes(Role.Admin);
+    const held = isAdmin ? [...user.roles, Role.Employee, Role.Agent] : user.roles;
+    const permission = this.reflector.getAllAndOverride<Permission | undefined>(PERMISSION_KEY, targets);
+
+    if (roles?.length && !roles.some((r) => held.includes(r))) throw new ForbiddenException();
+    if (permission && !isAdmin && !user.permissions.includes(permission)) throw new ForbiddenException();
     if (product && !user.roles.some((r) => ADMIN_ROLE_PRODUCT[r] === product)) throw new ForbiddenException();
     return true;
   }

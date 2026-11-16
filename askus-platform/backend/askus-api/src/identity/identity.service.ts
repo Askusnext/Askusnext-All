@@ -1,10 +1,21 @@
-import { ForbiddenException, Injectable, Logger, OnApplicationBootstrap, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, createHmac, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'crypto';
 import { IsNull, MoreThan, Repository } from 'typeorm';
 import { normalizeIdentifier } from '../common/identifier';
+import { verifyAgainstDummy, verifyPassword } from '../common/password';
 import { Role } from '../common/roles';
 import { AuditService } from '../audit/audit.service';
 import { NotificationService } from '../notification/notification.service';
@@ -12,10 +23,18 @@ import { OtpCode, Session, User } from './identity.entities';
 
 const OTP_TTL_MS = 5 * 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
-const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+// A sign-in lasts 12 hours in total: refresh rotation never extends it.
+const REFRESH_TTL_MS = 12 * 60 * 60 * 1000;
 const ACCESS_TTL_SECONDS = 15 * 60;
+const PASSWORD_MAX_FAILURES = 5;
+const PASSWORD_LOCK_MS = 15 * 60 * 1000;
 
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
+
+const maskEmail = (email: string) => {
+  const [name, domain] = email.split('@');
+  return `${name.slice(0, 2)}${'*'.repeat(Math.max(name.length - 2, 1))}@${domain}`;
+};
 
 @Injectable()
 export class IdentityService implements OnApplicationBootstrap {
@@ -31,58 +50,124 @@ export class IdentityService implements OnApplicationBootstrap {
     private readonly audit: AuditService,
   ) {}
 
-  // Without this, a fresh database has no staff able to sign in.
+  // Without this, a fresh database has no staff able to sign in. Each env var is a comma-separated
+  // list of emails/mobiles; 
   async onApplicationBootstrap() {
-    const raw = this.config.get<string>('SUPER_ADMIN_IDENTIFIER');
-    if (!raw) return;
-    const user = await this.findOrCreateUser(normalizeIdentifier(raw));
-    if (!user.roles.includes(Role.SuperAdmin)) {
-      user.roles = [...user.roles, Role.SuperAdmin];
-      await this.users.save(user);
-      this.logger.log(`Granted SUPER_ADMIN to ${raw}`);
+    const seeds: [string, Role[]][] = [
+      ['SUPER_ADMIN_IDENTIFIER', [Role.SuperAdmin]],
+      ['ADMIN_IDENTIFIERS', [Role.Admin]],
+      ['EMPLOYEE_IDENTIFIERS', [Role.Employee]],
+      ['AGENT_IDENTIFIERS', [Role.Agent]],
+    ];
+    for (const [key, roles] of seeds) {
+      const raw = this.config.get<string>(key);
+      for (const entry of (raw ?? '').split(',').map((v) => v.trim()).filter(Boolean)) {
+        const user = await this.findOrCreateUser(normalizeIdentifier(entry));
+        const missing = roles.filter((r) => !user.roles.includes(r));
+        if (!missing.length) continue;
+        user.roles = [...user.roles, ...missing];
+        await this.users.save(user);
+        this.logger.log(`Granted ${missing.join(',')} to ${entry}`);
+      }
     }
   }
 
-  async requestOtp(rawIdentifier: string) {
+  // A fully verified account gets a single email OTP (no SMS cost). Until both mobile and email are
+  // proven, the first sign-in needs an OTP on each; `needs` tells the client which contact to ask for.
+  async requestOtp(rawIdentifier: string, app?: 'staff', rawOther?: string) {
     const identifier = normalizeIdentifier(rawIdentifier);
-    const code = String(randomInt(100000, 1000000));
-    await this.otps.save(
-      this.otps.create({
-        identifier,
-        codeHash: this.hashOtp(identifier, code),
-        expiresAt: new Date(Date.now() + OTP_TTL_MS),
-      }),
-    );
-    await this.notifications.send({
-      channel: identifier.includes('@') ? 'email' : 'sms',
-      to: identifier,
-      message: `Your AskUs verification code is ${code}. It is valid for 5 minutes.`,
-    });
-    return { sent: true };
+    const existing = await this.findByIdentifier(identifier);
+
+    // Staff sign-in: someone whose request is still waiting (or was declined) is told so up front
+    // instead of being sent a code that cannot get them in. Only these two states are revealed.
+    if (app === 'staff' && existing && (existing.approvalStatus === 'PENDING' || existing.approvalStatus === 'REJECTED')) {
+      return { sent: false, status: existing.approvalStatus };
+    }
+
+    if (existing?.mobileVerifiedAt && existing.emailVerifiedAt && existing.email) {
+      await this.sendOtp(identifier, 'email', existing.email);
+      return { sent: true, channels: ['email'] as const, emailHint: maskEmail(existing.email) };
+    }
+
+    const other = await this.resolveOtherContact(identifier, existing, rawOther);
+    if (!other) return { sent: false, needs: identifier.includes('@') ? ('mobile' as const) : ('email' as const) };
+
+    await this.sendOtp(identifier, identifier.includes('@') ? 'email' : 'sms', identifier);
+    await this.sendOtp(other, other.includes('@') ? 'email' : 'sms', other);
+    return { sent: true, channels: ['sms', 'email'] as const };
   }
 
-  async verifyOtp(rawIdentifier: string, code: string) {
+  async verifyOtp(rawIdentifier: string, code: string, rawOther?: string, otherCode?: string) {
     const identifier = normalizeIdentifier(rawIdentifier);
-    const otp = await this.otps.findOne({
-      where: { identifier, consumed: false, expiresAt: MoreThan(new Date()) },
-      order: { createdAt: 'DESC' },
-    });
-    if (!otp || otp.attempts >= OTP_MAX_ATTEMPTS) throw new UnauthorizedException('Invalid or expired code');
+    let user = await this.findByIdentifier(identifier);
 
-    const expected = Buffer.from(otp.codeHash);
-    const actual = Buffer.from(this.hashOtp(identifier, code));
-    if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
-      otp.attempts += 1;
+    if (user?.mobileVerifiedAt && user.emailVerifiedAt) {
+      const otp = await this.checkOtp(identifier, code);
+      otp.consumed = true;
       await this.otps.save(otp);
-      throw new UnauthorizedException('Invalid or expired code');
-    }
-    otp.consumed = true;
-    await this.otps.save(otp);
+    } else {
+      if (!otherCode) throw new BadRequestException('Enter the codes sent to both your mobile and email');
+      const other = await this.resolveOtherContact(identifier, user, rawOther);
+      if (!other) throw new UnauthorizedException('Invalid or expired code');
 
-    const user = await this.findOrCreateUser(identifier);
+      // Both must pass before either is consumed, so one typo does not burn the other code.
+      const first = await this.checkOtp(identifier, code);
+      const second = await this.checkOtp(other, otherCode);
+      first.consumed = second.consumed = true;
+      await this.otps.save([first, second]);
+
+      const email = identifier.includes('@') ? identifier : other;
+      const mobile = identifier.includes('@') ? other : identifier;
+      const now = new Date();
+      user = user ?? this.users.create({ roles: [Role.Customer] });
+      user.email = email;
+      user.mobile = mobile;
+      user.emailVerifiedAt = now;
+      user.mobileVerifiedAt = now;
+      user = await this.users.save(user);
+    }
+
+    if (user.approvalStatus === 'PENDING' && user.roles.some((r) => r !== Role.Customer)) throw new ForbiddenException('Awaiting Super Admin approval');
     if (!user.isActive) throw new ForbiddenException('Account disabled');
 
     await this.audit.log({ actorId: user.id, action: 'auth.login', resource: `user:${user.id}` });
+    return this.issueTokens(user, randomUUID());
+  }
+
+  // Mobile number (or email) + password. One generic error for every failure so the response
+  // never reveals whether an account exists; repeated failures lock the account for a while.
+  async loginWithPassword(rawIdentifier: string, password: string) {
+    const identifier = normalizeIdentifier(rawIdentifier);
+    const user = await this.users
+      .createQueryBuilder('u')
+      .addSelect('u.passwordHash')
+      .where(identifier.includes('@') ? 'u.email = :id' : 'u.mobile = :id', { id: identifier })
+      .getOne();
+
+    if (!user || !user.passwordHash || !user.isActive) {
+      await verifyAgainstDummy(password);
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      throw new HttpException('Too many failed attempts. Try again later.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    if (!(await verifyPassword(password, user.passwordHash))) {
+      user.failedLogins += 1;
+      if (user.failedLogins >= PASSWORD_MAX_FAILURES) {
+        user.lockedUntil = new Date(Date.now() + PASSWORD_LOCK_MS);
+        user.failedLogins = 0;
+      }
+      await this.users.save(user);
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (user.failedLogins !== 0 || user.lockedUntil) {
+      user.failedLogins = 0;
+      user.lockedUntil = null;
+      await this.users.save(user);
+    }
+    await this.audit.log({ actorId: user.id, action: 'auth.login.password', resource: `user:${user.id}` });
     return this.issueTokens(user, randomUUID());
   }
 
@@ -102,17 +187,19 @@ export class IdentityService implements OnApplicationBootstrap {
 
     const user = await this.users.findOne({ where: { id: session.userId } });
     if (!user || !user.isActive) throw new UnauthorizedException();
-    return this.issueTokens(user, session.familyId);
+    return this.issueTokens(user, session.familyId, session.expiresAt);
   }
 
   async logout(refreshToken: string) {
     await this.sessions.update({ refreshHash: sha256(refreshToken), revokedAt: IsNull() }, { revokedAt: new Date() });
   }
 
-  private async issueTokens(user: User, familyId: string) {
+  // sessionEnd carries the original sign-in expiry through refresh rotations.
+  private async issueTokens(user: User, familyId: string, sessionEnd?: Date) {
     const accessToken = await this.jwt.signAsync({
       sub: user.id,
       roles: user.roles,
+      permissions: user.permissions ?? [],
       name: user.fullName ?? user.email ?? user.mobile ?? 'User',
     });
     const refreshToken = randomBytes(48).toString('base64url');
@@ -121,11 +208,67 @@ export class IdentityService implements OnApplicationBootstrap {
         userId: user.id,
         familyId,
         refreshHash: sha256(refreshToken),
-        expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
+        expiresAt: sessionEnd ?? new Date(Date.now() + REFRESH_TTL_MS),
         revokedAt: null,
       }),
     );
     return { accessToken, refreshToken, expiresIn: ACCESS_TTL_SECONDS };
+  }
+
+  private findByIdentifier(identifier: string) {
+    return this.users.findOne({ where: identifier.includes('@') ? { email: identifier } : { mobile: identifier } });
+  }
+
+  // The contact of the other kind: the one already on the account, else the one the client supplied.
+  // Returns null when it is still unknown. A contact owned by a different account is rejected.
+  private async resolveOtherContact(identifier: string, existing: User | null, rawOther?: string) {
+    const isEmail = identifier.includes('@');
+    const stored = isEmail ? existing?.mobile : existing?.email;
+    if (stored) return stored;
+    if (!rawOther) return null;
+
+    const other = normalizeIdentifier(rawOther);
+    if (other.includes('@') === isEmail) {
+      throw new BadRequestException(isEmail ? 'Enter a mobile number' : 'Enter an email address');
+    }
+    if (await this.findByIdentifier(other)) {
+      throw new ConflictException(`This ${isEmail ? 'mobile number' : 'email'} is already registered`);
+    }
+    return other;
+  }
+
+  private async sendOtp(key: string, channel: 'sms' | 'email', to: string) {
+    const code = String(randomInt(100000, 1000000));
+    await this.otps.save(
+      this.otps.create({
+        identifier: key,
+        codeHash: this.hashOtp(key, code),
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      }),
+    );
+    await this.notifications.send({
+      channel,
+      to,
+      message: `Your AskUs verification code is ${code}. It is valid for 5 minutes.`,
+      otp: code,
+    });
+  }
+
+  private async checkOtp(identifier: string, code: string) {
+    const otp = await this.otps.findOne({
+      where: { identifier, consumed: false, expiresAt: MoreThan(new Date()) },
+      order: { createdAt: 'DESC' },
+    });
+    if (!otp || otp.attempts >= OTP_MAX_ATTEMPTS) throw new UnauthorizedException('Invalid or expired code');
+
+    const expected = Buffer.from(otp.codeHash);
+    const actual = Buffer.from(this.hashOtp(identifier, code));
+    if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
+      otp.attempts += 1;
+      await this.otps.save(otp);
+      throw new UnauthorizedException('Invalid or expired code');
+    }
+    return otp;
   }
 
   private async findOrCreateUser(identifier: string) {

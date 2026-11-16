@@ -48,4 +48,20 @@ export class StorageService {
       query: { 'response-content-disposition': `inline; filename="${fileName.replace(/[^\w.-]/g, '_')}"` },
     });
   }
+
+  async delete(key: string) {
+    const r = this.r2;
+    const url = presign({
+      method: 'DELETE',
+      host: r.host,
+      path: `/${r.bucket}/${key}`,
+      region: 'auto',
+      service: 's3',
+      accessKey: r.accessKey,
+      secretKey: r.secretKey,
+      expiresSeconds: 60,
+    });
+    const res = await fetch(url, { method: 'DELETE', signal: AbortSignal.timeout(10_000) });
+    if (!res.ok && res.status !== 404) throw new ServiceUnavailableException('Could not delete the stored document.');
+  }
 }

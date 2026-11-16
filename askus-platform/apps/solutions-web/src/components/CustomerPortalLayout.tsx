@@ -4,12 +4,12 @@ import { CUSTOMER_KEYS, clearSession } from '../api/session';
 
 export default function CustomerPortalLayout({ children }: { children: React.ReactNode }) {
 	const navigate = useNavigate();
-	const customerRaw = sessionStorage.getItem('askus_customer');
+	const customerRaw = localStorage.getItem('askus_customer');
 	const customer = customerRaw ? JSON.parse(customerRaw) : null;
 
 	const handleLogout = () => {
 		clearSession(CUSTOMER_KEYS);
-		sessionStorage.removeItem('askus_customer');
+		localStorage.removeItem('askus_customer');
 		navigate('/customer/login', { replace: true });
 	};
 
