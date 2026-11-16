@@ -1,4 +1,6 @@
 import {
+  BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   HttpStatus,
@@ -28,6 +30,11 @@ const PASSWORD_MAX_FAILURES = 5;
 const PASSWORD_LOCK_MS = 15 * 60 * 1000;
 
 const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
+
+const maskEmail = (email: string) => {
+  const [name, domain] = email.split('@');
+  return `${name.slice(0, 2)}${'*'.repeat(Math.max(name.length - 2, 1))}@${domain}`;
+};
 
 @Injectable()
 export class IdentityService implements OnApplicationBootstrap {
@@ -65,56 +72,61 @@ export class IdentityService implements OnApplicationBootstrap {
     }
   }
 
-  async requestOtp(rawIdentifier: string, app?: 'staff') {
+  // A fully verified account gets a single email OTP (no SMS cost). Until both mobile and email are
+  // proven, the first sign-in needs an OTP on each; `needs` tells the client which contact to ask for.
+  async requestOtp(rawIdentifier: string, app?: 'staff', rawOther?: string) {
     const identifier = normalizeIdentifier(rawIdentifier);
+    const existing = await this.findByIdentifier(identifier);
 
     // Staff sign-in: someone whose request is still waiting (or was declined) is told so up front
     // instead of being sent a code that cannot get them in. Only these two states are revealed.
-    if (app === 'staff') {
-      const existing = await this.users.findOne({
-        where: identifier.includes('@') ? { email: identifier } : { mobile: identifier },
-      });
-      if (existing && (existing.approvalStatus === 'PENDING' || existing.approvalStatus === 'REJECTED')) {
-        return { sent: false, status: existing.approvalStatus };
-      }
+    if (app === 'staff' && existing && (existing.approvalStatus === 'PENDING' || existing.approvalStatus === 'REJECTED')) {
+      return { sent: false, status: existing.approvalStatus };
     }
 
-    const code = String(randomInt(100000, 1000000));
-    await this.otps.save(
-      this.otps.create({
-        identifier,
-        codeHash: this.hashOtp(identifier, code),
-        expiresAt: new Date(Date.now() + OTP_TTL_MS),
-      }),
-    );
-    await this.notifications.send({
-      channel: identifier.includes('@') ? 'email' : 'sms',
-      to: identifier,
-      message: `Your AskUs verification code is ${code}. It is valid for 5 minutes.`,
-      otp: code,
-    });
-    return { sent: true };
+    if (existing?.mobileVerifiedAt && existing.emailVerifiedAt && existing.email) {
+      await this.sendOtp(identifier, 'email', existing.email);
+      return { sent: true, channels: ['email'] as const, emailHint: maskEmail(existing.email) };
+    }
+
+    const other = await this.resolveOtherContact(identifier, existing, rawOther);
+    if (!other) return { sent: false, needs: identifier.includes('@') ? ('mobile' as const) : ('email' as const) };
+
+    await this.sendOtp(identifier, identifier.includes('@') ? 'email' : 'sms', identifier);
+    await this.sendOtp(other, other.includes('@') ? 'email' : 'sms', other);
+    return { sent: true, channels: ['sms', 'email'] as const };
   }
 
-  async verifyOtp(rawIdentifier: string, code: string) {
+  async verifyOtp(rawIdentifier: string, code: string, rawOther?: string, otherCode?: string) {
     const identifier = normalizeIdentifier(rawIdentifier);
-    const otp = await this.otps.findOne({
-      where: { identifier, consumed: false, expiresAt: MoreThan(new Date()) },
-      order: { createdAt: 'DESC' },
-    });
-    if (!otp || otp.attempts >= OTP_MAX_ATTEMPTS) throw new UnauthorizedException('Invalid or expired code');
+    let user = await this.findByIdentifier(identifier);
 
-    const expected = Buffer.from(otp.codeHash);
-    const actual = Buffer.from(this.hashOtp(identifier, code));
-    if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
-      otp.attempts += 1;
+    if (user?.mobileVerifiedAt && user.emailVerifiedAt) {
+      const otp = await this.checkOtp(identifier, code);
+      otp.consumed = true;
       await this.otps.save(otp);
-      throw new UnauthorizedException('Invalid or expired code');
-    }
-    otp.consumed = true;
-    await this.otps.save(otp);
+    } else {
+      if (!otherCode) throw new BadRequestException('Enter the codes sent to both your mobile and email');
+      const other = await this.resolveOtherContact(identifier, user, rawOther);
+      if (!other) throw new UnauthorizedException('Invalid or expired code');
 
-    const user = await this.findOrCreateUser(identifier);
+      // Both must pass before either is consumed, so one typo does not burn the other code.
+      const first = await this.checkOtp(identifier, code);
+      const second = await this.checkOtp(other, otherCode);
+      first.consumed = second.consumed = true;
+      await this.otps.save([first, second]);
+
+      const email = identifier.includes('@') ? identifier : other;
+      const mobile = identifier.includes('@') ? other : identifier;
+      const now = new Date();
+      user = user ?? this.users.create({ roles: [Role.Customer] });
+      user.email = email;
+      user.mobile = mobile;
+      user.emailVerifiedAt = now;
+      user.mobileVerifiedAt = now;
+      user = await this.users.save(user);
+    }
+
     if (user.approvalStatus === 'PENDING' && user.roles.some((r) => r !== Role.Customer)) throw new ForbiddenException('Awaiting Super Admin approval');
     if (!user.isActive) throw new ForbiddenException('Account disabled');
 
@@ -201,6 +213,62 @@ export class IdentityService implements OnApplicationBootstrap {
       }),
     );
     return { accessToken, refreshToken, expiresIn: ACCESS_TTL_SECONDS };
+  }
+
+  private findByIdentifier(identifier: string) {
+    return this.users.findOne({ where: identifier.includes('@') ? { email: identifier } : { mobile: identifier } });
+  }
+
+  // The contact of the other kind: the one already on the account, else the one the client supplied.
+  // Returns null when it is still unknown. A contact owned by a different account is rejected.
+  private async resolveOtherContact(identifier: string, existing: User | null, rawOther?: string) {
+    const isEmail = identifier.includes('@');
+    const stored = isEmail ? existing?.mobile : existing?.email;
+    if (stored) return stored;
+    if (!rawOther) return null;
+
+    const other = normalizeIdentifier(rawOther);
+    if (other.includes('@') === isEmail) {
+      throw new BadRequestException(isEmail ? 'Enter a mobile number' : 'Enter an email address');
+    }
+    if (await this.findByIdentifier(other)) {
+      throw new ConflictException(`This ${isEmail ? 'mobile number' : 'email'} is already registered`);
+    }
+    return other;
+  }
+
+  private async sendOtp(key: string, channel: 'sms' | 'email', to: string) {
+    const code = String(randomInt(100000, 1000000));
+    await this.otps.save(
+      this.otps.create({
+        identifier: key,
+        codeHash: this.hashOtp(key, code),
+        expiresAt: new Date(Date.now() + OTP_TTL_MS),
+      }),
+    );
+    await this.notifications.send({
+      channel,
+      to,
+      message: `Your AskUs verification code is ${code}. It is valid for 5 minutes.`,
+      otp: code,
+    });
+  }
+
+  private async checkOtp(identifier: string, code: string) {
+    const otp = await this.otps.findOne({
+      where: { identifier, consumed: false, expiresAt: MoreThan(new Date()) },
+      order: { createdAt: 'DESC' },
+    });
+    if (!otp || otp.attempts >= OTP_MAX_ATTEMPTS) throw new UnauthorizedException('Invalid or expired code');
+
+    const expected = Buffer.from(otp.codeHash);
+    const actual = Buffer.from(this.hashOtp(identifier, code));
+    if (expected.length !== actual.length || !timingSafeEqual(expected, actual)) {
+      otp.attempts += 1;
+      await this.otps.save(otp);
+      throw new UnauthorizedException('Invalid or expired code');
+    }
+    return otp;
   }
 
   private async findOrCreateUser(identifier: string) {

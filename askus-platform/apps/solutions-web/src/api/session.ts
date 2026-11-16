@@ -40,16 +40,29 @@ const postJson = <T>(path: string, body: unknown) =>
     body: JSON.stringify(body),
   }).then((r) => parse<T>(r));
 
-export const requestOtp = (identifier: string, app?: 'staff') =>
-  postJson<{ sent: boolean; status?: 'PENDING' | 'REJECTED' }>('/auth/request-otp', { identifier, app });
+export interface OtpResult {
+  sent: boolean;
+  status?: 'PENDING' | 'REJECTED';
+  /** First sign-in: the other contact still has to be supplied. */
+  needs?: 'email' | 'mobile';
+  /** Both channels on a first sign-in, email only afterwards. */
+  channels?: ('sms' | 'email')[];
+  emailHint?: string;
+}
+
+/** Second contact of a first sign-in; `identifier` is omitted when the account already has it. */
+export interface OtherContact { identifier?: string; code: string }
+
+export const requestOtp = (identifier: string, app?: 'staff', otherIdentifier?: string) =>
+  postJson<OtpResult>('/auth/request-otp', { identifier, app, otherIdentifier });
 
 export function saveTokens(keys: SessionKeys, t: Tokens) {
   localStorage.setItem(keys.access, t.accessToken);
   localStorage.setItem(keys.refresh, t.refreshToken);
 }
 
-export async function signInWithOtp(keys: SessionKeys, identifier: string, code: string): Promise<{ token: string; me: Me }> {
-  const tokens = await postJson<Tokens>('/auth/verify-otp', { identifier, code });
+export async function signInWithOtp(keys: SessionKeys, identifier: string, code: string, other?: OtherContact): Promise<{ token: string; me: Me }> {
+  const tokens = await postJson<Tokens>('/auth/verify-otp', { identifier, code, otherIdentifier: other?.identifier, otherCode: other?.code });
   saveTokens(keys, tokens);
   markSignedIn(keys.access);
   const me = await authFetch<Me>(keys, '/users/me');

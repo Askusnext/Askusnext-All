@@ -3,7 +3,7 @@
  * Kept separate from `api.ts` (internal staff) so customer sessions never mix
  * with employee sessions in the same browser.
  */
-import { BASE, CUSTOMER_KEYS, authFetch, requestOtp, signInWithOtp } from './session';
+import { BASE, CUSTOMER_KEYS, authFetch, requestOtp, signInWithOtp, type OtherContact } from './session';
 
 export type CustomerAuthResponse = {
 	token: string;
@@ -51,11 +51,11 @@ async function request<T>(method: string, endpoint: string, body?: unknown, auth
 }
 
 export const customerApi = {
-	requestOtp: (identifier: string) => requestOtp(identifier),
+	requestOtp: (identifier: string, otherIdentifier?: string) => requestOtp(identifier, undefined, otherIdentifier),
 
 	// First sign-in creates the account, so there is no separate register call.
-	verifyOtp: async (identifier: string, code: string): Promise<CustomerAuthResponse> => {
-		const { token, me } = await signInWithOtp(CUSTOMER_KEYS, identifier, code);
+	verifyOtp: async (identifier: string, code: string, other?: OtherContact): Promise<CustomerAuthResponse> => {
+		const { token, me } = await signInWithOtp(CUSTOMER_KEYS, identifier, code, other);
 		return { token, customer: { id: me.id, name: me.name, email: me.email ?? undefined, mobile: me.mobile ?? '' } };
 	},
 	getTickets: () => request<CustomerTicket[]>('GET', '/customer-tickets'),

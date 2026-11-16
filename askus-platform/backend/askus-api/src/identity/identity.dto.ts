@@ -10,11 +10,21 @@ export class RequestOtpDto {
   @IsOptional()
   @IsIn(['staff'])
   app?: 'staff';
+
+  // First sign-in only: the other contact (email if identifier is a mobile, and vice versa).
+  @IsOptional()
+  @Matches(IDENTIFIER, { message: 'otherIdentifier must be a mobile number or email' })
+  otherIdentifier?: string;
 }
 
 export class VerifyOtpDto extends RequestOtpDto {
   @Matches(/^\d{6}$/, { message: 'code must be 6 digits' })
   code: string;
+
+  // First sign-in only: the code sent to otherIdentifier.
+  @IsOptional()
+  @Matches(/^\d{6}$/, { message: 'otherCode must be 6 digits' })
+  otherCode?: string;
 }
 
 export class LoginPasswordDto extends RequestOtpDto {

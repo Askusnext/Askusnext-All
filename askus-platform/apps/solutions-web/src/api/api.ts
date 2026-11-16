@@ -4,7 +4,7 @@
 import type {
   Ticket, DashboardKPIs, PaginatedResponse, AuthResponse, User,
 } from '../types';
-import { BASE, STAFF_KEYS, authFetch, requestOtp, signInWithOtp, signInWithPassword } from './session';
+import { BASE, STAFF_KEYS, authFetch, requestOtp, signInWithOtp, signInWithPassword, type OtherContact } from './session';
 import type { Me } from './session';
 
 // The code was valid but the person has no staff role yet. Carries the short-lived token (in memory
@@ -77,10 +77,10 @@ export type KBArticle = {
 
 // ── Auth (passwordless: OTP to mobile or email) ───────────────────────────────
 export const apiClient = {
-  requestOtp: (identifier: string) => requestOtp(identifier, 'staff'),
+  requestOtp: (identifier: string, otherIdentifier?: string) => requestOtp(identifier, 'staff', otherIdentifier),
 
-  verifyOtp: async (identifier: string, code: string): Promise<AuthResponse> => {
-    const { token, me } = await signInWithOtp(STAFF_KEYS, identifier, code);
+  verifyOtp: async (identifier: string, code: string, other?: OtherContact): Promise<AuthResponse> => {
+    const { token, me } = await signInWithOtp(STAFF_KEYS, identifier, code, other);
     return toStaffAuth(token, me);
   },
 

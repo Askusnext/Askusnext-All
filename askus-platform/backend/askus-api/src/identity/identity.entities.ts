@@ -41,6 +41,13 @@ export class User {
   @Column({ type: 'varchar', name: 'password_hash', nullable: true, select: false })
   passwordHash: string | null;
 
+  // Set once each contact is proven by OTP; sign-in OTPs go to email only after both are set.
+  @Column({ type: 'timestamptz', name: 'mobile_verified_at', nullable: true })
+  mobileVerifiedAt: Date | null;
+
+  @Column({ type: 'timestamptz', name: 'email_verified_at', nullable: true })
+  emailVerifiedAt: Date | null;
+
   @Column({ name: 'failed_logins', default: 0 })
   failedLogins: number;
 

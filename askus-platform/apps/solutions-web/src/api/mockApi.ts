@@ -1,5 +1,6 @@
 import type { Ticket, DashboardKPIs, PaginatedResponse, User, UserRole, OTPResponse, AuthResponse, TicketStatus, Priority, PolicyType, InsuranceStatus, PaymentStatus } from '../types';
 import { apiClient } from './api';
+import type { OtherContact } from './session';
 
 // ── Feature flag: use real backend when VITE_API_BASE_URL is set ──────────────
 export const USE_REAL_API = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
@@ -372,7 +373,7 @@ const CREDENTIALS: Record<string, { password: string; userKey: keyof typeof MOCK
 
 // ── Mock implementations ──────────────────────────────────────────────────────
 const mockImpl = {
-  sendOTP: async (_mobile: string): Promise<OTPResponse> => {
+  sendOTP: async (_mobile: string, _other?: string): Promise<OTPResponse> => {
     await delay(600);
     return { success: true, sessionId: 'mock-session-' + Date.now(), message: 'OTP sent' };
   },
@@ -381,7 +382,7 @@ const mockImpl = {
   loginWithPassword: (identifier: string, password: string): Promise<AuthResponse> =>
     mockImpl.verifyOTP(identifier, password, ''),
 
-  verifyOTP: async (emailOrMobile: string, otpOrPassword: string, sessionId: string): Promise<AuthResponse> => {
+  verifyOTP: async (emailOrMobile: string, otpOrPassword: string, sessionId: string, _other?: OtherContact): Promise<AuthResponse> => {
     await delay(800);
     // Company-email restriction: any email-based login must use @askussolutions.in
     if (emailOrMobile.includes('@') && !isAllowedEmail(emailOrMobile)) {
@@ -562,16 +563,24 @@ const mockImpl = {
 
 // ── Exported api — real backend when available, mock otherwise ────────────────
 export const api: typeof mockImpl & {
-  verifyOTP(email: string, password: string, sessionId: string): Promise<AuthResponse>;
+  verifyOTP(email: string, password: string, sessionId: string, other?: OtherContact): Promise<AuthResponse>;
 } = USE_REAL_API
   ? {
       // Auth
-      sendOTP: async (identifier: string) => {
-        const r = await apiClient.requestOtp(identifier);
-        return { success: r.sent, sessionId: 'otp-requested', message: r.sent ? 'OTP sent' : 'No code sent', status: r.status };
+      sendOTP: async (identifier: string, other?: string) => {
+        const r = await apiClient.requestOtp(identifier, other);
+        return {
+          success: r.sent,
+          sessionId: 'otp-requested',
+          message: r.sent ? 'OTP sent' : 'No code sent',
+          status: r.status,
+          needs: r.needs,
+          channels: r.channels,
+          emailHint: r.emailHint,
+        };
       },
-      verifyOTP: (identifier: string, code: string, _sessionId: string) =>
-        apiClient.verifyOtp(identifier, code),
+      verifyOTP: (identifier: string, code: string, _sessionId: string, other?: OtherContact) =>
+        apiClient.verifyOtp(identifier, code, other),
       loginWithPassword: (identifier: string, password: string) =>
         apiClient.loginWithPassword(identifier, password),
 

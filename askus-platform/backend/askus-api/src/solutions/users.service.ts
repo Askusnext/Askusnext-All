@@ -256,7 +256,11 @@ export class UsersService {
     const user = await this.getManaged(actor, id);
     if (body.role && !this.assignable(actor).includes(body.role)) throw new ForbiddenException(`You cannot assign ${body.role}`);
     if (body.name !== undefined) user.fullName = body.name;
-    if (body.mobile !== undefined) user.mobile = normalizeIdentifier(body.mobile);
+    if (body.mobile !== undefined) {
+      const mobile = normalizeIdentifier(body.mobile);
+      if (mobile !== user.mobile) user.mobileVerifiedAt = null;
+      user.mobile = mobile;
+    }
     if (body.role) {
       user.roles = [FROM_TMS[body.role]];
       if (body.role === 'Admin') user.permissions = [];

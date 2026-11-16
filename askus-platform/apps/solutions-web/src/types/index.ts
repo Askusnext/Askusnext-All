@@ -271,6 +271,9 @@ export interface AuthResponse {
 export interface OTPResponse {
   success: boolean;
   status?: 'PENDING' | 'REJECTED';
+  needs?: 'email' | 'mobile';
+  channels?: ('sms' | 'email')[];
+  emailHint?: string;
   sessionId: string;
   message: string;
 }

@@ -13,14 +13,14 @@ export class IdentityController {
   @Post('request-otp')
   @HttpCode(200)
   requestOtp(@Body() dto: RequestOtpDto) {
-    return this.identity.requestOtp(dto.identifier, dto.app);
+    return this.identity.requestOtp(dto.identifier, dto.app, dto.otherIdentifier);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
   @Post('verify-otp')
   @HttpCode(200)
   verifyOtp(@Body() dto: VerifyOtpDto) {
-    return this.identity.verifyOtp(dto.identifier, dto.code);
+    return this.identity.verifyOtp(dto.identifier, dto.code, dto.otherIdentifier, dto.otherCode);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })
