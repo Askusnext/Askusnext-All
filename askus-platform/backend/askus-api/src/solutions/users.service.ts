@@ -332,7 +332,9 @@ export class UsersService {
     if (body.name !== undefined) user.fullName = body.name;
     if (body.mobile !== undefined) {
       const mobile = normalizeIdentifier(body.mobile);
+      // Admin-entered contacts are trusted; with the email already on file, the next sign-in is email OTP only.
       if (mobile !== user.mobile) user.mobileVerifiedAt = new Date();
+      if (user.email && !user.emailVerifiedAt) user.emailVerifiedAt = new Date();
       user.mobile = mobile;
     }
     if (body.role) {
