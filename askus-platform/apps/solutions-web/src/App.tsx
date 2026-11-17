@@ -29,6 +29,7 @@ import TicketFormPage from './views/TicketFormPage';
 import AnalyticsPage from './views/AnalyticsPage';
 import CalendarPage from './views/CalendarPage';
 import TimesheetPage from './views/TimesheetPage';
+import AttendancePage from './views/AttendancePage';
 import UserManagementPage from './views/UserManagementPage';
 import LoansPage from './views/LoansPage';
 import InsuranceRequestsPage from './views/InsuranceRequestsPage';
@@ -181,6 +182,11 @@ export default function App() {
               <Route path="timesheet" element={
                 <ProtectedRoute><RoleRoute permission="timesheet">
                   <TimesheetPage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="attendance" element={
+                <ProtectedRoute><RoleRoute permission="timesheet">
+                  <AttendancePage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="insurance-requests" element={

@@ -1,7 +1,13 @@
 import { Module } from '@nestjs/common';
+import { User } from '../identity/identity.entities';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AttendanceController } from './attendance.controller';
+import { AttendanceRecordsController, HolidaysController } from './attendance-records.controller';
+import { AttendanceRecordsService } from './attendance-records.service';
 import { LocationPing, TrackingConsent, WorkSession } from './attendance.entities';
+import { LeaveController } from './leave.controller';
+import { AttendanceConfig, AttendanceRecord, Holiday, LeaveBalance, LeaveRequest, LeaveType, WeekOffRule } from './leave.entities';
+import { LeaveService } from './leave.service';
 import { AttendanceService } from './attendance.service';
 import { CounterService } from './counter.service';
 import { CustomerTicketsController } from './customer-tickets.controller';
@@ -22,13 +28,17 @@ import { UsersService } from './users.service';
 
 // AskUs Solutions ticket management (migrated from the standalone TMS backend).
 @Module({
-  imports: [TypeOrmModule.forFeature([Ticket, SolutionsCustomer, SolutionsVehicle, Counter, Timesheet, KBArticle, TrackingConsent, WorkSession, LocationPing])],
+  imports: [TypeOrmModule.forFeature([Ticket, SolutionsCustomer, SolutionsVehicle, Counter, Timesheet, KBArticle, TrackingConsent, WorkSession, LocationPing,
+    LeaveType, LeaveBalance, LeaveRequest, Holiday, AttendanceRecord, AttendanceConfig, WeekOffRule, User])],
   controllers: [
     TicketsController,
     CustomerTicketsController,
     DashboardController,
     TimesheetController,
     AttendanceController,
+    AttendanceRecordsController,
+    LeaveController,
+    HolidaysController,
     KbController,
     PaymentsController,
     UsersController,
@@ -40,6 +50,8 @@ import { UsersService } from './users.service';
     DashboardService,
     TimesheetService,
     AttendanceService,
+    AttendanceRecordsService,
+    LeaveService,
     KbService,
     PaymentsService,
     UsersService,
