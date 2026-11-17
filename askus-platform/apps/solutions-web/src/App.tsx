@@ -27,6 +27,7 @@ import TicketsPage from './views/TicketsPage';
 import TicketDetailPage from './views/TicketDetailPage';
 import TicketFormPage from './views/TicketFormPage';
 import AnalyticsPage from './views/AnalyticsPage';
+import LeadsPage from './views/LeadsPage';
 import RenewalsPage from './views/RenewalsPage';
 import UnifiedCalendarPage from './views/UnifiedCalendarPage';
 import TimesheetPage from './views/TimesheetPage';
@@ -198,6 +199,9 @@ export default function App() {
                 <ProtectedRoute><RoleRoute permission="loans">
                   <LoansPage />
                 </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="leads" element={
+                <ProtectedRoute><LeadsPage /></ProtectedRoute>
               } />
               <Route path="renewals" element={
                 <ProtectedRoute><RoleRoute permission="tickets">

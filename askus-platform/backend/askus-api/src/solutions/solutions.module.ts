@@ -8,6 +8,10 @@ import { LocationPing, TrackingConsent, WorkSession } from './attendance.entitie
 import { CalendarController, CalendarPublicController, MeetingsController } from './calendar.controller';
 import { ActivityFeedItem, CalendarConnection, Meeting, MeetingAttendee, TeamMember } from './calendar.entities';
 import { CalendarService } from './calendar.service';
+import { LeadsController, LeadsPublicController } from './leads.controller';
+import { CommissionRule, Lead, LeadDocument, LeadEvent, LeadNotification } from './leads.entities';
+import { LeadsNotifyService } from './leads-notify.service';
+import { LeadsService } from './leads.service';
 import { LeaveController } from './leave.controller';
 import { AgentController, DeviceAuthGuard, TimeController, WorkReportsController } from './monitoring.controller';
 import { ActivityHeartbeat, ActivitySession, AgentPairingCode, DailySummary, DeviceToken, MonitoringConsent, MonitoringSetting } from './monitoring.entities';
@@ -41,10 +45,13 @@ import { UsersService } from './users.service';
   imports: [TypeOrmModule.forFeature([Ticket, SolutionsCustomer, SolutionsVehicle, Counter, Timesheet, KBArticle, TrackingConsent, WorkSession, LocationPing,
     LeaveType, LeaveBalance, LeaveRequest, Holiday, AttendanceRecord, AttendanceConfig, WeekOffRule, User,
     ActivityHeartbeat, ActivitySession, DailySummary, DeviceToken, AgentPairingCode, MonitoringConsent, MonitoringSetting,
-    CalendarConnection, Meeting, MeetingAttendee, ActivityFeedItem, TeamMember, TicketHistory, TicketComment])],
+    CalendarConnection, Meeting, MeetingAttendee, ActivityFeedItem, TeamMember, TicketHistory, TicketComment,
+    Lead, LeadEvent, LeadDocument, LeadNotification, CommissionRule])],
   controllers: [
     TicketsController,
     TicketReportsController,
+    LeadsController,
+    LeadsPublicController,
     CustomerTicketsController,
     DashboardController,
     TimesheetController,
@@ -67,6 +74,8 @@ import { UsersService } from './users.service';
     TicketsService,
     TicketAccessService,
     TicketReportsService,
+    LeadsService,
+    LeadsNotifyService,
     CustomerTicketsService,
     DashboardService,
     TimesheetService,

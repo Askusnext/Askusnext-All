@@ -1,6 +1,6 @@
 import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
-export type ActivityModuleName = 'loans' | 'insurance' | 'tickets' | 'timesheet' | 'attendance' | 'calendar' | 'tracking' | 'auth' | 'system';
+export type ActivityModuleName = 'loans' | 'insurance' | 'tickets' | 'timesheet' | 'attendance' | 'calendar' | 'leads' | 'tracking' | 'auth' | 'system';
 
 /**
  * One line of "who did what, when, on which item". Written by the loans, insurance, tickets, timesheet,
