@@ -6,7 +6,7 @@ services:
       POSTGRES_PASSWORD: askus
       POSTGRES_DB: askus
     ports:
-      - "5432:5432"
+      - "5440:5432"
     volumes:
       - askus_pg:/var/lib/postgresql/data
       - ./backend/askus-api/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro

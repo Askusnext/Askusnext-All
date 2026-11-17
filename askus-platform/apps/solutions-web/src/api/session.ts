@@ -134,3 +134,18 @@ export async function authFetch<T>(
   }
   return parse<T>(res);
 }
+
+/** Fetches a protected file (for example a customer document) and returns a temporary local URL to open it. */
+export async function authFileUrl(keys: SessionKeys, path: string): Promise<string> {
+  const send = () => {
+    const token = sessionStorage.getItem(keys.access);
+    return fetch(`${BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  };
+  let res = await send();
+  if (res.status === 401 && (await refreshTokens(keys))) res = await send();
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ message: res.statusText }));
+    throw new Error((Array.isArray(err.message) ? err.message.join(', ') : err.message) || 'Could not open the file');
+  }
+  return URL.createObjectURL(await res.blob());
+}

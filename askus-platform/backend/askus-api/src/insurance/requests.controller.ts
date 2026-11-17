@@ -1,4 +1,5 @@
-import { Body, Controller, Get, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post, Req, UseGuards } from '@nestjs/common';
+import type { Request } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { Type } from 'class-transformer';
@@ -18,6 +19,9 @@ class DocRefDto implements DocRef {
   @IsString() @MaxLength(10) format: string;
   @IsOptional() @IsIn(['rc', 'policy']) kind?: 'rc' | 'policy';
 }
+
+/** Public address of this API (for the local file links). Set PUBLIC_API_URL when running behind a proxy. */
+const apiBase = (req: Request) => process.env.PUBLIC_API_URL ?? `${req.protocol}://${req.get('host')}/api`;
 
 class OfflineRequestDto {
   @IsUUID() id: string;
@@ -80,14 +84,14 @@ export class InsuranceRequestsController {
 
   @Post('documents/sign')
   @HttpCode(200)
-  sign(@Body() dto: SignUploadDto, @CurrentUser() user: AuthUser) {
-    return this.requests.signUpload(user, dto);
+  sign(@Body() dto: SignUploadDto, @CurrentUser() user: AuthUser, @Req() req: Request) {
+    return this.requests.signUpload(user, dto, apiBase(req));
   }
 
   @Post('documents/download')
   @HttpCode(200)
-  download(@Body() dto: DownloadDto, @CurrentUser() user: AuthUser) {
-    return this.requests.signDownload(user, dto.key);
+  download(@Body() dto: DownloadDto, @CurrentUser() user: AuthUser, @Req() req: Request) {
+    return this.requests.signDownload(user, dto.key, apiBase(req));
   }
 
   // Paid provider call per lookup, so it is rate limited per client.

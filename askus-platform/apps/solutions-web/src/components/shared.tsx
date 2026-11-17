@@ -21,7 +21,8 @@ export function PriorityTag({ priority }: { priority: Priority }) {
 }
 
 // ── Expiry tag ───────────────────────────────────────────────────────────────
-export function ExpiryTag({ date }: { date: string }) {
+export function ExpiryTag({ date }: { date?: string | null }) {
+  if (!date || Number.isNaN(new Date(date).getTime())) return <span style={{ color: '#bbb' }}>—</span>;
   const days = Math.ceil((new Date(date).getTime() - Date.now()) / 86400000);
   const color = days < 0 ? 'red' : days <= 10 ? 'red' : days <= 30 ? 'orange' : days <= 60 ? 'blue' : 'green';
   const label = days < 0 ? `Expired ${Math.abs(days)}d ago` : `${days}d left`;

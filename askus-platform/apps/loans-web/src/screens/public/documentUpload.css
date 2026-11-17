@@ -1,0 +1,159 @@
+/*
+ * Document upload step. Plain CSS on purpose: the layout must not depend on
+ * utility-class generation, so it looks the same in every environment.
+ *
+ * Sizes were measured from the reference page screenshot (rendered at 150%
+ * display scale): title 28px, body 12px, labels 14px, circles 44px, etc.
+ */
+.du-root {
+  --du-blue: #0b5fff;
+  --du-navy: #052f5f;
+  --du-green: #1d8e3b;
+  display: grid;
+  grid-template-columns: 35% 1fr;
+  height: 100vh;
+  height: 100dvh;
+  background: #fff;
+  font-family: 'Open Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: #1c1d1f;
+}
+.du-root button, .du-root select { font-family: inherit; }
+
+/* ---------- left progress panel ---------- */
+.du-aside {
+  background: #f2f7ff;
+  padding: 44px 60px 40px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.du-aside h2 { margin: 28px 0 0; font-size: 14px; font-weight: 600; line-height: 20px; color: var(--du-navy); }
+.du-aside p { margin: 6px 0 0; font-size: 12px; line-height: 18px; color: #5b6b85; }
+.du-aside ul { margin: 14px 0 0; padding-left: 19px; list-style: disc; font-size: 12px; line-height: 18px; color: #5b6b85; }
+.du-aside ul li { display: list-item; margin: 0; }
+.du-aside ul strong { color: var(--du-navy); font-weight: 600; }
+
+.du-steps { list-style: none; margin: 30px 0 0; padding: 0; }
+.du-step { position: relative; display: flex; align-items: flex-start; gap: 10px; height: 97px; }
+.du-step:last-child { height: auto; }
+.du-step-line { position: absolute; left: 21px; top: 44px; height: 53px; width: 2px; background: #bcd2f5; }
+.du-step-line.is-done { background: var(--du-green); }
+.du-step-line.is-active { background: var(--du-blue); }
+.du-step-dot {
+  position: relative; z-index: 1; flex: none; width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 600; color: var(--du-navy);
+  background: #fff; border: 1px solid #d0d9ea; cursor: pointer; padding: 0;
+}
+.du-step-dot.is-active { background: var(--du-blue); color: #fff; border-color: var(--du-blue); box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px rgba(11, 95, 255, 0.55); }
+.du-step-dot.is-done { background: var(--du-green); color: #fff; border-color: var(--du-green); }
+.du-step-dot svg { width: 20px; height: 20px; }
+.du-step-title { font-size: 17px; line-height: 44px; color: #3f5373; white-space: nowrap; }
+.du-step-title.is-active { color: var(--du-blue); font-weight: 500; }
+.du-step-title.is-done { color: var(--du-green); font-weight: 500; }
+
+/* ---------- right content ---------- */
+.du-main { min-height: 0; overflow-y: auto; padding: 56px 40px 40px; }
+.du-content { max-width: 581px; margin: 0 auto; }
+.du-title { margin: 0; font-size: 28px; line-height: 36px; font-weight: 700; color: var(--du-navy); }
+.du-subtitle { margin: 4px 0 0; font-size: 13px; color: #5f6368; }
+.du-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; line-height: 18px; }
+.du-meta + .du-meta { margin-top: 12px; }
+.du-meta > span:first-child { margin-right: 0; }
+.du-chip { background: #e8f0fe; color: var(--du-blue); border-radius: 4px; padding: 2px 8px; font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; line-height: 17px; }
+
+.du-slots { display: flex; flex-direction: column; gap: 16px; margin-top: 26px; }
+.du-card { border: 1px solid #e7e7e7; border-radius: 12px; background: #fff; padding: 14px 17px 9px 21px; }
+.du-card.is-alt { background: #f8faff; }
+.du-card-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.du-card-name { display: flex; align-items: center; gap: 12px; min-width: 0; font-size: 14px; font-weight: 500; line-height: 20px; color: var(--du-navy); }
+.du-card-name img { flex: none; width: 22px; height: 22px; }
+.du-filename { margin: 6px 0 0 56px; font-size: 11px; color: #6a6d71; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.du-period { margin: 14px 0 0 56px; }
+.du-period p { margin: 0; font-size: 12px; font-weight: 600; line-height: 18px; color: var(--du-navy); }
+.du-period-selects { display: flex; gap: 10px; margin-top: 8px; }
+.du-select { height: 26px; border: 1px solid #d0d1d2; border-radius: 4px; background: #f5f5f5; padding: 0 6px; font-size: 12px; font-weight: 600; color: #4a4d52; }
+.du-select:first-child { width: 80px; }
+.du-select:last-child { width: 104px; }
+.du-select:disabled { opacity: 0.75; }
+.du-link { display: block; margin: 8px 0 0 56px; padding: 0; background: none; border: 0; font-size: 11px; color: #6a6d71; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.du-link:hover { color: #e11d48; }
+
+.du-upload {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer;
+  width: 129px; height: 39px; border: 1px solid var(--du-blue); background: #f5f8ff; color: var(--du-blue);
+  border-radius: 5px; font-size: 12px; font-weight: 500; padding: 0;
+}
+.du-upload img { width: 20px; height: 20px; }
+.du-upload:hover { background: #e8f0fe; }
+.du-upload:disabled { opacity: 0.5; cursor: not-allowed; }
+.du-done { flex: none; display: flex; align-items: center; gap: 6px; }
+.du-pill { display: inline-flex; align-items: center; gap: 4px; border: 1px solid #9be0b3; background: #e8f8ee; color: var(--du-green); border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 500; line-height: 18px; }
+.du-pill img { width: 12px; height: 12px; }
+.du-icon-btn { width: 30px; height: 30px; border: 0; border-radius: 50%; background: #eef2ff; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.du-icon-btn img { width: 14px; height: 14px; }
+.du-icon-btn:hover { background: #dde6ff; }
+.du-icon-btn:disabled { opacity: 0.5; }
+
+.du-or { display: flex; align-items: center; gap: 12px; }
+.du-or span { height: 1px; flex: 1; background: #d0d1d2; }
+.du-or b { font-weight: 400; font-size: 12px; color: #3f5373; flex: none; }
+
+.du-error { margin: 14px 0 0; font-size: 12px; color: #e11d48; }
+.du-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 32px; }
+.du-btn {
+  height: 43px; width: 186px; padding: 0 16px; border: 1px solid var(--du-blue); border-radius: 8px;
+  background: var(--du-blue); color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+}
+.du-btn:hover { background: #0a54e6; }
+.du-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.du-btn.is-outline { background: #fff; color: var(--du-blue); }
+.du-btn.is-outline:hover { background: #f2f7ff; }
+.du-terms { margin: 30px 0 0; text-align: center; font-size: 12px; line-height: 18px; }
+.du-terms a { color: #2b2bd6; font-weight: 500; }
+
+.du-box { max-width: 340px; border: 1px solid #e4e4e3; border-radius: 10px; padding: 16px; }
+.du-box h3 { margin: 0; font-size: 14px; color: var(--du-navy); }
+.du-box p { margin: 4px 0 0; font-size: 12px; color: #6a6d71; }
+.du-primary { margin-top: 12px; border: 0; border-radius: 6px; background: #0066ff; color: #fff; padding: 8px 18px; font-size: 12px; font-weight: 600; cursor: pointer; }
+.du-success { border: 1px solid #9be0b3; background: #f3fbf6; border-radius: 12px; padding: 24px; text-align: center; }
+.du-success h1 { margin: 12px 0 0; font-size: 20px; color: var(--du-navy); }
+.du-success p { margin: 6px 0 0; font-size: 13px; color: #45484d; }
+.du-success-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 18px; }
+.du-spin { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6a6d71; }
+
+/* ---------- mobile top bar ---------- */
+.du-mobile { display: none; background: #f2f7ff; border-bottom: 1px solid #e4e4e3; padding: 12px 16px; }
+.du-mobile-row { display: flex; align-items: center; justify-content: space-between; }
+.du-mobile small { font-size: 12px; font-weight: 500; color: #6a6d71; }
+.du-bars { display: flex; gap: 6px; margin-top: 12px; }
+.du-bars i { flex: 1; height: 6px; border-radius: 999px; background: #d0d9ea; }
+.du-bars i.is-active { background: var(--du-blue); }
+.du-bars i.is-done { background: var(--du-green); }
+
+@media (max-width: 767px) {
+  .du-root { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+  .du-aside { display: none; }
+  .du-mobile { display: block; }
+  .du-main { padding: 22px 16px 36px; }
+  .du-title { font-size: 22px; line-height: 30px; }
+  .du-meta, .du-aside p { font-size: 13px; }
+  .du-card { padding: 14px; }
+  .du-card-name { font-size: 15px; }
+  .du-upload { width: 110px; height: 40px; font-size: 13px; }
+  .du-select { height: 32px; font-size: 13px; }
+  .du-select:first-child { width: 90px; }
+  .du-select:last-child { width: 120px; }
+  .du-filename, .du-period, .du-link { margin-left: 0; }
+  .du-btn { width: auto; flex: 1; height: 46px; font-size: 15px; }
+  .du-terms { font-size: 13px; }
+}
+
+.du-reuse { margin: 0 0 16px; padding: 10px 12px; border-radius: 8px; background: #eef5ff; border: 1px solid #cfe0ff; color: #1b4b9b; font-size: 12px; line-height: 18px; }
+
+/* ---------- reviewer feedback ---------- */
+.du-pill.is-flag { border-color: #f5b5b5; background: #fdecec; color: #c62828; }
+.du-flag-note { margin: 8px 0 0 56px; padding: 8px 10px; border-radius: 6px; background: #fdecec; color: #9b1c1c; font-size: 12px; line-height: 18px; }
+.du-flag-banner { margin: 0 0 16px; padding: 12px 14px; border-radius: 8px; background: #fff4e5; border: 1px solid #ffd8a8; color: #8a4b00; font-size: 12px; line-height: 18px; }
+.du-step-dot.is-flag { border-color: #e53935; box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(229, 57, 53, 0.45); }
+@media (max-width: 767px) { .du-flag-note { margin-left: 0; } }

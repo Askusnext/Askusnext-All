@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+:root {
+  font-family: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Custom smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.7);
+}
+
+/* Mega-menu entrance */
+@keyframes megaIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* Product tiles: lift + wiggle on hover/focus (static icons), gentle scale for animated ones */
+@keyframes tileWiggle {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-6px) rotate(-5deg); }
+  60% { transform: translateY(-2px) rotate(4deg); }
+}
+.tile .tile-icon { transition: transform 0.25s ease; }
+.tile:hover .tile-icon, .tile:focus-visible .tile-icon { transform: scale(1.08); }
+.tile:hover .tile-icon > img, .tile:focus-visible .tile-icon > img { animation: tileWiggle 0.6s ease; }
+
+@keyframes menuIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- Loan quotes page (rebuilt from the reference) ---- */
+@theme {
+  --font-poppins: 'Poppins', ui-sans-serif, system-ui, sans-serif;
+}
+.quotes-scroll-none { -ms-overflow-style: none; scrollbar-width: none; }
+.quotes-scroll-none::-webkit-scrollbar { display: none; }
+@media (max-width: 650px) {
+  .quotes-v2-h-slide:first-child { margin-left: 4%; }
+  .quotes-v2-h-slide:last-child { margin-right: 4%; }
+}
+@media (max-width: 350px) {
+  .quotes-v2-h-slide { flex: 0 0 89%; }
+}
+@keyframes quotesMarquee { 0% { transform: translateX(0); } to { transform: translateX(-50%); } }
+.quotes-marquee { animation: quotesMarquee 30s linear infinite; }
+.quotes-marquee:hover { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .quotes-marquee { animation: none; } }
+@keyframes slideInFromBottom { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes quotesBounceFirst { 0%, 100% { transform: translateY(0); } 25%, 75% { transform: translateY(-4px); } 50% { transform: translateY(0); } }
+.quotes-bounce-first { animation: quotesBounceFirst 0.8s ease-in-out 3; }
+
+/* ---- Responsive tables: rows become labelled cards on phones ---- */
+@media (max-width: 767px) {
+  .rtable, .rtable tbody, .rtable tr, .rtable td { display: block; width: 100%; }
+  .rtable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .rtable tbody { padding: 10px; }
+  .rtable tbody tr { margin-bottom: 10px; border: 1px solid rgb(30 41 59); border-radius: 14px; background: rgb(15 23 42 / 0.55); padding: 4px 14px; }
+  .rtable tbody tr:last-child { margin-bottom: 0; }
+  .rtable td { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 9px 0 !important; text-align: right !important; border-bottom: 1px dashed rgb(30 41 59); min-width: 0; overflow-wrap: anywhere; }
+  .rtable td:last-child { border-bottom: 0; }
+  .rtable td[data-label]::before { content: attr(data-label); flex: 0 0 auto; max-width: 42%; text-align: left; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: rgb(148 163 184); padding-top: 2px; }
+  .rtable td[data-label=""]::before { content: none; }
+  .rtable td.rt-action { justify-content: stretch; }
+  .rtable td.rt-action > * { width: 100%; justify-content: center; padding-top: 10px; padding-bottom: 10px; }
+}
+@media (max-width: 767px) {
+  .rtable.rt-light tbody tr { border-color: #e2e8f0; background: #fff; }
+  .rtable.rt-light td { border-bottom-color: #f1f5f9; }
+  .rtable.rt-light td[data-label]::before { color: #64748b; }
+}
+@media (max-width: 767px) {
+  .rtable td.rt-stack { flex-direction: column; align-items: stretch; gap: 4px; text-align: left !important; }
+  .rtable td.rt-stack[data-label]::before { max-width: none; }
+}

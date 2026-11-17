@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto';
 import { existsSync, mkdirSync } from 'fs';
 import { diskStorage } from 'multer';
 import { extname, join } from 'path';
+import { ActivityService } from '../activity/activity.service';
 import { AccessGuard, AuthUser, CurrentUser, JwtAuthGuard, Permissions, Roles } from '../common/access';
 import { Role } from '../common/roles';
 import { TicketStatus } from './solutions.entities';
@@ -42,7 +43,19 @@ class CommentDto {
 @Roles(Role.Employee, Role.Agent)
 @Permissions('tickets')
 export class TicketsController {
-  constructor(private readonly tickets: TicketsService) {}
+  constructor(
+    private readonly tickets: TicketsService,
+    private readonly activity: ActivityService,
+  ) {}
+
+  /** Records what a staff member did to a ticket. */
+  private async track(user: AuthUser, id: string, action: string, summary: (label: string) => string, metadata?: Record<string, unknown>, known?: string) {
+    let label = known ?? id;
+    if (!known) {
+      try { label = ((await this.tickets.findOne(id)) as { ticketNumber?: string }).ticketNumber ?? id; } catch { /* keep the id */ }
+    }
+    await this.activity.log(user, { module: 'tickets', action, entityType: 'ticket', entityId: id, entityLabel: label, summary: summary(label), metadata });
+  }
 
   @Get()
   findAll(@Query() query: Record<string, string>) {
@@ -56,31 +69,42 @@ export class TicketsController {
 
   @Roles(Role.Employee)
   @Post()
-  create(@Body() body: Record<string, any>, @CurrentUser() user: AuthUser) {
-    return this.tickets.create(body, user.name);
+  async create(@Body() body: Record<string, any>, @CurrentUser() user: AuthUser) {
+    const t = (await this.tickets.create(body, user.name)) as { id: string; ticketNumber?: string };
+    await this.track(user, t.id, 'ticket.created', (l) => `Created ticket ${l}`, { type: body.ticketType, priority: body.priority }, t.ticketNumber);
+    return t;
   }
 
   @Roles(Role.Employee)
   @Put(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() body: Record<string, any>, @CurrentUser() user: AuthUser) {
-    return this.tickets.update(id, body, user.name);
+  async update(@Param('id', ParseUUIDPipe) id: string, @Body() body: Record<string, any>, @CurrentUser() user: AuthUser) {
+    const t = (await this.tickets.update(id, body, user.name)) as { ticketNumber?: string };
+    const fields = Object.keys(body ?? {}).filter((k) => !['note'].includes(k)).slice(0, 12);
+    await this.track(user, id, 'ticket.updated', (l) => `Updated ticket ${l}${body.status ? ` (status ${body.status})` : ''}`, { fields, status: body.status, assignedToName: body.assignedToName }, t.ticketNumber);
+    return t;
   }
 
   @Roles(Role.Employee)
   @Put(':id/status')
-  updateStatus(@Param('id', ParseUUIDPipe) id: string, @Body() dto: StatusDto, @CurrentUser() user: AuthUser) {
-    return this.tickets.updateStatus(id, dto.status, dto.note, user.name);
+  async updateStatus(@Param('id', ParseUUIDPipe) id: string, @Body() dto: StatusDto, @CurrentUser() user: AuthUser) {
+    const r = await this.tickets.updateStatus(id, dto.status, dto.note, user.name);
+    await this.track(user, id, 'ticket.status_changed', (l) => `Ticket ${l}: status changed to ${dto.status}`, { status: dto.status, note: dto.note });
+    return r;
   }
 
   @Roles(Role.Employee)
   @Put(':id/payment')
-  updatePayment(@Param('id', ParseUUIDPipe) id: string, @Body() body: Record<string, any>, @CurrentUser() user: AuthUser) {
-    return this.tickets.updatePayment(id, body, user.name);
+  async updatePayment(@Param('id', ParseUUIDPipe) id: string, @Body() body: Record<string, any>, @CurrentUser() user: AuthUser) {
+    const r = await this.tickets.updatePayment(id, body, user.name);
+    await this.track(user, id, 'ticket.payment_updated', (l) => `Ticket ${l}: payment ${body.paymentStatus ?? 'updated'}`, { paymentStatus: body.paymentStatus, amount: body.amount });
+    return r;
   }
 
   @Post(':id/comment')
-  addComment(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CommentDto, @CurrentUser() user: AuthUser) {
-    return this.tickets.addComment(id, dto.note, user.name);
+  async addComment(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CommentDto, @CurrentUser() user: AuthUser) {
+    const r = await this.tickets.addComment(id, dto.note, user.name);
+    await this.track(user, id, 'ticket.commented', (l) => `Ticket ${l}: added a comment`, { note: dto.note.slice(0, 200) });
+    return r;
   }
 
   @Post(':id/documents')
@@ -97,19 +121,23 @@ export class TicketsController {
       limits: { fileSize: 10 * 1024 * 1024 },
     }),
   )
-  addDocument(
+  async addDocument(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File,
     @Body('type') type: string,
     @CurrentUser() user: AuthUser,
   ) {
     if (!file) throw new BadRequestException('file is required');
-    return this.tickets.addDocument(id, file, type, user.name);
+    const r = await this.tickets.addDocument(id, file, type, user.name);
+    await this.track(user, id, 'ticket.document_added', (l) => `Ticket ${l}: attached ${file.originalname}`, { type });
+    return r;
   }
 
   @Roles(Role.Employee)
   @Delete(':id/documents/:docId')
-  deleteDocument(@Param('id', ParseUUIDPipe) id: string, @Param('docId') docId: string) {
-    return this.tickets.deleteDocument(id, docId);
+  async deleteDocument(@Param('id', ParseUUIDPipe) id: string, @Param('docId') docId: string, @CurrentUser() user: AuthUser) {
+    const r = await this.tickets.deleteDocument(id, docId);
+    await this.track(user, id, 'ticket.document_removed', (l) => `Ticket ${l}: removed a document`, { docId });
+    return r;
   }
 }

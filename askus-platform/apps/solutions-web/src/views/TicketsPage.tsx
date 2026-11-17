@@ -97,8 +97,8 @@ export default function TicketsPage() {
                     <div style={{ fontWeight:500, fontSize:12 }}>{t.vehicleRegNo} · {t.vehicleName}</div>
                     <div style={{ fontSize:11, color:'#888' }}>{t.customerName}</div>
                   </td>
-                  <td style={{ padding:'10px 14px', fontSize:12 }}>{t.policy.insurer}</td>
-                  <td style={{ padding:'10px 14px' }}><ExpiryTag date={t.policy.expiryDate} /></td>
+                  <td style={{ padding:'10px 14px', fontSize:12 }}>{t.policy?.insurer || '—'}</td>
+                  <td style={{ padding:'10px 14px' }}><ExpiryTag date={t.policy?.expiryDate} /></td>
                   <td style={{ padding:'10px 14px' }}><StatusBadge status={t.status as TicketStatus} /></td>
                   <td style={{ padding:'10px 14px' }}><PriorityTag priority={t.priority as Priority} /></td>
                   <td style={{ padding:'10px 14px' }} onClick={e => e.stopPropagation()}>

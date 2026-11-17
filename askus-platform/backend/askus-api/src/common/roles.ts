@@ -11,7 +11,7 @@ export enum Role {
 }
 
 // Granted per Employee/Agent by an Admin; Admin and Super Admin are never restricted by these.
-export const PERMISSIONS = ['tickets', 'payments', 'timesheet', 'kb', 'users', 'reports'] as const;
+export const PERMISSIONS = ['tickets', 'payments', 'timesheet', 'kb', 'users', 'reports', 'loans', 'insurance'] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
 export type Product = 'taxi' | 'insurance' | 'loans' | 'organic';

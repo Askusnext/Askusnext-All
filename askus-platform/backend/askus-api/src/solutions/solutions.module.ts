@@ -1,5 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AttendanceController } from './attendance.controller';
+import { LocationPing, TrackingConsent, WorkSession } from './attendance.entities';
+import { AttendanceService } from './attendance.service';
 import { CounterService } from './counter.service';
 import { CustomerTicketsController } from './customer-tickets.controller';
 import { CustomerTicketsService } from './customer-tickets.service';
@@ -19,12 +22,13 @@ import { UsersService } from './users.service';
 
 // AskUs Solutions ticket management (migrated from the standalone TMS backend).
 @Module({
-  imports: [TypeOrmModule.forFeature([Ticket, SolutionsCustomer, SolutionsVehicle, Counter, Timesheet, KBArticle])],
+  imports: [TypeOrmModule.forFeature([Ticket, SolutionsCustomer, SolutionsVehicle, Counter, Timesheet, KBArticle, TrackingConsent, WorkSession, LocationPing])],
   controllers: [
     TicketsController,
     CustomerTicketsController,
     DashboardController,
     TimesheetController,
+    AttendanceController,
     KbController,
     PaymentsController,
     UsersController,
@@ -35,6 +39,7 @@ import { UsersService } from './users.service';
     CustomerTicketsService,
     DashboardService,
     TimesheetService,
+    AttendanceService,
     KbService,
     PaymentsService,
     UsersService,

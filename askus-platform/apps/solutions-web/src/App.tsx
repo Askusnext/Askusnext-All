@@ -30,6 +30,9 @@ import AnalyticsPage from './views/AnalyticsPage';
 import CalendarPage from './views/CalendarPage';
 import TimesheetPage from './views/TimesheetPage';
 import UserManagementPage from './views/UserManagementPage';
+import LoansPage from './views/LoansPage';
+import InsuranceRequestsPage from './views/InsuranceRequestsPage';
+import ActivityPage from './views/ActivityPage';
 import type { Permission } from './types';
 import { hasPermission, homePath, isAdminRole } from './access';
 
@@ -178,6 +181,21 @@ export default function App() {
               <Route path="timesheet" element={
                 <ProtectedRoute><RoleRoute permission="timesheet">
                   <TimesheetPage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="insurance-requests" element={
+                <ProtectedRoute><RoleRoute permission="insurance">
+                  <InsuranceRequestsPage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="activity" element={
+                <ProtectedRoute><RoleRoute>
+                  <ActivityPage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="loans" element={
+                <ProtectedRoute><RoleRoute permission="loans">
+                  <LoansPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="renewals" element={

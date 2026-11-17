@@ -52,7 +52,7 @@ export default function BoardPage() {
               </div>
               <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
                 {byStatus(col.key).map(t => {
-                  const days = daysLeft(t.policy.expiryDate);
+                  const days = t.policy?.expiryDate ? daysLeft(t.policy.expiryDate) : Infinity;
                   return (
                     <Card key={t.id} size="small" style={{ borderRadius:8, cursor:'pointer', border:'1px solid #f0f0f0' }}
                       styles={{ body:{ padding:'10px 12px' } }} onClick={() => navigate(`/tickets/${t.id}`)}>
