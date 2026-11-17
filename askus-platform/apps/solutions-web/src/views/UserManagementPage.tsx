@@ -48,7 +48,7 @@ export default function UserManagementPage() {
   const [editing, setEditing] = useState<ManagedUser | null>(null);
   const [saving, setSaving] = useState(false);
   // Full PAN details of the user being edited, fetched on demand (the list only carries a masked number).
-  const [pan, setPan] = useState<{ panNumber: string | null; url: string | null } | null>(null);
+  const [pan, setPan] = useState<{ panNumber: string | null; url: string | null; backUrl: string | null } | null>(null);
   const [form] = Form.useForm();
   const [approving, setApproving] = useState<ManagedUser | null>(null);
   const [approveForm] = Form.useForm();
@@ -123,9 +123,14 @@ export default function UserManagementPage() {
         if (values.role !== 'Admin') await userApi.setPermissions(editing.id, values.permissions ?? []);
         const newNumber = (values.panNumber ?? '').trim().toUpperCase();
         const newImage = values.panImage?.[0]?.originFileObj as File | undefined;
+        const newBackImage = values.panBackImage?.[0]?.originFileObj as File | undefined;
         const numberChanged = !!newNumber && newNumber !== (pan?.panNumber ?? '');
-        if (numberChanged || newImage) {
-          await userApi.updatePan(editing.id, { panNumber: numberChanged ? newNumber : undefined, panImage: newImage });
+        if (numberChanged || newImage || newBackImage) {
+          await userApi.updatePan(editing.id, {
+            panNumber: numberChanged ? newNumber : undefined,
+            panImage: newImage,
+            panBackImage: newBackImage,
+          });
         }
         message.success('User updated');
       } else {
@@ -134,9 +139,11 @@ export default function UserManagementPage() {
           email: values.email,
           mobile: values.mobile,
           role: values.role,
-          aadhaar: values.aadhaar?.[0]?.originFileObj as File | undefined,
+          aadhaar: values.aadhaarFront?.[0]?.originFileObj as File | undefined,
+          aadhaarBack: values.aadhaarBack?.[0]?.originFileObj as File | undefined,
           panNumber: values.panNumber,
           panImage: values.panImage?.[0]?.originFileObj as File | undefined,
+          panBackImage: values.panBackImage?.[0]?.originFileObj as File | undefined,
           permissions: values.role === 'Admin' ? [] : values.permissions ?? [],
         });
         message.success(
@@ -154,7 +161,9 @@ export default function UserManagementPage() {
 
   const viewAadhaar = async (user: ManagedUser) => {
     try {
-      window.open(await userApi.aadhaarUrl(user.id), '_blank', 'noopener');
+      const d = await userApi.aadhaarUrls(user.id);
+      window.open(d.frontUrl, '_blank', 'noopener');
+      if (d.backUrl) window.open(d.backUrl, '_blank', 'noopener');
     } catch (err) {
       message.error(err instanceof Error ? err.message : 'Could not open Aadhaar');
     }
@@ -170,12 +179,22 @@ export default function UserManagementPage() {
     }
   };
 
+  const viewPanBack = async (user: ManagedUser) => {
+    try {
+      const d = await userApi.panDetails(user.id);
+      if (!d.backUrl) throw new Error('No PAN back image uploaded');
+      window.open(d.backUrl, '_blank', 'noopener');
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : 'Could not open PAN');
+    }
+  };
+
   const removePan = async (user: ManagedUser) => {
     try {
       await userApi.deletePan(user.id);
       message.success('PAN number and image removed');
       setPan(null);
-      form.setFieldsValue({ panNumber: '', panImage: [] });
+      form.setFieldsValue({ panNumber: '', panImage: [], panBackImage: [] });
       setEditing({ ...user, hasPan: false, panMasked: null });
       await loadUsers();
     } catch (err) {
@@ -444,25 +463,31 @@ export default function UserManagementPage() {
           </Form.Item>
 
           {!editing && (
-            <Form.Item
-              name="aadhaar"
-              label="Aadhaar document"
-              valuePropName="fileList"
-              getValueFromEvent={(e) => e?.fileList}
-              extra="JPG, PNG or PDF, up to 5 MB. Stored privately; only Admins can view it."
-            >
-              <Upload
-                maxCount={1}
-                accept=".jpg,.jpeg,.png,.pdf"
-                beforeUpload={(file) => {
-                  if (!AADHAAR_TYPES.includes(file.type)) { message.error('Aadhaar must be a JPG, PNG or PDF'); return Upload.LIST_IGNORE; }
-                  if (file.size > AADHAAR_MAX_BYTES) { message.error('File must be 5 MB or smaller'); return Upload.LIST_IGNORE; }
-                  return false;
-                }}
+            <>
+              <Form.Item
+                name="aadhaarFront"
+                label="Aadhaar front page"
+                valuePropName="fileList"
+                getValueFromEvent={(e) => e?.fileList}
+                extra="JPG, PNG or PDF, up to 5 MB. Stored privately; only Admins can view it."
               >
-                <Button icon={<UploadOutlined />}>Select file</Button>
-              </Upload>
-            </Form.Item>
+                <Upload maxCount={1} accept=".jpg,.jpeg,.png,.pdf" beforeUpload={beforeDocUpload('Aadhaar front')}>
+                  <Button icon={<UploadOutlined />}>Select file</Button>
+                </Upload>
+              </Form.Item>
+
+              <Form.Item
+                name="aadhaarBack"
+                label="Aadhaar back page"
+                valuePropName="fileList"
+                getValueFromEvent={(e) => e?.fileList}
+                extra="JPG, PNG or PDF, up to 5 MB. Stored privately; only Admins can view it."
+              >
+                <Upload maxCount={1} accept=".jpg,.jpeg,.png,.pdf" beforeUpload={beforeDocUpload('Aadhaar back')}>
+                  <Button icon={<UploadOutlined />}>Select file</Button>
+                </Upload>
+              </Form.Item>
+            </>
           )}
 
           <Form.Item
@@ -479,19 +504,32 @@ export default function UserManagementPage() {
 
           <Form.Item
             name="panImage"
-            label={editing && editing.hasPan ? 'Replace PAN image' : 'PAN image'}
+            label={editing && editing.hasPan ? 'Replace PAN front image' : 'PAN front image'}
             valuePropName="fileList"
             getValueFromEvent={(e) => e?.fileList}
             extra="JPG, PNG or PDF, up to 5 MB. Stored privately; only Admins can view it."
           >
-            <Upload maxCount={1} accept=".jpg,.jpeg,.png,.pdf" beforeUpload={beforeDocUpload('PAN')}>
+            <Upload maxCount={1} accept=".jpg,.jpeg,.png,.pdf" beforeUpload={beforeDocUpload('PAN front')}>
+              <Button icon={<UploadOutlined />}>Select file</Button>
+            </Upload>
+          </Form.Item>
+
+          <Form.Item
+            name="panBackImage"
+            label={editing && editing.hasPan ? 'Replace PAN back image' : 'PAN back image'}
+            valuePropName="fileList"
+            getValueFromEvent={(e) => e?.fileList}
+            extra="JPG, PNG or PDF, up to 5 MB. Stored privately; only Admins can view it."
+          >
+            <Upload maxCount={1} accept=".jpg,.jpeg,.png,.pdf" beforeUpload={beforeDocUpload('PAN back')}>
               <Button icon={<UploadOutlined />}>Select file</Button>
             </Upload>
           </Form.Item>
 
           {editing && (editing.hasPan || editing.panMasked) && (
             <Space style={{ marginBottom: 16 }}>
-              <Button size="small" icon={<FileSearchOutlined />} disabled={!pan?.url} onClick={() => viewPan(editing)}>View PAN image</Button>
+              <Button size="small" icon={<FileSearchOutlined />} disabled={!pan?.url} onClick={() => viewPan(editing)}>View PAN front</Button>
+              <Button size="small" icon={<FileSearchOutlined />} disabled={!pan?.backUrl} onClick={() => viewPanBack(editing)}>View PAN back</Button>
               <Popconfirm
                 title="Remove PAN number and image?"
                 description="The stored PAN image is deleted permanently."

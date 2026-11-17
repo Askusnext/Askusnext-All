@@ -24,16 +24,22 @@ class CreateStaffDto {
   @IsIn(STAFF_ROLES)
   role: (typeof STAFF_ROLES)[number];
 
-  // Object key returned by POST /users/aadhaar-upload-url after the file was uploaded.
+  // Object keys returned by POST /users/aadhaar-upload-url after each page was uploaded.
   @IsString()
   aadhaarKey: string;
+
+  @IsString()
+  aadhaarBackKey: string;
 
   @Matches(PAN, { message: 'Enter a valid PAN number (for example ABCDE1234F)' })
   panNumber: string;
 
-  // Object key returned by POST /users/pan-upload-url after the file was uploaded.
+  // Object keys returned by POST /users/pan-upload-url after each page was uploaded.
   @IsString()
   panKey: string;
+
+  @IsString()
+  panBackKey: string;
 
   @IsOptional()
   @IsArray()
@@ -65,6 +71,10 @@ class UpdatePanDto {
   @IsOptional()
   @IsString()
   panKey?: string;
+
+  @IsOptional()
+  @IsString()
+  panBackKey?: string;
 }
 
 class PermissionsDto {

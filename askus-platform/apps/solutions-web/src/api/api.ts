@@ -159,7 +159,7 @@ export const apiClient = {
   getUsers: () =>
     get<User[]>('/users'),
 
-  createUser: (data: { name: string; email: string; mobile: string; role: string; aadhaarKey: string; panNumber: string; panKey: string; permissions?: string[]; password?: string }) =>
+  createUser: (data: { name: string; email: string; mobile: string; role: string; aadhaarKey: string; aadhaarBackKey: string; panNumber: string; panKey: string; panBackKey: string; permissions?: string[]; password?: string }) =>
     post<User>('/users', data),
 
   getAadhaarUploadUrl: (contentType: string, size: number) =>
@@ -169,9 +169,9 @@ export const apiClient = {
     post<{ key: string; uploadUrl: string }>('/users/pan-upload-url', { contentType, size }),
 
   getPan: (id: string) =>
-    get<{ panNumber: string | null; url: string | null }>(`/users/${id}/pan`),
+    get<{ panNumber: string | null; url: string | null; backUrl: string | null }>(`/users/${id}/pan`),
 
-  updatePan: (id: string, data: { panNumber?: string; panKey?: string }) =>
+  updatePan: (id: string, data: { panNumber?: string; panKey?: string; panBackKey?: string }) =>
     put<User>(`/users/${id}/pan`, data),
 
   deletePan: (id: string) =>
@@ -179,6 +179,9 @@ export const apiClient = {
 
   getAadhaarUrl: (id: string) =>
     get<{ url: string }>(`/users/${id}/aadhaar`),
+
+  getAadhaarUrls: (id: string) =>
+    get<{ frontUrl: string; backUrl: string | null }>(`/users/${id}/aadhaar`),
 
   setUserPermissions: (id: string, permissions: string[]) =>
     put<User>(`/users/${id}/permissions`, { permissions }),

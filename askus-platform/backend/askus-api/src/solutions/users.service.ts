@@ -43,8 +43,8 @@ export const toTmsUser = (u: User) => ({
   mobile: u.mobile,
   role: toTmsRole(u.roles),
   permissions: u.permissions ?? [],
-  hasAadhaar: !!u.aadhaarKey,
-  hasPan: !!u.panKey,
+  hasAadhaar: !!u.aadhaarKey && !!u.aadhaarBackKey,
+  hasPan: !!u.panKey && !!u.panBackKey,
   panMasked: u.panNumber ? maskPan(u.panNumber) : null,
   approvalStatus: u.approvalStatus,
   createdBy: u.createdBy,
@@ -123,7 +123,10 @@ export class UsersService {
     const user = await this.getManaged(actor, id, true);
     if (!user.aadhaarKey) throw new NotFoundException('No Aadhaar uploaded');
     await this.audit.log({ actorId: actor.id, action: 'staff.aadhaar.view', resource: `user:${id}` });
-    return { url: this.storage.signDownload(user.aadhaarKey, `aadhaar-${id}`) };
+    return {
+      frontUrl: this.storage.signDownload(user.aadhaarKey, `aadhaar-front-${id}`),
+      backUrl: user.aadhaarBackKey ? this.storage.signDownload(user.aadhaarBackKey, `aadhaar-back-${id}`) : null,
+    };
   }
 
   private cleanPanNumber(raw: string) {
@@ -135,43 +138,52 @@ export class UsersService {
   // The key must come from pan-upload-url and not already belong to anyone, so one user's file cannot be claimed or deleted via another.
   private async assertPanKeyFree(key: string, exceptUserId?: string) {
     if (!PAN_KEY.test(key)) throw new BadRequestException('Upload the PAN image first');
-    const owner = await this.users.findOne({ where: { panKey: key } });
+    const owner = await this.users.findOne({ where: [{ panKey: key }, { panBackKey: key }] });
     if (owner && owner.id !== exceptUserId) throw new ConflictException('This PAN image is already in use');
   }
 
-  /** Full PAN number and a signed link to its image; Admin/Super Admin only, and audited. */
+  /** Full PAN number and signed links to its front/back images; Admin/Super Admin only, and audited. */
   async panDetails(actor: AuthUser, id: string) {
     const user = await this.getManaged(actor, id);
     await this.audit.log({ actorId: actor.id, action: 'staff.pan.view', resource: `user:${id}` });
     return {
       panNumber: user.panNumber,
-      url: user.panKey ? this.storage.signDownload(user.panKey, `pan-${id}`) : null,
+      url: user.panKey ? this.storage.signDownload(user.panKey, `pan-front-${id}`) : null,
+      backUrl: user.panBackKey ? this.storage.signDownload(user.panBackKey, `pan-back-${id}`) : null,
     };
   }
 
-  async updatePan(actor: AuthUser, id: string, body: { panNumber?: string; panKey?: string }) {
+  async updatePan(actor: AuthUser, id: string, body: { panNumber?: string; panKey?: string; panBackKey?: string }) {
     const user = await this.getManaged(actor, id);
-    if (body.panNumber === undefined && body.panKey === undefined) throw new BadRequestException('Nothing to update');
+    if (body.panNumber === undefined && body.panKey === undefined && body.panBackKey === undefined) {
+      throw new BadRequestException('Nothing to update');
+    }
 
     if (body.panNumber !== undefined) user.panNumber = this.cleanPanNumber(body.panNumber);
-    let replaced: string | null = null;
+    const replaced: string[] = [];
     if (body.panKey !== undefined && body.panKey !== user.panKey) {
       await this.assertPanKeyFree(body.panKey, id);
-      replaced = user.panKey;
+      if (user.panKey) replaced.push(user.panKey);
       user.panKey = body.panKey;
     }
+    if (body.panBackKey !== undefined && body.panBackKey !== user.panBackKey) {
+      await this.assertPanKeyFree(body.panBackKey, id);
+      if (user.panBackKey) replaced.push(user.panBackKey);
+      user.panBackKey = body.panBackKey;
+    }
     await this.users.save(user);
-    if (replaced) await this.storage.delete(replaced);
+    await Promise.all(replaced.map((key) => this.storage.delete(key)));
     await this.audit.log({ actorId: actor.id, action: 'staff.pan.update', resource: `user:${id}` });
     return toTmsUser(user);
   }
 
   async deletePan(actor: AuthUser, id: string) {
     const user = await this.getManaged(actor, id);
-    // Remove the stored file first: if that fails nothing has changed and the delete can be retried.
-    if (user.panKey) await this.storage.delete(user.panKey);
+    // Remove the stored files first: if that fails nothing has changed and the delete can be retried.
+    await Promise.all([user.panKey, user.panBackKey].filter((k): k is string => !!k).map((k) => this.storage.delete(k)));
     user.panNumber = null;
     user.panKey = null;
+    user.panBackKey = null;
     await this.users.save(user);
     await this.audit.log({ actorId: actor.id, action: 'staff.pan.delete', resource: `user:${id}` });
     return toTmsUser(user);
@@ -185,16 +197,20 @@ export class UsersService {
       mobile?: string;
       role: StaffRole;
       aadhaarKey: string;
+      aadhaarBackKey: string;
       panNumber: string;
       panKey: string;
+      panBackKey: string;
       permissions?: string[];
       password?: string;
     },
   ) {
     if (!this.assignable(actor).includes(body.role)) throw new ForbiddenException(`You cannot create a ${body.role}`);
-    if (!AADHAAR_KEY.test(body.aadhaarKey)) throw new BadRequestException('Upload the Aadhaar document first');
+    if (!AADHAAR_KEY.test(body.aadhaarKey)) throw new BadRequestException('Upload the Aadhaar front image first');
+    if (!AADHAAR_KEY.test(body.aadhaarBackKey)) throw new BadRequestException('Upload the Aadhaar back image first');
     const panNumber = this.cleanPanNumber(body.panNumber);
     await this.assertPanKeyFree(body.panKey);
+    await this.assertPanKeyFree(body.panBackKey);
     const isSuper = actor.roles.includes(Role.SuperAdmin);
     const permissions = this.cleanPermissions(body.role, body.permissions);
     const email = normalizeIdentifier(body.email);
@@ -213,8 +229,10 @@ export class UsersService {
         roles: [FROM_TMS[body.role]],
         permissions,
         aadhaarKey: body.aadhaarKey,
+        aadhaarBackKey: body.aadhaarBackKey,
         panNumber,
         panKey: body.panKey,
+        panBackKey: body.panBackKey,
         createdBy: actor.id,
         // Admins need a Super Admin's sign-off; Super Admin creations are live immediately.
         approvalStatus: isSuper ? 'APPROVED' : 'PENDING',

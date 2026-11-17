@@ -23,16 +23,22 @@ export class User {
   @Column('simple-array', { default: '' })
   permissions: string[];
 
-  // Private R2 object key of the uploaded Aadhaar document; only Super Admin/Admin can open it.
+  // Private R2 object keys of the uploaded Aadhaar document (front/back); only Super Admin/Admin can open them.
   @Column({ type: 'varchar', name: 'aadhaar_key', nullable: true })
   aadhaarKey: string | null;
 
-  // PAN number and the private R2 key of its image; only Super Admin/Admin can read them.
+  @Column({ type: 'varchar', name: 'aadhaar_back_key', nullable: true })
+  aadhaarBackKey: string | null;
+
+  // PAN number and the private R2 keys of its image (front/back); only Super Admin/Admin can read them.
   @Column({ type: 'varchar', name: 'pan_number', nullable: true })
   panNumber: string | null;
 
   @Column({ type: 'varchar', name: 'pan_key', nullable: true })
   panKey: string | null;
+
+  @Column({ type: 'varchar', name: 'pan_back_key', nullable: true })
+  panBackKey: string | null;
 
   @Column({ type: 'uuid', name: 'created_by', nullable: true })
   createdBy: string | null;
