@@ -11,22 +11,45 @@ export default function LoginPage() {
   const [code, setCode]             = useState('');
   const [codeSent, setCodeSent]     = useState(false);
   const [sessionId, setSessionId]   = useState('');
+  const [needs, setNeeds]           = useState<'email' | 'mobile' | null>(null);
+  const [otherId, setOtherId]       = useState('');
+  const [otherCode, setOtherCode]   = useState('');
+  const [dual, setDual]             = useState(false);
+  const [emailHint, setEmailHint]   = useState('');
   const [loading, setLoading]       = useState(false);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
+  const resetFlow = () => { setCodeSent(false); setCode(''); setOtherCode(''); setNeeds(null); setOtherId(''); setDual(false); };
+
   // ── OTP login (mobile or email) ────────────────────────────────────────────
+  // First sign-in verifies mobile and email; afterwards the code goes to email only.
   const handleSendCode = async () => {
     if (!identifier.trim()) {
       message.error('Enter your mobile number or email');
       return;
     }
+    if (needs && !otherId.trim()) {
+      message.error(`Enter your ${needs === 'email' ? 'email address' : 'mobile number'}`);
+      return;
+    }
     setLoading(true);
     try {
-      const res = await api.sendOTP(identifier.trim());
+      const res = await api.sendOTP(identifier.trim(), needs ? otherId.trim() : undefined);
+      if (res.needs) {
+        setNeeds(res.needs);
+        message.info(`First sign-in: add your ${res.needs === 'email' ? 'email address' : 'mobile number'} to verify`);
+        return;
+      }
+      if (res.status) {
+        message.error(res.status === 'PENDING' ? 'Your account is awaiting approval' : 'Your access request was declined');
+        return;
+      }
       setSessionId(res.sessionId);
+      setDual(res.channels?.length === 2);
+      setEmailHint(res.emailHint ?? '');
       setCodeSent(true);
-      message.success('Verification code sent');
+      message.success(res.channels?.length === 2 ? 'Codes sent to your mobile and email' : 'Verification code sent to your email');
     } catch (err: unknown) {
       message.error(err instanceof Error ? err.message : 'Could not send code');
     } finally {
@@ -35,13 +58,14 @@ export default function LoginPage() {
   };
 
   const handleVerify = async () => {
-    if (!/^\d{6}$/.test(code.trim())) {
-      message.error('Enter the 6-digit code');
+    if (!/^\d{6}$/.test(code.trim()) || (dual && !/^\d{6}$/.test(otherCode.trim()))) {
+      message.error(dual ? 'Enter both 6-digit codes' : 'Enter the 6-digit code');
       return;
     }
     setLoading(true);
     try {
-      const res = await api.verifyOTP(identifier.trim(), code.trim(), sessionId);
+      const other = dual ? { identifier: otherId.trim() || undefined, code: otherCode.trim() } : undefined;
+      const res = await api.verifyOTP(identifier.trim(), code.trim(), sessionId, other);
       dispatch(loginSuccess({ token: res.token, user: res.user }));
       message.success(`Welcome, ${res.user.name}!`);
       navigate(res.user.role === 'Agent' ? '/timesheet' : '/dashboard', { replace: true });
@@ -83,12 +107,28 @@ export default function LoginPage() {
               onChange={e => setIdentifier(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && !codeSent && handleSendCode()}
               style={s.input}
-              readOnly={codeSent}
+              readOnly={codeSent || !!needs}
               autoFocus
             />
+            {needs && !codeSent && (
+              <>
+                <label style={s.label}>{needs === 'email' ? 'Email address' : 'Mobile number'} (to verify on first sign-in)</label>
+                <input
+                  type="text"
+                  placeholder={needs === 'email' ? 'you@example.com' : '10-digit mobile number'}
+                  value={otherId}
+                  onChange={e => setOtherId(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleSendCode()}
+                  style={s.input}
+                  autoFocus
+                />
+              </>
+            )}
             {codeSent && (
               <>
-                <label style={s.label}>Verification code</label>
+                <label style={s.label}>
+                  {dual ? `Code sent to ${identifier.includes('@') ? 'your email' : 'your mobile'}` : `Verification code${emailHint ? ` (sent to ${emailHint})` : ''}`}
+                </label>
                 <input
                   type="text"
                   inputMode="numeric"
@@ -101,8 +141,23 @@ export default function LoginPage() {
                   style={s.input}
                   autoFocus
                 />
+                {dual && (
+                  <>
+                    <label style={s.label}>Code sent to {identifier.includes('@') ? 'your mobile' : 'your email'}</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="6-digit code"
+                      value={otherCode}
+                      onChange={e => setOtherCode(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleVerify()}
+                      style={s.input}
+                    />
+                  </>
+                )}
                 <div style={{ textAlign: 'right', marginBottom: 14 }}>
-                  <a style={{ ...s.link, cursor: 'pointer' }} onClick={() => { setCodeSent(false); setCode(''); }}>
+                  <a style={{ ...s.link, cursor: 'pointer' }} onClick={resetFlow}>
                     Use a different number or email
                   </a>
                 </div>

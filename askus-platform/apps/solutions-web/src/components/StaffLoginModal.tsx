@@ -62,6 +62,16 @@ const Icon = {
       <rect x="7" y="3" width="10" height="18" rx="2.5" /><path d="M11 18h2" />
     </svg>
   ),
+  cross: (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
+      <path d="M7 7l10 10M17 7 7 17" />
+    </svg>
+  ),
+  clock: (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" />
+    </svg>
+  ),
   close: (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
       <path d="M6 6l12 12M18 6 6 18" />
@@ -255,6 +265,27 @@ function AccessRequestPanel({ token, me, signedInWith, onDone }: { token: string
   );
 }
 
+
+// Shown instead of sending a code when this number/email already has a request that is waiting or was declined.
+function StatusNotice({ status, who, onRetry, onDone }: { status: 'PENDING' | 'REJECTED'; who: string; onRetry: () => void; onDone: () => void }) {
+  const pending = status === 'PENDING';
+  return (
+    <div className="slm-done">
+      <div className={`slm-done-badge${pending ? ' wait' : ' bad'}`} aria-hidden>{pending ? Icon.clock : Icon.cross}</div>
+      <h2 id="slm-title" className="slm-title">{pending ? 'Request pending' : 'Request not approved'}</h2>
+      <span className={`slm-status${pending ? '' : ' bad'}`}>{pending ? 'Pending admin review' : 'Declined'}</span>
+      <blockquote className={`slm-quote${pending ? '' : ' bad'}`}>
+        {pending
+          ? '“Your request is in process. Once an admin approves you, you will be able to log in.”'
+          : '“Your request was not approved. Please contact your administrator if you think this is a mistake.”'}
+      </blockquote>
+      <p className="slm-who">Account: <strong>{who}</strong></p>
+      <button type="button" className="slm-cta" onClick={onDone}>Done</button>
+      <button type="button" className="slm-linkbtn slm-retry" onClick={onRetry}>Use a different email or number</button>
+    </div>
+  );
+}
+
 // Staff sign-in dialog shared by the landing page and the site chrome.
 // Live (API) mode: one-time code to an email or mobile number, or a password.
 // Demo mode (no API configured): the original username + password form.
@@ -271,6 +302,13 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [access, setAccess] = useState<{ token: string; me: Me } | null>(null);
+  const [blocked, setBlocked] = useState<'PENDING' | 'REJECTED' | null>(null);
+  // First sign-in verifies mobile and email; afterwards the code goes to email only.
+  const [needs, setNeeds] = useState<'email' | 'mobile' | null>(null);
+  const [otherId, setOtherId] = useState('');
+  const [otherCode, setOtherCode] = useState('');
+  const [dual, setDual] = useState(false);
+  const [emailHint, setEmailHint] = useState('');
   const idRef = useRef<HTMLInputElement>(null);
   const firstDigitRef = useRef<HTMLInputElement>(null);
 
@@ -284,7 +322,8 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
 
   const reset = useCallback(() => {
     setIdentifier(''); setPassword(''); setShowPw(false); setDigits(Array(6).fill(''));
-    setCodeSent(false); setCooldown(0); setBusy(false); setError(''); setAccess(null);
+    setCodeSent(false); setCooldown(0); setBusy(false); setError(''); setAccess(null); setBlocked(null);
+    setNeeds(null); setOtherId(''); setOtherCode(''); setDual(false); setEmailHint('');
     setMode(USE_REAL_API ? 'otp' : 'password');
   }, []);
 
@@ -334,23 +373,32 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
 
   const sendCode = () => {
     if (!validId()) { setError('Enter a valid email address or 10-digit phone number'); return; }
+    if (needs && !otherId.trim()) { setError(`Enter your ${needs === 'email' ? 'email address' : 'mobile number'}`); return; }
     return run(async () => {
-      await api.sendOTP(cleanId());
+      const res = await api.sendOTP(cleanId(), needs ? otherId.trim() : undefined);
+      if (res.needs) { setNeeds(res.needs); return; }
+      if (res.status) { setBlocked(res.status); return; }
+      setDual(res.channels?.length === 2);
+      setEmailHint(res.emailHint ?? '');
       setCodeSent(true);
       setDigits(Array(6).fill(''));
+      setOtherCode('');
       setCooldown(RESEND_SECONDS);
     });
   };
 
   const verify = useCallback((value: string) => run(
-    async () => { finish(await api.verifyOTP(cleanId(), value, '')); },
+    async () => {
+      const other = dual ? { identifier: otherId.trim() || undefined, code: otherCode.trim() } : undefined;
+      finish(await api.verifyOTP(cleanId(), value, '', other));
+    },
     () => { setDigits(Array(6).fill('')); setTimeout(() => firstDigitRef.current?.focus(), 0); },
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [identifier]);
+  ), [identifier, dual, otherId, otherCode]);
 
-  // Submit as soon as the sixth digit lands.
+  // Submit as soon as the sixth digit lands (a first sign-in has a second code, so it waits for the button).
   useEffect(() => {
-    if (mode === 'otp' && codeSent && code.length === 6 && !busy) void verify(code);
+    if (mode === 'otp' && codeSent && !dual && code.length === 6 && !busy) void verify(code);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [code]);
 
@@ -359,6 +407,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
     if (mode === 'otp') {
       if (!codeSent) return void sendCode();
       if (code.length < 6) return void setError('Enter the 6-digit code');
+      if (dual && !/^\d{6}$/.test(otherCode.trim())) return void setError('Enter the 6-digit code sent to your ' + (kind === 'email' ? 'mobile' : 'email'));
       return void verify(code);
     }
     if (!validId()) return void setError(USE_REAL_API ? 'Enter a valid email address or 10-digit phone number' : 'Enter your username');
@@ -366,7 +415,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
     return void run(async () => { finish(await api.loginWithPassword(cleanId(), password)); });
   };
 
-  const switchMode = (m: Mode) => { setMode(m); setError(''); setCodeSent(false); setDigits(Array(6).fill('')); setPassword(''); };
+  const switchMode = (m: Mode) => { setMode(m); setError(''); setCodeSent(false); setDigits(Array(6).fill('')); setPassword(''); setNeeds(null); setOtherId(''); setOtherCode(''); setDual(false); };
 
   if (!open) return null;
 
@@ -392,14 +441,16 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
         <section className="slm-main">
           <button type="button" className="slm-close" aria-label="Close" onClick={onClose}>{Icon.close}</button>
           <img className="slm-mobile-logo" src="/askus-wordmark.png" alt="Askus" />
-          {access ? (
+          {blocked ? (
+            <StatusNotice status={blocked} who={cleanId()} onDone={onClose} onRetry={() => { setBlocked(null); setCodeSent(false); setIdentifier(''); setError(''); }} />
+          ) : access ? (
             <AccessRequestPanel token={access.token} me={access.me} signedInWith={cleanId()} onDone={onClose} />
           ) : (
           <>
           <h2 id="slm-title" className="slm-title">{mode === 'otp' && codeSent ? 'Enter your code' : 'Welcome back'}</h2>
           <p className="slm-sub">
             {mode === 'otp' && codeSent
-              ? <>We sent a 6-digit code to <strong>{cleanId()}</strong>. <button type="button" className="slm-linkbtn" onClick={() => { setCodeSent(false); setDigits(Array(6).fill('')); setError(''); }}>Change</button></>
+              ? <>We sent a 6-digit code to <strong>{dual ? 'your mobile and email' : emailHint || cleanId()}</strong>. <button type="button" className="slm-linkbtn" onClick={() => { setCodeSent(false); setDigits(Array(6).fill('')); setNeeds(null); setOtherId(''); setOtherCode(''); setDual(false); setError(''); }}>Change</button></>
               : 'Access is provisioned by an Admin or Super Admin.'}
           </p>
 
@@ -420,10 +471,23 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
                     id="slm-id" ref={idRef} className="slm-input" type="text"
                     inputMode={USE_REAL_API ? 'email' : 'text'} autoComplete="username"
                     placeholder={USE_REAL_API ? 'name@askussolutions.in' : 'Enter username'}
-                    value={identifier} onChange={(e) => { setIdentifier(e.target.value); setError(''); }}
+                    value={identifier} onChange={(e) => { setIdentifier(e.target.value); setNeeds(null); setOtherId(''); setError(''); }}
                   />
                   {USE_REAL_API && kind !== 'none' && <span className="slm-chip">{kind === 'email' ? 'Email' : 'Phone · +91'}</span>}
                 </div>
+                {mode === 'otp' && needs && (
+                  <>
+                    <label className="slm-label" htmlFor="slm-other">{needs === 'email' ? 'Email address' : 'Phone number'} (verified on first sign-in)</label>
+                    <div className="slm-field">
+                      <span className="slm-ico">{Icon.mail}</span>
+                      <input
+                        id="slm-other" className="slm-input" type="text" autoFocus
+                        placeholder={needs === 'email' ? 'name@askussolutions.in' : '10-digit phone number'}
+                        value={otherId} onChange={(e) => { setOtherId(e.target.value); setError(''); }}
+                      />
+                    </div>
+                  </>
+                )}
               </>
             )}
 
@@ -446,6 +510,17 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
             {mode === 'otp' && codeSent && (
               <>
                 <OtpBoxes digits={digits} onChange={(d) => { setDigits(d); setError(''); }} disabled={busy} firstRef={firstDigitRef} />
+                {dual && (
+                  <>
+                    <label className="slm-label" htmlFor="slm-code2">Code sent to your {kind === 'email' ? 'phone (SMS)' : 'email'}</label>
+                    <div className="slm-field">
+                      <input
+                        id="slm-code2" className="slm-input" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                        placeholder="6-digit code" value={otherCode} onChange={(e) => { setOtherCode(e.target.value.replace(/\D/g, '')); setError(''); }}
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="slm-resend">
                   {cooldown > 0
                     ? <span>Resend code in {cooldown}s</span>
@@ -532,6 +607,12 @@ const CSS = `
 .slm-foot{ margin-top:16px; text-align:center; font-size:13px; }
 .slm-foot a{ color:#0a6fa8; font-weight:600; text-decoration:none; } .slm-foot a:hover{ text-decoration:underline; }
 
+.slm-done-badge.wait{ background:#fff3d6; color:#b27300; }
+.slm-done-badge.bad{ background:#fde8e6; color:#c0392b; }
+.slm-status.bad{ background:#fde8e6; color:#a5281b; }
+.slm-quote.bad{ border-left-color:#e0685b; background:#fff5f4; color:#5a1f19; }
+.slm-who{ margin:-6px 0 18px; font-size:13px; color:var(--muted); } .slm-who strong{ color:var(--ink); word-break:break-all; }
+.slm-retry{ align-self:center; margin-top:14px; font-size:13px; }
 .slm-opt{ margin-left:6px; font-size:11.5px; font-weight:600; color:#7b8aa0; }
 .slm-note{ margin:0 0 16px; padding:11px 14px; border-radius:10px; background:#fff6e5; color:#8a5a00; font-size:13px; line-height:1.5; }
 .slm-drop{ display:flex; align-items:center; gap:14px; margin-bottom:16px; padding:14px 16px; border:1.5px dashed #b9c8da; border-radius:12px; background:#f8fbfe; cursor:pointer; transition:border-color .15s, background .15s; }

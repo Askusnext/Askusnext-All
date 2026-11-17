@@ -28,6 +28,10 @@ const FROM_TMS: Record<StaffRole, Role> = {
 const AADHAAR_TYPES: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'application/pdf': 'pdf' };
 const AADHAAR_MAX_BYTES = 5 * 1024 * 1024;
 const AADHAAR_KEY = /^aadhaar\/[0-9a-f-]{36}\.(jpg|png|pdf)$/;
+const PAN_NUMBER = /^[A-Z]{5}[0-9]{4}[A-Z]$/;
+const PAN_KEY = /^pan\/[0-9a-f-]{36}\.(jpg|png|pdf)$/;
+
+const maskPan = (n: string) => `${n.slice(0, 2)}******${n.slice(-2)}`;
 
 export const toTmsRole = (roles: Role[]): TmsRole =>
   (['SuperAdmin', 'Admin', 'Employee', 'Agent'] as const).find((r) => roles.some((x) => TO_TMS[x] === r)) ?? 'Customer';
@@ -40,6 +44,8 @@ export const toTmsUser = (u: User) => ({
   role: toTmsRole(u.roles),
   permissions: u.permissions ?? [],
   hasAadhaar: !!u.aadhaarKey,
+  hasPan: !!u.panKey,
+  panMasked: u.panNumber ? maskPan(u.panNumber) : null,
   approvalStatus: u.approvalStatus,
   createdBy: u.createdBy,
   branchId: 'branch-001',
@@ -98,10 +104,18 @@ export class UsersService {
 
   /** Signed upload URL for a private Aadhaar document; the returned key is then passed to create(). */
   aadhaarUploadUrl(body: { contentType: string; size: number }) {
+    return this.documentUploadUrl('aadhaar', 'Aadhaar', body);
+  }
+
+  panUploadUrl(body: { contentType: string; size: number }) {
+    return this.documentUploadUrl('pan', 'PAN', body);
+  }
+
+  private documentUploadUrl(prefix: 'aadhaar' | 'pan', label: string, body: { contentType: string; size: number }) {
     const ext = AADHAAR_TYPES[body.contentType];
-    if (!ext) throw new BadRequestException('Aadhaar must be a JPG, PNG or PDF');
-    if (body.size > AADHAAR_MAX_BYTES) throw new BadRequestException('Aadhaar file must be 5 MB or smaller');
-    const key = `aadhaar/${randomUUID()}.${ext}`;
+    if (!ext) throw new BadRequestException(`${label} must be a JPG, PNG or PDF`);
+    if (body.size > AADHAAR_MAX_BYTES) throw new BadRequestException(`${label} file must be 5 MB or smaller`);
+    const key = `${prefix}/${randomUUID()}.${ext}`;
     return { key, uploadUrl: this.storage.signUpload(key, body.contentType, body.size) };
   }
 
@@ -112,6 +126,57 @@ export class UsersService {
     return { url: this.storage.signDownload(user.aadhaarKey, `aadhaar-${id}`) };
   }
 
+  private cleanPanNumber(raw: string) {
+    const pan = raw.trim().toUpperCase();
+    if (!PAN_NUMBER.test(pan)) throw new BadRequestException('Enter a valid PAN number (for example ABCDE1234F)');
+    return pan;
+  }
+
+  // The key must come from pan-upload-url and not already belong to anyone, so one user's file cannot be claimed or deleted via another.
+  private async assertPanKeyFree(key: string, exceptUserId?: string) {
+    if (!PAN_KEY.test(key)) throw new BadRequestException('Upload the PAN image first');
+    const owner = await this.users.findOne({ where: { panKey: key } });
+    if (owner && owner.id !== exceptUserId) throw new ConflictException('This PAN image is already in use');
+  }
+
+  /** Full PAN number and a signed link to its image; Admin/Super Admin only, and audited. */
+  async panDetails(actor: AuthUser, id: string) {
+    const user = await this.getManaged(actor, id);
+    await this.audit.log({ actorId: actor.id, action: 'staff.pan.view', resource: `user:${id}` });
+    return {
+      panNumber: user.panNumber,
+      url: user.panKey ? this.storage.signDownload(user.panKey, `pan-${id}`) : null,
+    };
+  }
+
+  async updatePan(actor: AuthUser, id: string, body: { panNumber?: string; panKey?: string }) {
+    const user = await this.getManaged(actor, id);
+    if (body.panNumber === undefined && body.panKey === undefined) throw new BadRequestException('Nothing to update');
+
+    if (body.panNumber !== undefined) user.panNumber = this.cleanPanNumber(body.panNumber);
+    let replaced: string | null = null;
+    if (body.panKey !== undefined && body.panKey !== user.panKey) {
+      await this.assertPanKeyFree(body.panKey, id);
+      replaced = user.panKey;
+      user.panKey = body.panKey;
+    }
+    await this.users.save(user);
+    if (replaced) await this.storage.delete(replaced);
+    await this.audit.log({ actorId: actor.id, action: 'staff.pan.update', resource: `user:${id}` });
+    return toTmsUser(user);
+  }
+
+  async deletePan(actor: AuthUser, id: string) {
+    const user = await this.getManaged(actor, id);
+    // Remove the stored file first: if that fails nothing has changed and the delete can be retried.
+    if (user.panKey) await this.storage.delete(user.panKey);
+    user.panNumber = null;
+    user.panKey = null;
+    await this.users.save(user);
+    await this.audit.log({ actorId: actor.id, action: 'staff.pan.delete', resource: `user:${id}` });
+    return toTmsUser(user);
+  }
+
   async create(
     actor: AuthUser,
     body: {
@@ -120,12 +185,16 @@ export class UsersService {
       mobile?: string;
       role: StaffRole;
       aadhaarKey: string;
+      panNumber: string;
+      panKey: string;
       permissions?: string[];
       password?: string;
     },
   ) {
     if (!this.assignable(actor).includes(body.role)) throw new ForbiddenException(`You cannot create a ${body.role}`);
     if (!AADHAAR_KEY.test(body.aadhaarKey)) throw new BadRequestException('Upload the Aadhaar document first');
+    const panNumber = this.cleanPanNumber(body.panNumber);
+    await this.assertPanKeyFree(body.panKey);
     const isSuper = actor.roles.includes(Role.SuperAdmin);
     const permissions = this.cleanPermissions(body.role, body.permissions);
     const email = normalizeIdentifier(body.email);
@@ -138,9 +207,14 @@ export class UsersService {
         fullName: body.name,
         email,
         mobile,
+        // Contacts entered by an Admin/Super Admin are trusted, so no first-time OTP check is needed.
+        emailVerifiedAt: new Date(),
+        mobileVerifiedAt: mobile ? new Date() : null,
         roles: [FROM_TMS[body.role]],
         permissions,
         aadhaarKey: body.aadhaarKey,
+        panNumber,
+        panKey: body.panKey,
         createdBy: actor.id,
         // Admins need a Super Admin's sign-off; Super Admin creations are live immediately.
         approvalStatus: isSuper ? 'APPROVED' : 'PENDING',
@@ -256,7 +330,13 @@ export class UsersService {
     const user = await this.getManaged(actor, id);
     if (body.role && !this.assignable(actor).includes(body.role)) throw new ForbiddenException(`You cannot assign ${body.role}`);
     if (body.name !== undefined) user.fullName = body.name;
-    if (body.mobile !== undefined) user.mobile = normalizeIdentifier(body.mobile);
+    if (body.mobile !== undefined) {
+      const mobile = normalizeIdentifier(body.mobile);
+      // Admin-entered contacts are trusted; with the email already on file, the next sign-in is email OTP only.
+      if (mobile !== user.mobile) user.mobileVerifiedAt = new Date();
+      if (user.email && !user.emailVerifiedAt) user.emailVerifiedAt = new Date();
+      user.mobile = mobile;
+    }
     if (body.role) {
       user.roles = [FROM_TMS[body.role]];
       if (body.role === 'Admin') user.permissions = [];

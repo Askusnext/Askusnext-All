@@ -42,6 +42,9 @@ export interface User {
   role: UserRole;
   permissions?: string[];
   hasAadhaar?: boolean;
+  hasPan?: boolean;
+  /** Masked PAN (for example AB******4F); the full number is only fetched on demand. */
+  panMasked?: string | null;
   approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   branchId: string;
 }
@@ -272,6 +275,10 @@ export interface AuthResponse {
 
 export interface OTPResponse {
   success: boolean;
+  status?: 'PENDING' | 'REJECTED';
+  needs?: 'email' | 'mobile';
+  channels?: ('sms' | 'email')[];
+  emailHint?: string;
   sessionId: string;
   message: string;
 }
