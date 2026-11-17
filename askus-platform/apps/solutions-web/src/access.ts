@@ -16,6 +16,7 @@ export const NAV_ITEMS: { to: string; label: string; permission?: Permission; ad
   { to: '/calendar', label: 'Calendar', permission: 'tickets' },
   { to: '/timesheet', label: 'Timesheet', permission: 'timesheet' },
   { to: '/attendance', label: 'Attendance', permission: 'timesheet' },
+  { to: '/work-hours', label: 'Work hours', permission: 'timesheet' },
   { to: '/insurance-requests', label: 'Insurance Requests', permission: 'insurance' },
   { to: '/loans', label: 'Askus Loans', permission: 'loans' },
   { to: '/activity', label: 'Activity' },

@@ -30,6 +30,7 @@ import AnalyticsPage from './views/AnalyticsPage';
 import CalendarPage from './views/CalendarPage';
 import TimesheetPage from './views/TimesheetPage';
 import AttendancePage from './views/AttendancePage';
+import WorkHoursPage from './views/WorkHoursPage';
 import UserManagementPage from './views/UserManagementPage';
 import LoansPage from './views/LoansPage';
 import InsuranceRequestsPage from './views/InsuranceRequestsPage';
@@ -187,6 +188,11 @@ export default function App() {
               <Route path="attendance" element={
                 <ProtectedRoute><RoleRoute permission="timesheet">
                   <AttendancePage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="work-hours" element={
+                <ProtectedRoute><RoleRoute permission="timesheet">
+                  <WorkHoursPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="insurance-requests" element={
