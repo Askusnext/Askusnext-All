@@ -8,7 +8,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
-  userApi, type ManagedUser, SUPER_ADMIN_EMAIL, ALLOWED_EMAIL_DOMAIN,
+  userApi, type ManagedUser, SUPER_ADMIN_EMAIL,
 } from '../api/mockApi';
 import { PERMISSION_OPTIONS, type UserRole } from '../types';
 import { useAppSelector } from '../store';
@@ -416,15 +416,9 @@ export default function UserManagementPage() {
             rules={[
               { required: true, message: 'Enter an email' },
               { type: 'email', message: 'Enter a valid email' },
-              {
-                validator: (_, value) =>
-                  !value || value.trim().toLowerCase().endsWith('@' + ALLOWED_EMAIL_DOMAIN)
-                    ? Promise.resolve()
-                    : Promise.reject(new Error(`Email must end with @${ALLOWED_EMAIL_DOMAIN}`)),
-              },
             ]}
           >
-            <Input placeholder={`name@${ALLOWED_EMAIL_DOMAIN}`} disabled={!!editing} />
+            <Input placeholder="name@example.com" disabled={!!editing} />
           </Form.Item>
 
           <Form.Item
@@ -456,7 +450,6 @@ export default function UserManagementPage() {
               valuePropName="fileList"
               getValueFromEvent={(e) => e?.fileList}
               extra="JPG, PNG or PDF, up to 5 MB. Stored privately; only Admins can view it."
-              rules={[{ required: true, message: 'Upload the Aadhaar document' }]}
             >
               <Upload
                 maxCount={1}
@@ -477,7 +470,6 @@ export default function UserManagementPage() {
             label="PAN number"
             normalize={(v: string) => v?.toUpperCase()}
             rules={[
-              { required: !editing, message: 'Enter the PAN number' },
               { pattern: PAN_PATTERN, message: 'Enter a valid PAN (for example ABCDE1234F)' },
             ]}
             extra={editing && editing.hasPan ? 'Change the number and save to edit it.' : undefined}
@@ -491,7 +483,6 @@ export default function UserManagementPage() {
             valuePropName="fileList"
             getValueFromEvent={(e) => e?.fileList}
             extra="JPG, PNG or PDF, up to 5 MB. Stored privately; only Admins can view it."
-            rules={[{ required: !editing, message: 'Upload the PAN image' }]}
           >
             <Upload maxCount={1} accept=".jpg,.jpeg,.png,.pdf" beforeUpload={beforeDocUpload('PAN')}>
               <Button icon={<UploadOutlined />}>Select file</Button>

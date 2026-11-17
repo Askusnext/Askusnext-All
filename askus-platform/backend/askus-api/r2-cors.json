@@ -1,0 +1,16 @@
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "https://askussolutions.in",
+          "https://www.askussolutions.in",
+          "http://localhost:3005"
+        ],
+        "methods": ["GET", "PUT"],
+        "headers": ["content-type"]
+      },
+      "maxAgeSeconds": 3600
+    }
+  ]
+}
