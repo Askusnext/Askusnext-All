@@ -27,7 +27,7 @@ import TicketsPage from './views/TicketsPage';
 import TicketDetailPage from './views/TicketDetailPage';
 import TicketFormPage from './views/TicketFormPage';
 import AnalyticsPage from './views/AnalyticsPage';
-import CalendarPage from './views/CalendarPage';
+import UnifiedCalendarPage from './views/UnifiedCalendarPage';
 import TimesheetPage from './views/TimesheetPage';
 import AttendancePage from './views/AttendancePage';
 import WorkHoursPage from './views/WorkHoursPage';
@@ -176,9 +176,7 @@ export default function App() {
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="calendar" element={
-                <ProtectedRoute><RoleRoute permission="tickets">
-                  <CalendarPage />
-                </RoleRoute></ProtectedRoute>
+                <ProtectedRoute><UnifiedCalendarPage /></ProtectedRoute>
               } />
               <Route path="timesheet" element={
                 <ProtectedRoute><RoleRoute permission="timesheet">

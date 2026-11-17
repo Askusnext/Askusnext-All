@@ -13,7 +13,7 @@ export const NAV_ITEMS: { to: string; label: string; permission?: Permission; ad
   { to: '/board', label: 'Board', permission: 'tickets' },
   { to: '/tickets', label: 'Tickets', permission: 'tickets' },
   { to: '/analytics', label: 'Analytics', permission: 'reports' },
-  { to: '/calendar', label: 'Calendar', permission: 'tickets' },
+  { to: '/calendar', label: 'Calendar' },
   { to: '/timesheet', label: 'Timesheet', permission: 'timesheet' },
   { to: '/attendance', label: 'Attendance', permission: 'timesheet' },
   { to: '/work-hours', label: 'Work hours', permission: 'timesheet' },

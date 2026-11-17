@@ -5,6 +5,9 @@ import { AttendanceController } from './attendance.controller';
 import { AttendanceRecordsController, HolidaysController } from './attendance-records.controller';
 import { AttendanceRecordsService } from './attendance-records.service';
 import { LocationPing, TrackingConsent, WorkSession } from './attendance.entities';
+import { CalendarController, CalendarPublicController, MeetingsController } from './calendar.controller';
+import { ActivityFeedItem, CalendarConnection, Meeting, MeetingAttendee, TeamMember } from './calendar.entities';
+import { CalendarService } from './calendar.service';
 import { LeaveController } from './leave.controller';
 import { AgentController, DeviceAuthGuard, TimeController, WorkReportsController } from './monitoring.controller';
 import { ActivityHeartbeat, ActivitySession, AgentPairingCode, DailySummary, DeviceToken, MonitoringConsent, MonitoringSetting } from './monitoring.entities';
@@ -33,7 +36,8 @@ import { UsersService } from './users.service';
 @Module({
   imports: [TypeOrmModule.forFeature([Ticket, SolutionsCustomer, SolutionsVehicle, Counter, Timesheet, KBArticle, TrackingConsent, WorkSession, LocationPing,
     LeaveType, LeaveBalance, LeaveRequest, Holiday, AttendanceRecord, AttendanceConfig, WeekOffRule, User,
-    ActivityHeartbeat, ActivitySession, DailySummary, DeviceToken, AgentPairingCode, MonitoringConsent, MonitoringSetting])],
+    ActivityHeartbeat, ActivitySession, DailySummary, DeviceToken, AgentPairingCode, MonitoringConsent, MonitoringSetting,
+    CalendarConnection, Meeting, MeetingAttendee, ActivityFeedItem, TeamMember])],
   controllers: [
     TicketsController,
     CustomerTicketsController,
@@ -46,6 +50,9 @@ import { UsersService } from './users.service';
     AgentController,
     TimeController,
     WorkReportsController,
+    CalendarController,
+    CalendarPublicController,
+    MeetingsController,
     KbController,
     PaymentsController,
     UsersController,
@@ -60,6 +67,7 @@ import { UsersService } from './users.service';
     AttendanceRecordsService,
     LeaveService,
     MonitoringService,
+    CalendarService,
     DeviceAuthGuard,
     KbService,
     PaymentsService,

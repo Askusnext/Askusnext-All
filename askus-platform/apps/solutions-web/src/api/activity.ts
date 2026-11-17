@@ -3,7 +3,7 @@ import { STAFF_KEYS, authFetch } from './session';
 /** Everything staff do, recorded centrally by the AskUs API (PostgreSQL). */
 export const ACTIVITY_LIVE = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
 
-export type ActivityArea = 'loans' | 'insurance' | 'tickets' | 'timesheet' | 'attendance' | 'tracking' | 'auth' | 'system';
+export type ActivityArea = 'loans' | 'insurance' | 'tickets' | 'timesheet' | 'attendance' | 'calendar' | 'tracking' | 'auth' | 'system';
 
 export const AREA_LABEL: Record<ActivityArea, { label: string; color: string }> = {
   loans: { label: 'Loans', color: 'blue' },
@@ -11,6 +11,7 @@ export const AREA_LABEL: Record<ActivityArea, { label: string; color: string }> 
   tickets: { label: 'Tickets', color: 'volcano' },
   timesheet: { label: 'Timesheet', color: 'cyan' },
   attendance: { label: 'Attendance & leave', color: 'gold' },
+  calendar: { label: 'Calendar & meetings', color: 'cyan' },
   tracking: { label: 'Work tracking', color: 'green' },
   auth: { label: 'Sign-in', color: 'default' },
   system: { label: 'System', color: 'default' },
