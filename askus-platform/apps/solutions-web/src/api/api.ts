@@ -4,7 +4,7 @@
 import type {
   Ticket, DashboardKPIs, PaginatedResponse, AuthResponse, User,
 } from '../types';
-import { BASE, STAFF_KEYS, authFetch, requestOtp, signInWithOtp, signInWithPassword } from './session';
+import { BASE, STAFF_KEYS, authFetch, requestOtp, signInWithOtp, signInWithPassword, type OtherContact } from './session';
 import type { Me } from './session';
 
 // The code was valid but the person has no staff role yet. Carries the short-lived token (in memory
@@ -77,10 +77,10 @@ export type KBArticle = {
 
 // ── Auth (passwordless: OTP to mobile or email) ───────────────────────────────
 export const apiClient = {
-  requestOtp: (identifier: string) => requestOtp(identifier),
+  requestOtp: (identifier: string, otherIdentifier?: string) => requestOtp(identifier, 'staff', otherIdentifier),
 
-  verifyOtp: async (identifier: string, code: string): Promise<AuthResponse> => {
-    const { token, me } = await signInWithOtp(STAFF_KEYS, identifier, code);
+  verifyOtp: async (identifier: string, code: string, other?: OtherContact): Promise<AuthResponse> => {
+    const { token, me } = await signInWithOtp(STAFF_KEYS, identifier, code, other);
     return toStaffAuth(token, me);
   },
 
@@ -159,11 +159,23 @@ export const apiClient = {
   getUsers: () =>
     get<User[]>('/users'),
 
-  createUser: (data: { name: string; email: string; mobile: string; role: string; aadhaarKey: string; permissions?: string[]; password?: string }) =>
+  createUser: (data: { name: string; email: string; mobile: string; role: string; aadhaarKey: string; panNumber: string; panKey: string; permissions?: string[]; password?: string }) =>
     post<User>('/users', data),
 
   getAadhaarUploadUrl: (contentType: string, size: number) =>
     post<{ key: string; uploadUrl: string }>('/users/aadhaar-upload-url', { contentType, size }),
+
+  getPanUploadUrl: (contentType: string, size: number) =>
+    post<{ key: string; uploadUrl: string }>('/users/pan-upload-url', { contentType, size }),
+
+  getPan: (id: string) =>
+    get<{ panNumber: string | null; url: string | null }>(`/users/${id}/pan`),
+
+  updatePan: (id: string, data: { panNumber?: string; panKey?: string }) =>
+    put<User>(`/users/${id}/pan`, data),
+
+  deletePan: (id: string) =>
+    del<User>(`/users/${id}/pan`),
 
   getAadhaarUrl: (id: string) =>
     get<{ url: string }>(`/users/${id}/aadhaar`),

@@ -25,6 +25,17 @@ export class ApiError extends Error {
   }
 }
 
+export interface OtpRequestResult {
+  sent: boolean;
+  /** Staff sign-in only: the account is waiting for approval or was declined. */
+  status?: 'PENDING' | 'REJECTED';
+  /** First sign-in: the other contact still has to be supplied. */
+  needs?: 'email' | 'mobile';
+  /** Where codes went: both channels on a first sign-in, email only afterwards. */
+  channels?: ('sms' | 'email')[];
+  emailHint?: string;
+}
+
 export interface VehicleLookup {
   makeModel?: string;
   variant?: string;
@@ -64,10 +75,16 @@ export function createApiClient({ baseUrl, getAccessToken, refreshAccessToken }:
   return {
     request,
     auth: {
-      requestOtp: (identifier: string) =>
-        request<{ sent: boolean }>('/auth/request-otp', 'POST', { identifier }),
-      verifyOtp: (identifier: string, code: string) =>
-        request<AuthTokens>('/auth/verify-otp', 'POST', { identifier, code }),
+      requestOtp: (identifier: string, otherIdentifier?: string) =>
+        request<OtpRequestResult>('/auth/request-otp', 'POST', { identifier, otherIdentifier }),
+      /** `other` is only for a first sign-in: the second contact (if not already on the account) and its code. */
+      verifyOtp: (identifier: string, code: string, other?: { identifier?: string; code: string }) =>
+        request<AuthTokens>('/auth/verify-otp', 'POST', {
+          identifier,
+          code,
+          otherIdentifier: other?.identifier,
+          otherCode: other?.code,
+        }),
       refresh: (refreshToken: string) =>
         request<AuthTokens>('/auth/refresh', 'POST', { refreshToken }),
       logout: (refreshToken: string) =>
