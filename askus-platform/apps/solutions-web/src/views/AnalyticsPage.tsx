@@ -1,11 +1,18 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, Row, Col, Select, Empty } from 'antd';
-import { useKPIs, useMonthlyData } from '../hooks';
+import { useKPIs } from '../hooks';
+import { CATEGORY_LABEL, ticketingApi, type TicketVolume } from '../api/ticketing';
 
 export default function AnalyticsPage() {
   const { data: kpis } = useKPIs();
-  const { data: monthly } = useMonthlyData();
-  const maxT = Math.max(...(monthly?.map(m => m.tickets) ?? [1]));
+  const [volume, setVolume] = useState<TicketVolume | null>(null);
+  const [months, setMonths] = useState(6);
+  useEffect(() => { ticketingApi.volume(months).then(setVolume).catch(() => setVolume(null)); }, [months]);
+  const monthly = volume?.months.map(m => ({ month: m.label, tickets: m.total }));
+  const maxT = Math.max(1, ...(monthly?.map(m => m.tickets) ?? [1]));
+  const resolved = volume?.resolution.resolvedCount ?? 0;
+  const avgHours = volume?.resolution.avgHours;
+  const catTotal = (volume?.categoryBreakdown ?? []).reduce((a, c) => a + c.count, 0);
 
   const totalTickets   = kpis?.totalTickets    ?? 0;
   const expiredCount   = kpis?.expiredPolicies ?? 0;
@@ -32,17 +39,14 @@ export default function AnalyticsPage() {
           <h2 style={{ margin:0 }}>Analytics</h2>
           <p style={{ margin:0, color:'#888', fontSize:13 }}>{monthLabel} · All agents</p>
         </div>
-        <Select defaultValue="month" style={{ width:140 }}>
-          <Select.Option value="month">This month</Select.Option>
-          <Select.Option value="q">Last 90 days</Select.Option>
-          <Select.Option value="year">This year</Select.Option>
-        </Select>
+        <Select value={months} onChange={setMonths} style={{ width:150 }}
+          options={[{ value: 3, label: 'Last 3 months' }, { value: 6, label: 'Last 6 months' }, { value: 12, label: 'Last 12 months' }]} />
       </div>
 
       <Row gutter={12} style={{ marginBottom:16 }}>
         {[
           { label:'Total tickets',    value: totalTickets,  color: undefined },
-          { label:'Completed',        value: 0,             color:'#389e0d' },
+          { label:'Resolved',         value: resolved,      color:'#389e0d' },
           { label:'Expired policies', value: expiredCount,  color:'#cf1322' },
           { label:'Premium collected',value:`₹${premiumL}L`,color: undefined },
         ].map(k => (
@@ -57,21 +61,32 @@ export default function AnalyticsPage() {
 
       <Row gutter={14} style={{ marginBottom:14 }}>
         <Col span={12}>
-          <Card title="Tickets by status" style={{ borderRadius:10 }}>
-            {totalTickets === 0 ? (
-              <Empty description="No tickets yet" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Card title="Tickets by category" style={{ borderRadius:10 }}>
+            {catTotal === 0 ? (
+              <Empty description="No tickets in this period" image={Empty.PRESENTED_IMAGE_SIMPLE} />
             ) : (
-              <>
-                {barRow('Open',        kpis?.openTickets ?? 0, totalTickets ? Math.round(((kpis?.openTickets ?? 0)/totalTickets)*100) : 0, '#1677ff')}
-                {barRow('Completed',   0, 0, '#52c41a')}
-                {barRow('Expired',     expiredCount, totalTickets ? Math.round((expiredCount/totalTickets)*100) : 0, '#cf1322')}
-              </>
+              (volume?.categoryBreakdown ?? []).map(c => barRow(CATEGORY_LABEL[c.category] ?? c.category, c.count, Math.round((c.count / catTotal) * 100), '#1677ff', 110))
             )}
           </Card>
         </Col>
         <Col span={12}>
-          <Card title="Insurer distribution" style={{ borderRadius:10 }}>
-            <Empty description="No data yet" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          <Card title="Time to resolve" style={{ borderRadius:10 }}>
+            {resolved === 0 ? (
+              <Empty description="No resolved tickets yet" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            ) : (
+              <>
+                <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:10 }}>
+                  <span style={{ fontSize:32, fontWeight:700 }}>{avgHours !== null && avgHours !== undefined && avgHours >= 48 ? `${(avgHours / 24).toFixed(1)} d` : `${avgHours ?? 0} h`}</span>
+                  <span style={{ fontSize:13, color:'#888' }}>average, {resolved} resolved</span>
+                </div>
+                {(volume?.resolution.byCategory ?? []).map(c => (
+                  <div key={c.category} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #f5f5f5', fontSize:12 }}>
+                    <span>{CATEGORY_LABEL[c.category] ?? c.category}</span>
+                    <span style={{ color:'#888' }}>{c.avgHours >= 48 ? `${(c.avgHours / 24).toFixed(1)} d` : `${c.avgHours} h`} · {c.resolvedCount} resolved</span>
+                  </div>
+                ))}
+              </>
+            )}
           </Card>
         </Col>
       </Row>

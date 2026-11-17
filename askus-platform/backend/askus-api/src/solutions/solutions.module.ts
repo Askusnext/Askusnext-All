@@ -25,6 +25,10 @@ import { KbService } from './kb.service';
 import { PaymentsController } from './payments.controller';
 import { PaymentsService } from './payments.service';
 import { Counter, KBArticle, SolutionsCustomer, SolutionsVehicle, Ticket, Timesheet } from './solutions.entities';
+import { TicketAccessService } from './ticket-access.service';
+import { TicketReportsController } from './ticket-reports.controller';
+import { TicketReportsService } from './ticket-reports.service';
+import { TicketComment, TicketHistory } from './ticketing.entities';
 import { TicketsController } from './tickets.controller';
 import { TicketsService } from './tickets.service';
 import { TimesheetController } from './timesheet.controller';
@@ -37,9 +41,10 @@ import { UsersService } from './users.service';
   imports: [TypeOrmModule.forFeature([Ticket, SolutionsCustomer, SolutionsVehicle, Counter, Timesheet, KBArticle, TrackingConsent, WorkSession, LocationPing,
     LeaveType, LeaveBalance, LeaveRequest, Holiday, AttendanceRecord, AttendanceConfig, WeekOffRule, User,
     ActivityHeartbeat, ActivitySession, DailySummary, DeviceToken, AgentPairingCode, MonitoringConsent, MonitoringSetting,
-    CalendarConnection, Meeting, MeetingAttendee, ActivityFeedItem, TeamMember])],
+    CalendarConnection, Meeting, MeetingAttendee, ActivityFeedItem, TeamMember, TicketHistory, TicketComment])],
   controllers: [
     TicketsController,
+    TicketReportsController,
     CustomerTicketsController,
     DashboardController,
     TimesheetController,
@@ -60,6 +65,8 @@ import { UsersService } from './users.service';
   providers: [
     CounterService,
     TicketsService,
+    TicketAccessService,
+    TicketReportsService,
     CustomerTicketsService,
     DashboardService,
     TimesheetService,

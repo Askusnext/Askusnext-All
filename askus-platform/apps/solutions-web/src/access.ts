@@ -20,7 +20,7 @@ export const NAV_ITEMS: { to: string; label: string; permission?: Permission; ad
   { to: '/insurance-requests', label: 'Insurance Requests', permission: 'insurance' },
   { to: '/loans', label: 'Askus Loans', permission: 'loans' },
   { to: '/activity', label: 'Activity' },
-  { to: '/renewals', label: 'Renewals', adminOnly: true },
+  { to: '/renewals', label: 'Renewals', permission: 'tickets' },
   { to: '/users', label: 'User Management', adminOnly: true },
 ];
 

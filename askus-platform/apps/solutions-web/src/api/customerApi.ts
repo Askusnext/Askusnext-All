@@ -14,8 +14,8 @@ export type CustomerTicket = {
 	id: string;
 	ticketNumber: string;
 	title: string;
-	status: 'Open' | 'InProgress' | 'Completed' | 'Closed';
-	priority: 'High' | 'Medium' | 'Low';
+	status: 'Open' | 'InProgress' | 'AwaitingResponse' | 'Resolved' | 'Closed' | 'Reopened';
+	priority: 'Critical' | 'High' | 'Medium' | 'Low';
 	ticketType: string;
 	supportTicketData?: { description?: string };
 	activityLog: { id: string; action: string; note?: string; performedByName: string; createdAt: string }[];

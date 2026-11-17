@@ -8,16 +8,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { useTicket, useMutation } from '../hooks';
 import { api } from '../api/mockApi';
-import { WorkflowSteps, StatusBadge, PriorityTag, InsuranceStatusTag, PaymentStatusTag, DocStatus, AvatarInitials } from '../components/shared';
+import { STATUS_OPTIONS, WorkflowSteps, StatusBadge, PriorityTag, InsuranceStatusTag, PaymentStatusTag, DocStatus, AvatarInitials } from '../components/shared';
 import type { Ticket, TicketStatus } from '../types';
 import type { Dayjs } from 'dayjs';
 
-const STATUS_OPTS = [
-  { value:'Open',       label:'Open' },
-  { value:'InProgress', label:'In progress' },
-  { value:'Completed',  label:'Completed' },
-  { value:'Closed',     label:'Closed' },
-];
+const STATUS_OPTS = STATUS_OPTIONS;
 
 /* ── tiny reusable view row ──────────────────────────────────────────── */
 function VRow({ label, value }: { label: string; value: React.ReactNode }) {

@@ -512,7 +512,7 @@ export default function TicketFormPage() {
               <Form.Item name="priority" style={{ marginBottom: 14 }}>
                 <label style={lbl}>Priority</label>
                 <Select style={fw}>
-                  {['High','Medium','Low'].map(p =>
+                  {['Critical','High','Medium','Low'].map(p =>
                     <Select.Option key={p} value={p}>{p}</Select.Option>)}
                 </Select>
               </Form.Item>

@@ -1,5 +1,5 @@
-export type TicketStatus = 'Open' | 'InProgress' | 'Completed' | 'Closed';
-export type Priority = 'High' | 'Medium' | 'Low';
+export type TicketStatus = 'Open' | 'InProgress' | 'AwaitingResponse' | 'Resolved' | 'Closed' | 'Reopened';
+export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
 export type TicketType =
   | 'Insurance'
   | 'O2Taxi'

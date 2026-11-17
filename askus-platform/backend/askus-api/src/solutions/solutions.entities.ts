@@ -1,10 +1,12 @@
-import { Column, CreateDateColumn, Entity, Index, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, DeleteDateColumn, Entity, Index, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 export type PolicyType = 'Comprehensive' | 'ThirdParty' | 'OwnDamage' | 'ZeroDep';
 export type InsuranceStatus = 'Active' | 'ExpiringSoon' | 'Expired' | 'Cancelled' | 'NewPolicy';
 export type PaymentStatus = 'Pending' | 'Paid' | 'Partial' | 'Refunded';
-export type TicketStatus = 'Open' | 'InProgress' | 'Completed' | 'Closed';
-export type Priority = 'High' | 'Medium' | 'Low';
+/** Shared lifecycle: Open → InProgress → AwaitingResponse → Resolved → Closed, plus Reopened if closed in error. */
+export type TicketStatus = 'Open' | 'InProgress' | 'AwaitingResponse' | 'Resolved' | 'Closed' | 'Reopened';
+export const TICKET_STATUSES: TicketStatus[] = ['Open', 'InProgress', 'AwaitingResponse', 'Resolved', 'Closed', 'Reopened'];
+export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
 export type TicketType = 'Insurance' | 'O2Taxi' | 'General' | 'DailyActivity' | 'Support' | 'Payment' | 'Office' | 'Other';
 export type KBCategory = 'O2Taxi' | 'AlphaaInsurance' | 'AlphaaLoans' | 'General';
 export type AttendanceStatus = 'Present' | 'Absent' | 'Half Day' | 'Holiday' | 'Leave';
@@ -213,6 +215,25 @@ export class Ticket {
   @Column({ default: false })
   raisedByCustomer: boolean;
 
+  /** The staff member who created it (null for customer-raised and pre-existing tickets). Drives "own tickets" access. */
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  createdById: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  resolvedAt: Date | null;
+
+  @Column({ type: 'timestamptz', nullable: true })
+  closedAt: Date | null;
+
+  /** Set on tickets the Renewals job opens: which closed ticket's policy this renews, and which expiry it is for. */
+  @Index()
+  @Column({ type: 'uuid', nullable: true })
+  renewalOfId: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  renewalFor: string | null;
+
   @Column({ type: 'jsonb', nullable: true })
   paymentTicketData: Record<string, unknown> | null;
 
@@ -245,6 +266,10 @@ export class Ticket {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  /** Tickets are never hard-deleted, so their history is never lost. */
+  @DeleteDateColumn({ type: 'timestamptz' })
+  deletedAt: Date | null;
 }
 
 @Entity({ schema: SCHEMA, name: 'timesheets' })

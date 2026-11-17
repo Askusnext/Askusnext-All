@@ -3,18 +3,19 @@ import type { TicketStatus, Priority, InsuranceStatus, PaymentStatus } from '../
 
 // ── Status badge ─────────────────────────────────────────────────────────────
 const STATUS_COLOR: Record<TicketStatus, string> = {
-  Open: 'blue', InProgress: 'orange', Completed: 'green', Closed: 'default',
+  Open: 'blue', InProgress: 'orange', AwaitingResponse: 'gold', Resolved: 'green', Closed: 'default', Reopened: 'volcano',
 };
 const STATUS_LABEL: Record<TicketStatus, string> = {
-  Open: 'Open', InProgress: 'In progress', Completed: 'Completed', Closed: 'Closed',
+  Open: 'Open', InProgress: 'In progress', AwaitingResponse: 'Awaiting response', Resolved: 'Resolved', Closed: 'Closed', Reopened: 'Reopened',
 };
+export const STATUS_OPTIONS = (Object.keys(STATUS_LABEL) as TicketStatus[]).map((value) => ({ value, label: STATUS_LABEL[value] }));
 
 export function StatusBadge({ status }: { status: TicketStatus }) {
   return <Tag color={STATUS_COLOR[status]}>{STATUS_LABEL[status]}</Tag>;
 }
 
 // ── Priority tag ─────────────────────────────────────────────────────────────
-const PRIORITY_COLOR: Record<Priority, string> = { High: 'red', Medium: 'orange', Low: 'green' };
+const PRIORITY_COLOR: Record<Priority, string> = { Critical: 'magenta', High: 'red', Medium: 'orange', Low: 'green' };
 
 export function PriorityTag({ priority }: { priority: Priority }) {
   return <Tag color={PRIORITY_COLOR[priority]}>{priority}</Tag>;
@@ -61,12 +62,13 @@ export function DocStatus({ has, label }: { has: boolean; label: string }) {
 const STEPS: { key: TicketStatus; label: string }[] = [
   { key: 'Open', label: 'Open' },
   { key: 'InProgress', label: 'In progress' },
-  { key: 'Completed', label: 'Completed' },
+  { key: 'AwaitingResponse', label: 'Awaiting response' },
+  { key: 'Resolved', label: 'Resolved' },
   { key: 'Closed', label: 'Closed' },
 ];
 
 export function WorkflowSteps({ current }: { current: TicketStatus }) {
-  const idx = STEPS.findIndex(s => s.key === current);
+  const idx = Math.max(0, STEPS.findIndex(s => s.key === (current === 'Reopened' ? 'InProgress' : current)));
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       {STEPS.map((step, i) => (
