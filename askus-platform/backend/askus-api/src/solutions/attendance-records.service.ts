@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, Logger, NotFoundExc
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
 import { ActivityService } from '../activity/activity.service';
+import { StaffHierarchyService } from './staff-hierarchy.service';
 import { AuditService } from '../audit/audit.service';
 import { AuthUser } from '../common/access';
 import { Role } from '../common/roles';
@@ -50,6 +51,8 @@ type Person = Pick<User, 'id' | 'roles' | 'createdAt'>;
 
 export interface DayCell { s: AttendanceStatus | null; late: number; miss: boolean }
 
+const NO_ONE = '00000000-0000-0000-0000-000000000000';
+
 @Injectable()
 export class AttendanceRecordsService implements OnModuleInit {
   private readonly logger = new Logger(AttendanceRecordsService.name);
@@ -63,7 +66,14 @@ export class AttendanceRecordsService implements OnModuleInit {
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly activity: ActivityService,
     private readonly audit: AuditService,
+    private readonly hierarchy: StaffHierarchyService,
   ) {}
+
+  /** Staff ids the actor may see: undefined means everyone (Super Admin). Admins get their reports plus themselves. */
+  async scopeIds(actor: AuthUser): Promise<string[] | undefined> {
+    const s = await this.hierarchy.staffScope(actor);
+    return s.all ? undefined : s.ids;
+  }
 
   async onModuleInit() {
     await this.config();
@@ -332,12 +342,13 @@ export class AttendanceRecordsService implements OnModuleInit {
   // ───────────────────────── admin side ─────────────────────────
 
   /** Employee x date x status grid for a month. */
-  async register(month: string) {
+  async register(month: string, actor: AuthUser) {
     const { from, to } = monthRange(month);
-    const staff = await this.staff();
+    const scope = await this.scopeIds(actor);
+    const staff = await this.staff(scope);
     await this.ensureRange(staff, from, to);
     const [rows, holidays, cfg, rules, leave] = await Promise.all([
-      this.records.find({ where: { date: Between(from, to) } }),
+      this.records.find({ where: scope ? { date: Between(from, to), userId: In(scope.length ? scope : [NO_ONE]) } : { date: Between(from, to) } }),
       this.holidayMap(from, to),
       this.config(),
       this.weekOffs.find(),
@@ -372,9 +383,10 @@ export class AttendanceRecordsService implements OnModuleInit {
     };
   }
 
-  async lateReport(month: string) {
+  async lateReport(month: string, actor: AuthUser) {
     const { from, to } = monthRange(month);
-    const rows = await this.records.find({ where: { date: Between(from, to) }, order: { date: 'ASC' } });
+    const scope = await this.scopeIds(actor);
+    const rows = await this.records.find({ where: scope ? { date: Between(from, to), userId: In(scope.length ? scope : [NO_ONE]) } : { date: Between(from, to) }, order: { date: 'ASC' } });
     const late = rows.filter((r) => r.lateByMinutes > 0);
     const people = await this.users.find({ where: { id: In([...new Set(late.map((r) => r.userId))]) } });
     const name = new Map(people.map((u) => [u.id, u.fullName ?? u.email ?? u.mobile ?? u.id] as const));
@@ -387,8 +399,9 @@ export class AttendanceRecordsService implements OnModuleInit {
     return { month, graceMinutes: (await this.config()).graceMinutes, people: [...grouped.values()].sort((a, b) => b.count - a.count) };
   }
 
-  async missedCheckouts() {
-    const rows = await this.records.find({ where: { missedCheckout: true }, order: { date: 'DESC' }, take: 200 });
+  async missedCheckouts(actor: AuthUser) {
+    const scope = await this.scopeIds(actor);
+    const rows = await this.records.find({ where: scope ? { missedCheckout: true, userId: In(scope.length ? scope : [NO_ONE]) } : { missedCheckout: true }, order: { date: 'DESC' }, take: 200 });
     const people = await this.users.find({ where: { id: In([...new Set(rows.map((r) => r.userId))]) } });
     const name = new Map(people.map((u) => [u.id, u.fullName ?? u.email ?? u.mobile ?? u.id] as const));
     return rows.map((r) => ({ ...this.dto(r), userId: r.userId, employeeName: name.get(r.userId) ?? r.userId }));
@@ -401,6 +414,8 @@ export class AttendanceRecordsService implements OnModuleInit {
     for (const hm of [dto.checkIn, dto.checkOut]) if (hm && !HM_RE.test(hm)) throw new BadRequestException('Times must be HH:mm');
     const today = istDay(new Date());
     if (dto.date > today) throw new BadRequestException('You cannot mark a day that has not happened yet');
+    const scope = await this.scopeIds(actor);
+    if (scope && !scope.includes(dto.userId)) throw new NotFoundException('Staff member not found');
     const person = await this.users.findOneBy({ id: dto.userId });
     if (!person || !person.roles.some((r) => [Role.SuperAdmin, Role.Admin, Role.Employee, Role.Agent].includes(r))) throw new NotFoundException('Staff member not found');
 

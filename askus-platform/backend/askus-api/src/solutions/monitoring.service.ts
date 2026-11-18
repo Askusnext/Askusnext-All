@@ -7,6 +7,7 @@ import { AuthUser } from '../common/access';
 import { Role } from '../common/roles';
 import { User } from '../identity/identity.entities';
 import { istDay } from './attendance.service';
+import { StaffHierarchyService } from './staff-hierarchy.service';
 import { AttendanceRecordsService, assertDay, datesBetween } from './attendance-records.service';
 import {
   ActivityHeartbeat, ActivitySession, AgentPairingCode, DailySummary, DeviceToken, MonitoringConsent, MonitoringSetting, TrackingMethod,
@@ -77,6 +78,7 @@ export class MonitoringService implements OnModuleInit {
     private readonly attendance: AttendanceRecordsService,
     private readonly timesheets: TimesheetService,
     private readonly activity: ActivityService,
+    private readonly hierarchy: StaffHierarchyService,
   ) {}
 
   onModuleInit() {
@@ -127,9 +129,12 @@ export class MonitoringService implements OnModuleInit {
     return { method, targetMinutesPerDay };
   }
 
-  async settingsView() {
-    const rules = await this.settings.find({ order: { scope: 'ASC', target: 'ASC' } });
-    const staff = await this.attendance.staffList();
+  async settingsView(actor: AuthUser) {
+    const scope = await this.attendance.scopeIds(actor);
+    const all = await this.settings.find({ order: { scope: 'ASC', target: 'ASC' } });
+    // Role-wide rules stay visible; per-person rules only for people the actor may see.
+    const rules = scope ? all.filter((r) => r.scope === 'role' || scope.includes(r.target)) : all;
+    const staff = await this.attendance.staffList(scope);
     const names = new Map(staff.map((s) => [s.id, nameOf(s)] as const));
     return {
       defaultTargetMinutesPerDay: DEFAULT_TARGET_MINUTES,
@@ -139,21 +144,29 @@ export class MonitoringService implements OnModuleInit {
 
   async saveSetting(actor: AuthUser, dto: { scope: 'user' | 'role'; target: string; targetMinutesPerDay?: number | null; trackingMethod?: TrackingMethod | null }) {
     if (dto.scope === 'role' && !['Admin', 'Employee', 'Agent'].includes(dto.target)) throw new BadRequestException('role must be Admin, Employee or Agent');
-    if (dto.scope === 'user' && !(await this.users.findOneBy({ id: dto.target }))) throw new NotFoundException('Staff member not found');
+    if (dto.scope === 'user') {
+      const scope = await this.attendance.scopeIds(actor);
+      if (scope && !scope.includes(dto.target)) throw new NotFoundException('Staff member not found');
+      if (!(await this.users.findOneBy({ id: dto.target }))) throw new NotFoundException('Staff member not found');
+    }
     const row = (await this.settings.findOneBy({ scope: dto.scope, target: dto.target })) ?? this.settings.create({ scope: dto.scope, target: dto.target, targetMinutesPerDay: null, trackingMethod: null });
     if (dto.targetMinutesPerDay !== undefined) row.targetMinutesPerDay = dto.targetMinutesPerDay;
     if (dto.trackingMethod !== undefined) row.trackingMethod = dto.trackingMethod;
     await this.settings.save(row);
     await this.activity.log(actor, { module: 'tracking', action: 'monitoring.setting_changed', summary: `Set work-hour ${dto.scope} rule for ${dto.target}`, metadata: { ...dto } });
-    return this.settingsView();
+    return this.settingsView(actor);
   }
 
   async removeSetting(actor: AuthUser, id: string) {
     const row = await this.settings.findOneBy({ id });
     if (!row) throw new NotFoundException('Rule not found');
+    if (row.scope === 'user') {
+      const scope = await this.attendance.scopeIds(actor);
+      if (scope && !scope.includes(row.target)) throw new NotFoundException('Rule not found');
+    }
     await this.settings.remove(row);
     await this.activity.log(actor, { module: 'tracking', action: 'monitoring.setting_removed', summary: `Removed work-hour ${row.scope} rule for ${row.target}` });
-    return this.settingsView();
+    return this.settingsView(actor);
   }
 
   // ───────────────────────── agent pairing ─────────────────────────
@@ -392,8 +405,10 @@ export class MonitoringService implements OnModuleInit {
 
   /** Working / idle / offline for each person. Admins see everyone; everyone else sees only themselves. */
   async activeStatus(actor: AuthUser) {
-    const isAdmin = actor.roles.includes(Role.SuperAdmin) || actor.roles.includes(Role.Admin);
-    const staff = await this.attendance.staffList(isAdmin ? undefined : [actor.id]);
+    const scope = await this.attendance.scopeIds(actor); // Super Admin: all; Admin: reports + self; others: self
+    const viewer = await this.hierarchy.viewer(actor);
+    const isAdmin = viewer?.role === 'SuperAdmin' || viewer?.role === 'Admin';
+    const staff = await this.attendance.staffList(scope);
     const ids = staff.map((s) => s.id);
     if (!ids.length) return [];
     const today = istDay(new Date());
@@ -440,9 +455,9 @@ export class MonitoringService implements OnModuleInit {
     assertDay(q.to, 'to');
     if (q.from > q.to) throw new BadRequestException('from must not be after to');
     if (datesBetween(q.from, q.to).length > 93) throw new BadRequestException('Ask for at most 93 days at a time');
-    const isAdmin = actor.roles.includes(Role.SuperAdmin) || actor.roles.includes(Role.Admin);
-    if (q.userId && q.userId !== actor.id && !isAdmin) throw new ForbiddenException();
-    const staff = await this.attendance.staffList(q.userId ? [q.userId] : isAdmin ? undefined : [actor.id]);
+    const scope = await this.attendance.scopeIds(actor);
+    if (q.userId && q.userId !== actor.id && scope && !scope.includes(q.userId)) throw new NotFoundException('Staff member not found');
+    const staff = await this.attendance.staffList(q.userId ? [q.userId] : scope);
     const ids = staff.map((s) => s.id);
 
     // Weeks run Monday to Sunday, so pull whole weeks even when the range starts mid-week.

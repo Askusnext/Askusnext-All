@@ -37,6 +37,11 @@ import { TicketsController } from './tickets.controller';
 import { TicketsService } from './tickets.service';
 import { TimesheetController } from './timesheet.controller';
 import { TimesheetService } from './timesheet.service';
+import { PresenceConsent, PresenceCurrent, PresenceSession, PresenceTransition, StaffAssignmentAudit } from './presence.entities';
+import { PresenceController } from './presence.controller';
+import { PresenceGateway } from './presence.gateway';
+import { PresenceService } from './presence.service';
+import { PresenceBus, StaffHierarchyService } from './staff-hierarchy.service';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 
@@ -46,7 +51,8 @@ import { UsersService } from './users.service';
     LeaveType, LeaveBalance, LeaveRequest, Holiday, AttendanceRecord, AttendanceConfig, WeekOffRule, User,
     ActivityHeartbeat, ActivitySession, DailySummary, DeviceToken, AgentPairingCode, MonitoringConsent, MonitoringSetting,
     CalendarConnection, Meeting, MeetingAttendee, ActivityFeedItem, TeamMember, TicketHistory, TicketComment,
-    Lead, LeadEvent, LeadDocument, LeadNotification, CommissionRule])],
+    Lead, LeadEvent, LeadDocument, LeadNotification, CommissionRule,
+    StaffAssignmentAudit, PresenceConsent, PresenceSession, PresenceCurrent, PresenceTransition])],
   controllers: [
     TicketsController,
     TicketReportsController,
@@ -68,6 +74,7 @@ import { UsersService } from './users.service';
     KbController,
     PaymentsController,
     UsersController,
+    PresenceController,
   ],
   providers: [
     CounterService,
@@ -88,6 +95,11 @@ import { UsersService } from './users.service';
     KbService,
     PaymentsService,
     UsersService,
+    PresenceBus,
+    StaffHierarchyService,
+    PresenceService,
+    PresenceGateway,
   ],
+  exports: [StaffHierarchyService],
 })
 export class SolutionsModule {}

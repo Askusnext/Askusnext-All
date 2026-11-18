@@ -47,6 +47,8 @@ export interface User {
   panMasked?: string | null;
   approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   branchId: string;
+  /** Employee/Agent only: the Admin they report to (null = unassigned). Super Admin sees and edits it. */
+  reportingAdminId?: string | null;
 }
 
 export interface Customer {

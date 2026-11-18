@@ -72,8 +72,11 @@ export class LeaveController {
 
   /** Remaining leave by type. Admins may look at someone else with ?userId=. */
   @Get('balance')
-  balance(@Query() q: BalanceQuery, @CurrentUser() user: AuthUser) {
-    if (q.userId && q.userId !== user.id && !isAdmin(user)) throw new ForbiddenException();
+  async balance(@Query() q: BalanceQuery, @CurrentUser() user: AuthUser) {
+    if (q.userId && q.userId !== user.id) {
+      if (!isAdmin(user)) throw new ForbiddenException();
+      await this.leave.assertCanSee(user, q.userId); // an Admin only reaches their own reports
+    }
     return this.leave.balance(q.userId ?? user.id, q.year ? Number(q.year) : undefined);
   }
 
@@ -81,8 +84,8 @@ export class LeaveController {
 
   @Roles(Role.Admin)
   @Get('requests')
-  requests(@Query() q: ListQuery) {
-    return this.leave.list(q.status);
+  requests(@Query() q: ListQuery, @CurrentUser() user: AuthUser) {
+    return this.leave.list(q.status, user);
   }
 
   @Roles(Role.Admin)
@@ -94,8 +97,8 @@ export class LeaveController {
 
   @Roles(Role.Admin)
   @Get('balance-summary')
-  summary(@Query() q: YearQuery) {
-    return this.leave.balanceSummary(q.year ? Number(q.year) : undefined);
+  summary(@Query() q: YearQuery, @CurrentUser() user: AuthUser) {
+    return this.leave.balanceSummary(q.year ? Number(q.year) : undefined, user);
   }
 
   @Roles(Role.Admin)

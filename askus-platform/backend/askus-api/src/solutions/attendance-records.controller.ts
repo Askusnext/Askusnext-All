@@ -93,31 +93,31 @@ export class AttendanceRecordsController {
 
   @Roles(Role.Admin)
   @Get('register')
-  register(@Query() q: MonthQuery) {
-    return this.records.register(q.month);
+  register(@Query() q: MonthQuery, @CurrentUser() user: AuthUser) {
+    return this.records.register(q.month, user);
   }
 
   @Roles(Role.Admin)
   @Get('late-report')
-  lateReport(@Query() q: MonthQuery) {
-    return this.records.lateReport(q.month);
+  lateReport(@Query() q: MonthQuery, @CurrentUser() user: AuthUser) {
+    return this.records.lateReport(q.month, user);
   }
 
   @Roles(Role.Admin)
   @Get('missed-checkouts')
-  missedCheckouts() {
-    return this.records.missedCheckouts();
+  missedCheckouts(@CurrentUser() user: AuthUser) {
+    return this.records.missedCheckouts(user);
   }
 
   /** Excel or PDF of a month's register, for payroll. */
   @Roles(Role.Admin)
   @Get('export')
-  async export(@Query() q: ExportQuery, @Res() res: Response) {
+  async export(@Query() q: ExportQuery, @CurrentUser() user: AuthUser, @Res() res: Response) {
     const format = q.format ?? 'xlsx';
-    const reg = await this.records.register(q.month);
+    const reg = await this.records.register(q.month, user);
     const buffer = format === 'pdf'
       ? await registerPdf(reg)
-      : await registerXlsx(reg, await this.records.lateReport(q.month), await this.leave.balanceSummary(Number(q.month.slice(0, 4))));
+      : await registerXlsx(reg, await this.records.lateReport(q.month, user), await this.leave.balanceSummary(Number(q.month.slice(0, 4)), user));
     res.set({
       'Content-Type': format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': `attachment; filename="attendance-${q.month}.${format}"`,

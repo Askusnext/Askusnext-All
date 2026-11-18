@@ -34,6 +34,7 @@ import TimesheetPage from './views/TimesheetPage';
 import AttendancePage from './views/AttendancePage';
 import WorkHoursPage from './views/WorkHoursPage';
 import UserManagementPage from './views/UserManagementPage';
+import PresencePage from './views/PresencePage';
 import LoansPage from './views/LoansPage';
 import InsuranceRequestsPage from './views/InsuranceRequestsPage';
 import ActivityPage from './views/ActivityPage';
@@ -183,6 +184,11 @@ export default function App() {
               <Route path="work-hours" element={
                 <ProtectedRoute><RoleRoute permission="timesheet">
                   <WorkHoursPage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="presence" element={
+                <ProtectedRoute><RoleRoute adminOnly>
+                  <PresencePage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="insurance-requests" element={

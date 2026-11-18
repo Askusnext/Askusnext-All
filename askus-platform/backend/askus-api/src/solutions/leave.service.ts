@@ -1,6 +1,7 @@
+import { StaffHierarchyService } from './staff-hierarchy.service';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { ActivityService } from '../activity/activity.service';
 import { AuthUser } from '../common/access';
 import { Role } from '../common/roles';
@@ -33,6 +34,7 @@ export class LeaveService implements OnModuleInit {
     private readonly attendance: AttendanceRecordsService,
     private readonly activity: ActivityService,
     private readonly notify: NotificationService,
+    private readonly hierarchy: StaffHierarchyService,
   ) {}
 
   /** The four standard leave types exist from the first start. Admins can change or add more. */
@@ -94,11 +96,18 @@ export class LeaveService implements OnModuleInit {
   }
 
   /** Everyone's balances for the year, for the admin summary and the export. */
-  async balanceSummary(year = Number(istDay(new Date()).slice(0, 4))) {
-    const staff = await this.attendance.staffList();
+  async balanceSummary(year = Number(istDay(new Date()).slice(0, 4)), actor?: AuthUser) {
+    const staff = await this.attendance.staffList(actor ? await this.attendance.scopeIds(actor) : undefined);
     const types = await this.listTypes();
     const rows = await Promise.all(staff.map(async (u) => ({ userId: u.id, employeeName: nameOf(u), role: toTmsRole(u.roles), balances: await this.balance(u.id, year) })));
     return { year, types: types.map((t) => t.name), rows };
+  }
+
+  /** Throws 404 unless the actor may see this person's leave data (themselves, their reports, or anyone for a Super Admin). */
+  async assertCanSee(actor: AuthUser, userId: string) {
+    if (userId === actor.id) return;
+    const scope = await this.attendance.scopeIds(actor);
+    if (scope && !scope.includes(userId)) throw new NotFoundException('Staff member not found');
   }
 
   // ───────────────────────── requests ─────────────────────────
@@ -168,8 +177,10 @@ export class LeaveService implements OnModuleInit {
     return this.requests.find({ where: { userId }, order: { createdAt: 'DESC' }, take: 100 }).then((rows) => rows.map((r) => this.view(r)));
   }
 
-  async list(status?: LeaveStatus) {
-    const rows = await this.requests.find({ where: status ? { status } : {}, order: { createdAt: 'DESC' }, take: 200 });
+  async list(status: LeaveStatus | undefined, actor: AuthUser) {
+    const scope = await this.attendance.scopeIds(actor);
+    const where = { ...(status ? { status } : {}), ...(scope ? { userId: In(scope.length ? scope : ['00000000-0000-0000-0000-000000000000']) } : {}) };
+    const rows = await this.requests.find({ where, order: { createdAt: 'DESC' }, take: 200 });
     return rows.map((r) => this.view(r));
   }
 
@@ -179,9 +190,11 @@ export class LeaveService implements OnModuleInit {
    */
   async decide(actor: AuthUser, dto: { id: string; decision: 'approved' | 'rejected'; note?: string }) {
     const isSuper = actor.roles.includes(Role.SuperAdmin);
+    const scope = await this.attendance.scopeIds(actor);
     const result = await this.db.transaction(async (m) => {
       const r = await m.getRepository(LeaveRequest).createQueryBuilder('l').setLock('pessimistic_write').where('l.id = :id', { id: dto.id }).getOne();
       if (!r) throw new NotFoundException('Leave request not found');
+      if (scope && !scope.includes(r.userId)) throw new NotFoundException('Leave request not found');
       if (r.status !== 'pending') throw new ConflictException(`This request is already ${r.status}.`);
       if (r.userId === actor.id && !isSuper) throw new ForbiddenException('You cannot approve your own leave. Ask another Admin.');
 

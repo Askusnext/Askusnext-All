@@ -3,6 +3,8 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { logout, useAppDispatch, useAppSelector } from '../store';
 import { STAFF_KEYS, clearSession } from '../api/session';
 import { NAV_ITEMS, canOpen } from '../access';
+import PresenceGate from './PresenceGate';
+import { stopPresenceForLogout } from '../presence/session';
 
 export default function AppLayout() {
 	const dispatch = useAppDispatch();
@@ -13,6 +15,7 @@ export default function AppLayout() {
 	const visibleItems = NAV_ITEMS.filter((item) => canOpen(user, item));
 
 	const handleLogout = () => {
+		stopPresenceForLogout(); // end the browser-presence session while the token is still valid
 		clearSession(STAFF_KEYS);
 		dispatch(logout());
 		navigate('/home', { replace: true });
@@ -52,6 +55,7 @@ export default function AppLayout() {
 				<div style={styles.footer}>
 					<div style={styles.userName}>{user?.name ?? 'Signed in user'}</div>
 					<div style={styles.userRole}>{user?.role === 'SuperAdmin' ? 'Super Admin' : user?.role ?? 'Agent'}</div>
+					<div style={{ marginTop: 12 }}><PresenceGate role={user?.role} /></div>
 					<button type="button" style={styles.logoutButton} onClick={handleLogout}>
 						Logout
 					</button>

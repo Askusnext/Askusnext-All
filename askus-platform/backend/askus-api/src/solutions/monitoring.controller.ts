@@ -187,8 +187,8 @@ export class TimeController {
 
   @Roles(Role.Admin)
   @Get('settings')
-  settings() {
-    return this.monitoring.settingsView();
+  settings(@CurrentUser() user: AuthUser) {
+    return this.monitoring.settingsView(user);
   }
 
   /** Set a person's or a role's tracking method and minimum-hours target. */
