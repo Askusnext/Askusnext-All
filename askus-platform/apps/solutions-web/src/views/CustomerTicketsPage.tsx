@@ -7,7 +7,9 @@ import customerApi, { type CustomerTicket } from '../api/customerApi';
 const statusColors: Record<string, string> = {
 	Open: '#C8102E',
 	InProgress: '#B8860B',
-	Completed: '#1E8E3E',
+	AwaitingResponse: '#B8860B',
+	Resolved: '#1E8E3E',
+	Reopened: '#C8102E',
 	Closed: '#5b6b83',
 };
 

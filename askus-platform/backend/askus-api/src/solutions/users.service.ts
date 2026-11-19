@@ -9,16 +9,13 @@ import { PERMISSIONS, Role } from '../common/roles';
 import { AuditService } from '../audit/audit.service';
 import { User } from '../identity/identity.entities';
 import { StorageService } from '../storage/storage.service';
+import { StaffHierarchyService } from './staff-hierarchy.service';
+import { StaffRole, TmsRole, toTmsRole } from './tms-role';
 
-export type TmsRole = 'SuperAdmin' | 'Admin' | 'Employee' | 'Agent' | 'Customer';
-export type StaffRole = Exclude<TmsRole, 'SuperAdmin' | 'Customer'>;
+// Re-exported so existing imports from './users.service' keep working.
+export type { TmsRole, StaffRole };
+export { toTmsRole };
 
-const TO_TMS: Partial<Record<Role, TmsRole>> = {
-  [Role.SuperAdmin]: 'SuperAdmin',
-  [Role.Admin]: 'Admin',
-  [Role.Employee]: 'Employee',
-  [Role.Agent]: 'Agent',
-};
 const FROM_TMS: Record<StaffRole, Role> = {
   Admin: Role.Admin,
   Employee: Role.Employee,
@@ -33,9 +30,6 @@ const PAN_KEY = /^pan\/[0-9a-f-]{36}\.(jpg|png|pdf)$/;
 
 const maskPan = (n: string) => `${n.slice(0, 2)}******${n.slice(-2)}`;
 
-export const toTmsRole = (roles: Role[]): TmsRole =>
-  (['SuperAdmin', 'Admin', 'Employee', 'Agent'] as const).find((r) => roles.some((x) => TO_TMS[x] === r)) ?? 'Customer';
-
 export const toTmsUser = (u: User) => ({
   id: u.id,
   name: u.fullName ?? u.email ?? u.mobile ?? 'User',
@@ -48,6 +42,7 @@ export const toTmsUser = (u: User) => ({
   panMasked: u.panNumber ? maskPan(u.panNumber) : null,
   approvalStatus: u.approvalStatus,
   createdBy: u.createdBy,
+  reportingAdminId: u.reportingAdminId,
   branchId: 'branch-001',
 });
 
@@ -57,6 +52,7 @@ export class UsersService {
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly storage: StorageService,
     private readonly audit: AuditService,
+    private readonly hierarchy: StaffHierarchyService,
   ) {}
 
   async findById(id: string) {
@@ -78,6 +74,10 @@ export class UsersService {
     if (role === 'SuperAdmin' || role === 'Customer' || !this.assignable(actor).includes(role)) {
       throw new ForbiddenException('You cannot manage this user');
     }
+    // An Admin reaches only their own reports, or staff they created themselves (not yet assigned). Other Admins' people look absent.
+    if (!actor.roles.includes(Role.SuperAdmin) && user.reportingAdminId !== actor.id && user.createdBy !== actor.id) {
+      throw new NotFoundException('Not found');
+    }
     return user;
   }
 
@@ -89,16 +89,21 @@ export class UsersService {
   }
 
   async findStaff(actor: AuthUser) {
+    const me = await this.hierarchy.viewer(actor);
+    if (!me) throw new ForbiddenException();
+    // Employees/Agents holding the 'users' permission see only themselves; peers are not exposed.
+    if (me.role === 'Employee' || me.role === 'Agent') return (await this.users.find({ where: { id: me.id } })).map(toTmsUser);
     const roles = this.assignable(actor).map((r) => FROM_TMS[r]);
-    const rows = await this.users
+    const qb = this.users
       .createQueryBuilder('u')
       .where("(u.isActive = true OR u.approvalStatus = 'PENDING')")
       .andWhere(
         '(' + roles.map((_, i) => `u.roles LIKE :r${i}`).join(' OR ') + ` OR u.approvalStatus = 'PENDING')`,
         Object.fromEntries(roles.map((r, i) => [`r${i}`, `%${r}%`])),
-      )
-      .orderBy('u.createdAt', 'ASC')
-      .getMany();
+      );
+    // An Admin sees their own reports, people they created, and pending access requests to review; never other Admins' teams.
+    if (me.role === 'Admin') qb.andWhere("(u.reportingAdminId = :me OR u.createdBy = :me OR u.approvalStatus = 'PENDING')", { me: me.id });
+    const rows = await qb.orderBy('u.createdAt', 'ASC').getMany();
     return rows.map(toTmsUser);
   }
 
@@ -355,16 +360,24 @@ export class UsersService {
       if (user.email && !user.emailVerifiedAt) user.emailVerifiedAt = new Date();
       user.mobile = mobile;
     }
+    const wasAdmin = toTmsRole(user.roles) === 'Admin';
     if (body.role) {
       user.roles = [FROM_TMS[body.role]];
       if (body.role === 'Admin') user.permissions = [];
     }
-    return toTmsUser(await this.users.save(user));
+    const saved = await this.users.save(user);
+    // Only Employees/Agents report to an Admin. Becoming an Admin drops the person's own Admin; ceasing to be one drops their reports.
+    if (body.role === 'Admin') await this.hierarchy.clearLinks(actor.id, { subjectId: id }, 'Role changed to Admin');
+    if (wasAdmin && body.role && body.role !== 'Admin') await this.hierarchy.clearLinks(actor.id, { adminId: id }, 'Admin role removed');
+    return toTmsUser(saved);
   }
 
   async deactivate(actor: AuthUser, id: string) {
     await this.getManaged(actor, id);
     await this.users.update({ id }, { isActive: false });
+    // A disabled Admin's reports become unassigned (audited), and a disabled person leaves their Admin's team.
+    await this.hierarchy.clearLinks(actor.id, { adminId: id }, 'Admin deactivated');
+    await this.hierarchy.clearLinks(actor.id, { subjectId: id }, 'Staff member deactivated');
     return { message: 'User deactivated' };
   }
 }

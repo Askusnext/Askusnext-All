@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
+import { AuthUser } from '../common/access';
 import { Ticket } from './solutions.entities';
+import { TicketAccessService } from './ticket-access.service';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAY_MS = 86_400_000;
@@ -9,34 +11,33 @@ const isoDate = (d: Date) => d.toISOString().split('T')[0];
 
 @Injectable()
 export class DashboardService {
-  constructor(@InjectRepository(Ticket) private readonly tickets: Repository<Ticket>) {}
+  constructor(
+    @InjectRepository(Ticket) private readonly tickets: Repository<Ticket>,
+    private readonly access: TicketAccessService,
+  ) {}
 
-  async getKPIs() {
+  /** Every figure below is computed from the tickets this person is allowed to see. */
+  private async visible(user: AuthUser): Promise<SelectQueryBuilder<Ticket>> {
+    return this.access.restrict(this.tickets.createQueryBuilder('t'), 't', await this.access.scopeFor(user));
+  }
+
+  async getKPIs(user: AuthUser) {
     const now = new Date();
     const today = isoDate(now);
     const in30 = isoDate(new Date(now.getTime() + 30 * DAY_MS));
 
-    const sumPayments = (statuses: string[]) =>
-      this.tickets
-        .createQueryBuilder('t')
+    const sumPayments = async (statuses: string[]) =>
+      (await this.visible(user))
         .select(`COALESCE(SUM((t.payment ->> 'amount')::numeric), 0)`, 'total')
         .where(`t.payment ->> 'paymentStatus' IN (:...statuses)`, { statuses })
         .getRawOne<{ total: string }>();
 
     const [total, open, expiring, expired, byType, paid, pending] = await Promise.all([
-      this.tickets.count(),
-      this.tickets.createQueryBuilder('t').where('t.status IN (:...s)', { s: ['Open', 'InProgress'] }).getCount(),
-      this.tickets
-        .createQueryBuilder('t')
-        .where(`t.policy ->> 'expiryDate' >= :today AND t.policy ->> 'expiryDate' <= :in30`, { today, in30 })
-        .getCount(),
-      this.tickets.createQueryBuilder('t').where(`t.policy ->> 'insuranceStatus' = 'Expired'`).getCount(),
-      this.tickets
-        .createQueryBuilder('t')
-        .select('t.ticketType', 'type')
-        .addSelect('COUNT(*)', 'count')
-        .groupBy('t.ticketType')
-        .getRawMany<{ type: string; count: string }>(),
+      (await this.visible(user)).getCount(),
+      (await this.visible(user)).where('t.status IN (:...s)', { s: ['Open', 'InProgress', 'AwaitingResponse', 'Reopened'] }).getCount(),
+      (await this.visible(user)).where(`t.policy ->> 'expiryDate' >= :today AND t.policy ->> 'expiryDate' <= :in30`, { today, in30 }).getCount(),
+      (await this.visible(user)).where(`t.policy ->> 'insuranceStatus' = 'Expired'`).getCount(),
+      (await this.visible(user)).select('t.ticketType', 'type').addSelect('COUNT(*)', 'count').groupBy('t.ticketType').getRawMany<{ type: string; count: string }>(),
       sumPayments(['Paid']),
       sumPayments(['Pending', 'Partial']),
     ]);
@@ -60,23 +61,21 @@ export class DashboardService {
     };
   }
 
-  async getExpiryAlerts(days: number) {
+  async getExpiryAlerts(user: AuthUser, days: number) {
     const cutoff = isoDate(new Date(Date.now() + days * DAY_MS));
-    return this.tickets
-      .createQueryBuilder('t')
+    return (await this.visible(user))
       .where(`t.policy ->> 'expiryDate' <= :cutoff`, { cutoff })
       .orderBy(`t.policy ->> 'expiryDate'`, 'ASC')
       .limit(20)
       .getMany();
   }
 
-  async getMonthly() {
+  async getMonthly(user: AuthUser) {
     const from = new Date();
     from.setMonth(from.getMonth() - 5);
     from.setDate(1);
 
-    const rows = await this.tickets
-      .createQueryBuilder('t')
+    const rows = await (await this.visible(user))
       .select('EXTRACT(YEAR FROM t.createdAt)', 'year')
       .addSelect('EXTRACT(MONTH FROM t.createdAt)', 'month')
       .addSelect('COUNT(*)', 'tickets')

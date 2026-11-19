@@ -12,6 +12,7 @@ import {
 } from '../api/mockApi';
 import { PERMISSION_OPTIONS, type UserRole } from '../types';
 import { useAppSelector } from '../store';
+import { presenceApi } from '../api/presence';
 
 const { Title, Text } = Typography;
 
@@ -71,6 +72,37 @@ export default function UserManagementPage() {
   };
 
   useEffect(() => { loadUsers(); }, []);
+
+  // Super Admin only: the Admins an Employee/Agent can be assigned to.
+  const [admins, setAdmins] = useState<{ id: string; name: string }[]>([]);
+  const [assigning, setAssigning] = useState<string | null>(null);
+  useEffect(() => {
+    if (isSuperAdmin) presenceApi.admins().then(setAdmins).catch(() => undefined);
+  }, [isSuperAdmin]);
+
+  // The list changes only after the server confirms; until then the Select keeps showing the saved value.
+  const changeAssignment = (u: ManagedUser, adminId: string | null) => {
+    const to = adminId ? admins.find((a) => a.id === adminId)?.name ?? 'this Admin' : null;
+    Modal.confirm({
+      title: to ? `Assign ${u.name} to ${to}?` : `Remove ${u.name} from their Admin?`,
+      content: to
+        ? 'The Admin will see this person\'s presence and staff data. A previous Admin loses access immediately.'
+        : 'No Admin will see this person any more. Only Super Admins will.',
+      okText: to ? 'Assign' : 'Unassign',
+      onOk: async () => {
+        setAssigning(u.id);
+        try {
+          await presenceApi.assign(u.id, adminId);
+          message.success(to ? `${u.name} now reports to ${to}` : `${u.name} is unassigned`);
+          await loadUsers();
+        } catch (err) {
+          message.error(err instanceof Error ? err.message : 'Could not change the assignment');
+        } finally {
+          setAssigning(null);
+        }
+      },
+    });
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -277,6 +309,24 @@ export default function UserManagementPage() {
       onFilter: (value, record) => record.role === value,
       render: (role: UserRole) => <Tag color={ROLE_COLORS[role]}>{role}</Tag>,
     },
+    ...(isSuperAdmin
+      ? [{
+          title: 'Reports to',
+          key: 'reportsTo',
+          render: (_: unknown, u: ManagedUser) =>
+            (u.role === 'Employee' || u.role === 'Agent') && u.approvalStatus !== 'PENDING' && u.isActive ? (
+              <Select
+                size="small"
+                style={{ minWidth: 170 }}
+                data-testid={`assign-${u.id}`}
+                loading={assigning === u.id}
+                value={u.reportingAdminId ?? 'none'}
+                onChange={(v) => changeAssignment(u, v === 'none' ? null : v)}
+                options={[{ value: 'none', label: 'Unassigned' }, ...admins.map((a) => ({ value: a.id, label: a.name }))]}
+              />
+            ) : <Text type="secondary">—</Text>,
+        }]
+      : []),
     {
       title: 'Permissions',
       dataIndex: 'permissions',

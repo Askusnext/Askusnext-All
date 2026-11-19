@@ -6,6 +6,7 @@ import { AuthUser } from '../common/access';
 import { Role } from '../common/roles';
 import { User } from '../identity/identity.entities';
 import { LocationPing, TrackingConsent, WorkSession } from './attendance.entities';
+import { StaffHierarchyService } from './staff-hierarchy.service';
 import { TimesheetService } from './timesheet.service';
 import { toTmsRole } from './users.service';
 
@@ -22,7 +23,6 @@ export interface Fix {
   accuracy?: number | null;
 }
 
-const canSeeAll = (u: AuthUser) => u.roles.includes(Role.SuperAdmin) || u.roles.includes(Role.Admin) || u.roles.includes(Role.Employee);
 export const istDay = (d: Date) => new Date(d.getTime() + IST_OFFSET_MS).toISOString().slice(0, 10);
 const iso = (d: Date | null | undefined) => (d ? d.toISOString() : null);
 
@@ -35,6 +35,7 @@ export class AttendanceService {
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly timesheets: TimesheetService,
     private readonly activity: ActivityService,
+    private readonly hierarchy: StaffHierarchyService,
   ) {}
 
   // ───────────────────────── time maths ─────────────────────────
@@ -177,18 +178,23 @@ export class AttendanceService {
 
   // ───────────────────────── admin / employee side ─────────────────────────
 
-  private assertViewer(actor: AuthUser) {
-    if (!canSeeAll(actor)) throw new ForbiddenException();
+  /** Super Admin: everyone. Admin: their reports and themselves. Employees and Agents: only themselves. Never trusts the token's role. */
+  private async visibleIds(actor: AuthUser): Promise<string[] | null> {
+    const s = await this.hierarchy.staffScope(actor);
+    if (!s.ids.length && !s.all) throw new ForbiddenException();
+    return s.all ? null : s.ids;
   }
 
   /** Everyone's status for a day: working, idle, signal lost, finished, or not started. */
   async live(actor: AuthUser, day: string | undefined) {
-    this.assertViewer(actor);
+    const scope = await this.visibleIds(actor);
     const date = day ?? istDay(new Date());
-    const staff = await this.users
+    const qb = this.users
       .createQueryBuilder('u')
       .where(`u.roles ~ '(^|,)(SUPER_ADMIN|ADMIN|EMPLOYEE|AGENT)(,|$)'`)
-      .andWhere('u.isActive = true')
+      .andWhere('u.isActive = true');
+    if (scope) qb.andWhere('u.id IN (:...scope)', { scope });
+    const staff = await qb
       .orderBy('u.fullName', 'ASC', 'NULLS LAST')
       .getMany();
     const ids = staff.map((s) => s.id);
@@ -222,7 +228,8 @@ export class AttendanceService {
 
   /** The sessions and location trail of one person on one day. */
   async trail(actor: AuthUser, userId: string, day: string) {
-    this.assertViewer(actor);
+    const scope = await this.visibleIds(actor);
+    if (scope && !scope.includes(userId)) throw new NotFoundException('Staff member not found');
     const account = await this.users.findOneBy({ id: userId });
     if (!account) throw new NotFoundException('Staff member not found');
     const sessions = await this.sessions.find({ where: { userId, day }, order: { startedAt: 'ASC' } });

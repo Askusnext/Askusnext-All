@@ -14,6 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useKPIs, useExpiryAlerts, useMonthlyData } from '../hooks';
 import { ExpiryTag, StatusBadge, PriorityTag, AvatarInitials } from '../components/shared';
+import CountersPanel from '../components/CountersPanel';
 import type { Ticket } from '../types';
 
 const BAR_COLORS = ['#C8102E', '#E8A0A8', '#A0BBD8', '#9DCCA8'];
@@ -190,6 +191,7 @@ export default function DashboardPage() {
   return (
     <div>
       {/* Header */}
+      <CountersPanel />
       {/* KPI cards */}
       <Row gutter={12} style={{ marginBottom: 20 }}>
         {[

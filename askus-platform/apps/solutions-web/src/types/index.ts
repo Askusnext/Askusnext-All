@@ -1,5 +1,5 @@
-export type TicketStatus = 'Open' | 'InProgress' | 'Completed' | 'Closed';
-export type Priority = 'High' | 'Medium' | 'Low';
+export type TicketStatus = 'Open' | 'InProgress' | 'AwaitingResponse' | 'Resolved' | 'Closed' | 'Reopened';
+export type Priority = 'Critical' | 'High' | 'Medium' | 'Low';
 export type TicketType =
   | 'Insurance'
   | 'O2Taxi'
@@ -47,6 +47,8 @@ export interface User {
   panMasked?: string | null;
   approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
   branchId: string;
+  /** Employee/Agent only: the Admin they report to (null = unassigned). Super Admin sees and edits it. */
+  reportingAdminId?: string | null;
 }
 
 export interface Customer {

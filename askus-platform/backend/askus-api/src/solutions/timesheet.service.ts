@@ -1,14 +1,12 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { ActivityService } from '../activity/activity.service';
 import { AuthUser } from '../common/access';
-import { Role } from '../common/roles';
 import { User } from '../identity/identity.entities';
 import { IDayEntry, Timesheet } from './solutions.entities';
+import { StaffHierarchyService } from './staff-hierarchy.service';
 import { toTmsRole } from './users.service';
-
-const canSeeAll = (u: AuthUser) => u.roles.includes(Role.SuperAdmin) || u.roles.includes(Role.Admin) || u.roles.includes(Role.Employee);
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -36,13 +34,21 @@ export class TimesheetService {
     @InjectRepository(Timesheet) private readonly sheets: Repository<Timesheet>,
     @InjectRepository(User) private readonly users: Repository<User>,
     private readonly activity: ActivityService,
+    private readonly hierarchy: StaffHierarchyService,
   ) {}
 
-  findAll(weekStart: string | undefined, user: AuthUser) {
+  /** null = everyone (Super Admin); otherwise the ids this actor may see. Employees and Agents get only themselves. */
+  private async scope(actor: AuthUser): Promise<string[] | null> {
+    const s = await this.hierarchy.staffScope(actor);
+    return s.all ? null : s.ids.length ? s.ids : [actor.id];
+  }
+
+  async findAll(weekStart: string | undefined, user: AuthUser) {
+    const scope = await this.scope(user);
     return this.sheets.find({
       where: {
         ...(weekStart ? { weekStart } : {}),
-        ...(canSeeAll(user) ? {} : { userId: user.id }),
+        ...(scope ? { userId: In(scope) } : {}),
       },
       order: { weekStart: 'DESC' },
     });
@@ -53,18 +59,13 @@ export class TimesheetService {
    * Admins and employees see the whole team; an agent sees only themselves.
    */
   async week(weekStart: string, user: AuthUser) {
-    let staff: User[];
-    if (canSeeAll(user)) {
-      staff = await this.users
-        .createQueryBuilder('u')
-        .where(`u.roles ~ '(^|,)(SUPER_ADMIN|ADMIN|EMPLOYEE|AGENT)(,|$)'`)
-        .andWhere('u.isActive = true')
-        .orderBy('u.fullName', 'ASC', 'NULLS LAST')
-        .getMany();
-    } else {
-      const self = await this.users.findOneBy({ id: user.id });
-      staff = self ? [self] : [];
-    }
+    const scope = await this.scope(user);
+    const qb = this.users
+      .createQueryBuilder('u')
+      .where(`u.roles ~ '(^|,)(SUPER_ADMIN|ADMIN|EMPLOYEE|AGENT)(,|$)'`)
+      .andWhere('u.isActive = true');
+    if (scope) qb.andWhere('u.id IN (:...scope)', { scope });
+    const staff: User[] = await qb.orderBy('u.fullName', 'ASC', 'NULLS LAST').getMany();
     const sheets = staff.length ? await this.sheets.find({ where: { weekStart, userId: In(staff.map((s) => s.id)) } }) : [];
     const byUser = new Map(sheets.map((s) => [s.userId, s]));
     return staff.map((u) => ({
@@ -122,7 +123,8 @@ export class TimesheetService {
 
   /** An admin or employee records attendance for someone else. */
   async upsertFor(actor: AuthUser, userId: string, weekStart: string, entries: IDayEntry[]) {
-    if (!canSeeAll(actor)) throw new ForbiddenException();
+    const scope = await this.scope(actor);
+    if (scope && !scope.includes(userId)) throw new NotFoundException('Staff member not found');
     const account = await this.users.findOneBy({ id: userId });
     if (!account) throw new NotFoundException('Staff member not found');
     const saved = await this.save(account, weekStart, entries);
@@ -136,7 +138,8 @@ export class TimesheetService {
   async update(id: string, entries: IDayEntry[], user: AuthUser) {
     const sheet = await this.sheets.findOne({ where: { id } });
     if (!sheet) throw new NotFoundException('Not found');
-    if (!canSeeAll(user) && sheet.userId !== user.id) throw new ForbiddenException();
+    const scope = await this.scope(user);
+    if (scope && !scope.includes(sheet.userId)) throw new NotFoundException('Not found');
     assertEntriesInWeek(sheet.weekStart, entries);
     sheet.entries = entries;
     return this.sheets.save(sheet);

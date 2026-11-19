@@ -27,9 +27,14 @@ import TicketsPage from './views/TicketsPage';
 import TicketDetailPage from './views/TicketDetailPage';
 import TicketFormPage from './views/TicketFormPage';
 import AnalyticsPage from './views/AnalyticsPage';
-import CalendarPage from './views/CalendarPage';
+import LeadsPage from './views/LeadsPage';
+import RenewalsPage from './views/RenewalsPage';
+import UnifiedCalendarPage from './views/UnifiedCalendarPage';
 import TimesheetPage from './views/TimesheetPage';
+import AttendancePage from './views/AttendancePage';
+import WorkHoursPage from './views/WorkHoursPage';
 import UserManagementPage from './views/UserManagementPage';
+import PresencePage from './views/PresencePage';
 import LoansPage from './views/LoansPage';
 import InsuranceRequestsPage from './views/InsuranceRequestsPage';
 import ActivityPage from './views/ActivityPage';
@@ -79,16 +84,6 @@ function HomeGate() {
 function CustomerProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('askus_customer_token');
   return token ? <>{children}</> : <Navigate to="/customer/login" replace />;
-}
-
-function Placeholder({ title }: { title: string }) {
-  return (
-    <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>
-      <div style={{ fontSize: 48, marginBottom: 16 }}>🚧</div>
-      <div style={{ fontSize: 20, fontWeight: 500, marginBottom: 8 }}>{title}</div>
-      <div style={{ fontSize: 14 }}>Coming in the next sprint</div>
-    </div>
-  );
 }
 
 export default function App() {
@@ -174,13 +169,26 @@ export default function App() {
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="calendar" element={
-                <ProtectedRoute><RoleRoute permission="tickets">
-                  <CalendarPage />
-                </RoleRoute></ProtectedRoute>
+                <ProtectedRoute><UnifiedCalendarPage /></ProtectedRoute>
               } />
               <Route path="timesheet" element={
                 <ProtectedRoute><RoleRoute permission="timesheet">
                   <TimesheetPage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="attendance" element={
+                <ProtectedRoute><RoleRoute permission="timesheet">
+                  <AttendancePage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="work-hours" element={
+                <ProtectedRoute><RoleRoute permission="timesheet">
+                  <WorkHoursPage />
+                </RoleRoute></ProtectedRoute>
+              } />
+              <Route path="presence" element={
+                <ProtectedRoute><RoleRoute adminOnly>
+                  <PresencePage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="insurance-requests" element={
@@ -198,9 +206,12 @@ export default function App() {
                   <LoansPage />
                 </RoleRoute></ProtectedRoute>
               } />
+              <Route path="leads" element={
+                <ProtectedRoute><LeadsPage /></ProtectedRoute>
+              } />
               <Route path="renewals" element={
-                <ProtectedRoute><RoleRoute adminOnly>
-                  <Placeholder title="Renewals" />
+                <ProtectedRoute><RoleRoute permission="tickets">
+                  <RenewalsPage />
                 </RoleRoute></ProtectedRoute>
               } />
               <Route path="users" element={

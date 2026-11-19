@@ -43,6 +43,12 @@ export class User {
   @Column({ type: 'uuid', name: 'created_by', nullable: true })
   createdBy: string | null;
 
+  // Solutions staff hierarchy: the one Admin an Employee/Agent reports to. Null = unassigned.
+  // Only a Super Admin changes it (see StaffHierarchyService); never set for any other role.
+  @Index()
+  @Column({ type: 'uuid', name: 'reporting_admin_id', nullable: true })
+  reportingAdminId: string | null;
+
   @Column({ name: 'is_active', default: true })
   isActive: boolean;
 

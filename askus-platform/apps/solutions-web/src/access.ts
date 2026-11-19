@@ -13,12 +13,17 @@ export const NAV_ITEMS: { to: string; label: string; permission?: Permission; ad
   { to: '/board', label: 'Board', permission: 'tickets' },
   { to: '/tickets', label: 'Tickets', permission: 'tickets' },
   { to: '/analytics', label: 'Analytics', permission: 'reports' },
-  { to: '/calendar', label: 'Calendar', permission: 'tickets' },
+  { to: '/calendar', label: 'Calendar' },
   { to: '/timesheet', label: 'Timesheet', permission: 'timesheet' },
+  { to: '/attendance', label: 'Attendance', permission: 'timesheet' },
+  { to: '/work-hours', label: 'Work hours', permission: 'timesheet' },
+  // Browser presence of the people a manager is allowed to see; Employees and Agents never get this page.
+  { to: '/presence', label: 'Team Presence', adminOnly: true },
+  { to: '/leads', label: 'Insurance & Loan Leads' },
   { to: '/insurance-requests', label: 'Insurance Requests', permission: 'insurance' },
   { to: '/loans', label: 'Askus Loans', permission: 'loans' },
   { to: '/activity', label: 'Activity' },
-  { to: '/renewals', label: 'Renewals', adminOnly: true },
+  { to: '/renewals', label: 'Renewals', permission: 'tickets' },
   { to: '/users', label: 'User Management', adminOnly: true },
 ];
 

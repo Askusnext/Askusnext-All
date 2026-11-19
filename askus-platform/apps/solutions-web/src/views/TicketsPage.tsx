@@ -3,7 +3,7 @@ import { Card, Select, Button, Input, Tag, Spin, Tabs } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTickets } from '../hooks';
-import { StatusBadge, PriorityTag, ExpiryTag } from '../components/shared';
+import { StatusBadge, PriorityTag, ExpiryTag, STATUS_OPTIONS } from '../components/shared';
 import type { TicketStatus, Priority } from '../types';
 
 export default function TicketsPage() {
@@ -50,11 +50,10 @@ export default function TicketsPage() {
           <Input.Search placeholder="Search reg. no., owner, ticket…" style={{ flex:1, minWidth:200 }} allowClear
             onSearch={v => set('search', v)} />
           <Select placeholder="Status" allowClear style={{ width:130 }} onChange={v => set('status', v ?? '')}>
-            {['Open','InProgress','Completed','Closed'].map(s =>
-              <Select.Option key={s} value={s}>{s === 'InProgress' ? 'In progress' : s}</Select.Option>)}
+            {STATUS_OPTIONS.map(s => <Select.Option key={s.value} value={s.value}>{s.label}</Select.Option>)}
           </Select>
           <Select placeholder="Priority" allowClear style={{ width:110 }} onChange={v => set('priority', v ?? '')}>
-            {['High','Medium','Low'].map(p => <Select.Option key={p} value={p}>{p}</Select.Option>)}
+            {['Critical','High','Medium','Low'].map(p => <Select.Option key={p} value={p}>{p}</Select.Option>)}
           </Select>
           {activeTab === 'all' && (
             <Select placeholder="Ticket type" allowClear style={{ width:150 }} onChange={v => set('ticketType', v ?? '')}>
