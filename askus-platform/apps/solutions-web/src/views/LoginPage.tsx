@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { message, Spin } from 'antd';
 import { useNavigate, Link } from 'react-router-dom';
 import { api } from '../api/mockApi';
+import { useWhatsAppAvailable } from '../api/useWhatsApp';
 import { useAppDispatch } from '../store';
 import { loginSuccess } from '../store';
 
@@ -16,6 +17,10 @@ export default function LoginPage() {
   const [otherCode, setOtherCode]   = useState('');
   const [dual, setDual]             = useState(false);
   const [emailHint, setEmailHint]   = useState('');
+  const [mobileChannel, setMobileChannel] = useState<'whatsapp' | 'sms' | null>(null);
+  const [mobileHint, setMobileHint] = useState('');
+  const [waFailed, setWaFailed]     = useState(false);
+  const waAvailable = useWhatsAppAvailable();
   const [loading, setLoading]       = useState(false);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -24,7 +29,8 @@ export default function LoginPage() {
 
   // ── OTP login (mobile or email) ────────────────────────────────────────────
   // First sign-in verifies mobile and email; afterwards the code goes to email only.
-  const handleSendCode = async () => {
+  // `whatsapp` comes from which button was pressed, never carried over.
+  const sendCode = async (whatsapp: boolean) => {
     if (!identifier.trim()) {
       message.error('Enter your mobile number or email');
       return;
@@ -35,7 +41,7 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      const res = await api.sendOTP(identifier.trim(), needs ? otherId.trim() : undefined);
+      const res = await api.sendOTP(identifier.trim(), needs ? otherId.trim() : undefined, whatsapp ? 'whatsapp' : undefined);
       if (res.needs) {
         setNeeds(res.needs);
         message.info(`First sign-in: add your ${res.needs === 'email' ? 'email address' : 'mobile number'} to verify`);
@@ -48,14 +54,23 @@ export default function LoginPage() {
       setSessionId(res.sessionId);
       setDual(res.channels?.length === 2);
       setEmailHint(res.emailHint ?? '');
+      setMobileHint(res.mobileHint ?? '');
+      setMobileChannel(res.channels?.includes('whatsapp') ? 'whatsapp' : res.channels?.includes('sms') ? 'sms' : null);
+      setWaFailed(Boolean(res.whatsappFailed));
+      setCode('');
+      setOtherCode('');
       setCodeSent(true);
-      message.success(res.channels?.length === 2 ? 'Codes sent to your mobile and email' : 'Verification code sent to your email');
+      const mobileWord = res.channels?.includes('whatsapp') ? 'WhatsApp' : 'mobile';
+      message.success(res.channels?.length === 2 ? `Codes sent to your ${mobileWord} and email` : res.channels?.includes('whatsapp') ? 'Verification code sent on WhatsApp' : 'Verification code sent to your email');
     } catch (err: unknown) {
       message.error(err instanceof Error ? err.message : 'Could not send code');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleSendCode = () => sendCode(false);
+  const handleSendWhatsApp = () => sendCode(true);
 
   const handleVerify = async () => {
     if (!/^\d{6}$/.test(code.trim()) || (dual && !/^\d{6}$/.test(otherCode.trim()))) {
@@ -127,7 +142,9 @@ export default function LoginPage() {
             {codeSent && (
               <>
                 <label style={s.label}>
-                  {dual ? `Code sent to ${identifier.includes('@') ? 'your email' : 'your mobile'}` : `Verification code${emailHint ? ` (sent to ${emailHint})` : ''}`}
+                  {dual
+                    ? `Code sent to ${identifier.includes('@') ? 'your email' : mobileChannel === 'whatsapp' ? 'your WhatsApp' : 'your mobile'}`
+                    : mobileChannel === 'whatsapp' ? `Verification code (sent on WhatsApp${mobileHint ? ` to ${mobileHint}` : ''})` : `Verification code${emailHint ? ` (sent to ${emailHint})` : ''}`}
                 </label>
                 <input
                   type="text"
@@ -143,7 +160,7 @@ export default function LoginPage() {
                 />
                 {dual && (
                   <>
-                    <label style={s.label}>Code sent to {identifier.includes('@') ? 'your mobile' : 'your email'}</label>
+                    <label style={s.label}>Code sent to {identifier.includes('@') ? (mobileChannel === 'whatsapp' ? 'your WhatsApp' : 'your mobile') : 'your email'}</label>
                     <input
                       type="text"
                       inputMode="numeric"
@@ -156,6 +173,18 @@ export default function LoginPage() {
                     />
                   </>
                 )}
+                {waFailed && (
+                  <p style={{ fontSize: 12, color: '#b45309', margin: '0 0 8px' }}>
+                    WhatsApp isn't available right now, so we sent your code {dual ? 'by SMS' : 'to your email'} instead.
+                  </p>
+                )}
+                {mobileChannel === 'whatsapp' && (
+                  <div style={{ textAlign: 'right', marginBottom: 8 }}>
+                    <a style={{ ...s.link, cursor: 'pointer' }} onClick={handleSendCode}>
+                      Didn't get it on WhatsApp? Send it by {dual ? 'SMS' : 'email'}
+                    </a>
+                  </div>
+                )}
                 <div style={{ textAlign: 'right', marginBottom: 14 }}>
                   <a style={{ ...s.link, cursor: 'pointer' }} onClick={resetFlow}>
                     Use a different number or email
@@ -166,6 +195,15 @@ export default function LoginPage() {
             <button style={s.primaryBtn} onClick={codeSent ? handleVerify : handleSendCode} disabled={loading}>
               {loading ? <Spin size="small" /> : codeSent ? 'Verify and Log In' : 'Send Code'}
             </button>
+            {!codeSent && waAvailable && (
+              <button
+                style={{ ...s.primaryBtn, marginTop: 10, background: '#fff', color: '#128C7E', border: '2px solid #25D366', boxShadow: 'none' }}
+                onClick={handleSendWhatsApp}
+                disabled={loading}
+              >
+                Send code on WhatsApp
+              </button>
+            )}
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: '#888' }}>

@@ -20,7 +20,7 @@ type Ctx = {
   user: AuthUser | null
   loading: boolean
   /** First sign-in needs an email too (`needs: 'email'`); later sign-ins get a single email OTP. */
-  requestOtp: (mobile: string, email?: string) => Promise<OtpRequestResult>
+  requestOtp: (mobile: string, email?: string, whatsapp?: boolean) => Promise<OtpRequestResult>
   /** `emailCode` is the second code of a first sign-in. */
   confirmOtp: (code: string, name?: string, emailCode?: string) => Promise<void>
   logout: () => Promise<void>
@@ -67,10 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     loading,
     reload,
-    async requestOtp(mobile, mail) {
+    async requestOtp(mobile, mail, whatsapp) {
       const national = normMobile(mobile)
       if (!/^[6-9]\d{9}$/.test(national)) throw new Error('Enter a valid 10-digit Indian mobile number.')
-      const res = await api.auth.requestOtp(`+91${national}`, mail?.trim() || undefined)
+      const res = await api.auth.requestOtp(`+91${national}`, mail?.trim() || undefined, whatsapp ? 'whatsapp' : undefined)
       setPhone(`+91${national}`)
       setEmail(mail?.trim() ?? '')
       return res

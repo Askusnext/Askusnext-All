@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import customerApi from '../api/customerApi';
+import { useWhatsAppAvailable } from '../api/useWhatsApp';
 
 export default function CustomerLoginPage() {
 	const [identifier, setIdentifier] = useState('');
@@ -12,11 +13,16 @@ export default function CustomerLoginPage() {
 	const [otherCode, setOtherCode] = useState('');
 	const [dual, setDual] = useState(false);
 	const [emailHint, setEmailHint] = useState('');
+	const [mobileChannel, setMobileChannel] = useState<'whatsapp' | 'sms' | null>(null);
+	const [mobileHint, setMobileHint] = useState('');
+	const [waFailed, setWaFailed] = useState(false);
+	const waAvailable = useWhatsAppAvailable();
 	const [loading, setLoading] = useState(false);
 	const navigate = useNavigate();
 
 	// First sign-in verifies mobile and email; afterwards the code goes to email only.
-	const handleSendCode = async () => {
+	// `whatsapp` is chosen by which button was pressed, never carried over, so each press means what it says.
+	const sendCode = async (whatsapp: boolean) => {
 		if (!identifier.trim()) {
 			message.error('Enter your mobile number or email');
 			return;
@@ -27,7 +33,7 @@ export default function CustomerLoginPage() {
 		}
 		setLoading(true);
 		try {
-			const res = await customerApi.requestOtp(identifier.trim(), needs ? otherId.trim() : undefined);
+			const res = await customerApi.requestOtp(identifier.trim(), needs ? otherId.trim() : undefined, whatsapp ? 'whatsapp' : undefined);
 			if (res.needs) {
 				setNeeds(res.needs);
 				message.info(`First sign-in: add your ${res.needs === 'email' ? 'email address' : 'mobile number'} to verify`);
@@ -35,14 +41,23 @@ export default function CustomerLoginPage() {
 			}
 			setDual(res.channels?.length === 2);
 			setEmailHint(res.emailHint ?? '');
+			setMobileHint(res.mobileHint ?? '');
+			setMobileChannel(res.channels?.includes('whatsapp') ? 'whatsapp' : res.channels?.includes('sms') ? 'sms' : null);
+			setWaFailed(Boolean(res.whatsappFailed));
+			setCode('');
+			setOtherCode('');
 			setCodeSent(true);
-			message.success(res.channels?.length === 2 ? 'Codes sent to your mobile and email' : 'Verification code sent to your email');
+			const mobileWord = res.channels?.includes('whatsapp') ? 'WhatsApp' : 'mobile';
+			message.success(res.channels?.length === 2 ? `Codes sent to your ${mobileWord} and email` : res.channels?.includes('whatsapp') ? 'Verification code sent on WhatsApp' : 'Verification code sent to your email');
 		} catch (err) {
 			message.error((err as Error).message || 'Could not send code');
 		} finally {
 			setLoading(false);
 		}
 	};
+
+	const handleSendCode = () => sendCode(false);
+	const handleSendWhatsApp = () => sendCode(true);
 
 	const handleVerify = async () => {
 		if (!/^\d{6}$/.test(code.trim()) || (dual && !/^\d{6}$/.test(otherCode.trim()))) {
@@ -99,7 +114,9 @@ export default function CustomerLoginPage() {
 				{codeSent && (
 					<>
 						<label style={styles.label}>
-							{dual ? `Code sent to ${identifier.includes('@') ? 'your email' : 'your mobile'}` : `Verification code${emailHint ? ` (sent to ${emailHint})` : ''}`}
+							{dual
+								? `Code sent to ${identifier.includes('@') ? 'your email' : mobileChannel === 'whatsapp' ? 'your WhatsApp' : 'your mobile'}`
+								: mobileChannel === 'whatsapp' ? `Verification code (sent on WhatsApp${mobileHint ? ` to ${mobileHint}` : ''})` : `Verification code${emailHint ? ` (sent to ${emailHint})` : ''}`}
 						</label>
 						<input
 							type="text"
@@ -115,7 +132,7 @@ export default function CustomerLoginPage() {
 						/>
 						{dual && (
 							<>
-								<label style={styles.label}>Code sent to {identifier.includes('@') ? 'your mobile' : 'your email'}</label>
+								<label style={styles.label}>Code sent to {identifier.includes('@') ? (mobileChannel === 'whatsapp' ? 'your WhatsApp' : 'your mobile') : 'your email'}</label>
 								<input
 									type="text"
 									inputMode="numeric"
@@ -131,9 +148,34 @@ export default function CustomerLoginPage() {
 					</>
 				)}
 
+				{codeSent && waFailed && (
+					<p style={{ fontSize: 12, color: '#b45309', margin: '0 0 10px' }}>
+						WhatsApp isn't available right now, so we sent your code {dual ? 'by SMS' : 'to your email'} instead.
+					</p>
+				)}
+
 				<button type="button" style={styles.submitBtn} onClick={codeSent ? handleVerify : handleSendCode} disabled={loading}>
 					{loading ? 'Please wait…' : codeSent ? 'Verify and Log In' : 'Send Code'}
 				</button>
+
+				{!codeSent && waAvailable && (
+					<button
+						type="button"
+						onClick={handleSendWhatsApp}
+						disabled={loading}
+						style={{ ...styles.submitBtn, marginTop: 10, background: '#fff', color: '#128C7E', border: '2px solid #25D366', boxShadow: 'none' }}
+					>
+						Send code on WhatsApp
+					</button>
+				)}
+
+				{codeSent && mobileChannel === 'whatsapp' && (
+					<p style={{ textAlign: 'center', marginTop: 12, fontSize: 13 }}>
+						<a style={{ cursor: 'pointer', color: '#555', textDecoration: 'underline' }} onClick={handleSendCode}>
+							Didn't get it on WhatsApp? Send it by {dual ? 'SMS' : 'email'}
+						</a>
+					</p>
+				)}
 
 				<p style={styles.footerText}>
 					New here? Enter your mobile or email. On first sign-in we verify both; after that, codes come to your email only.

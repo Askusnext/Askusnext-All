@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft, ShieldCheck, X } from 'lucide-react'
+import { ArrowLeft, MessageCircle, ShieldCheck, X } from 'lucide-react'
 import OtpInput from './OtpInput'
 import { authMessage, useAuth } from '../context/AuthContext'
 import { validEmail, validMobile } from '../lib/validate'
+import { api } from '../lib/api'
 import { Button, cn } from '../ui'
 import type { OtpRequestResult } from '@askus/api-client'
 
@@ -22,6 +23,12 @@ export default function AuthModal({ onClose }: { onClose: (reason?: 'done' | 'ca
   const [emailCode, setEmailCode] = useState('')
   const [dual, setDual] = useState(false)
   const [emailHint, setEmailHint] = useState<string | null>(null)
+  // WhatsApp: offered only when the server says it can deliver; `viaWa` is what the current code request used
+  const [waAvailable, setWaAvailable] = useState(false)
+  const [viaWa, setViaWa] = useState(false)
+  const [mobileChannel, setMobileChannel] = useState<'whatsapp' | 'sms' | null>(null)
+  const [mobileHint, setMobileHint] = useState<string | null>(null)
+  const [waFailed, setWaFailed] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [cooldown, setCooldown] = useState(0)
@@ -31,6 +38,7 @@ export default function AuthModal({ onClose }: { onClose: (reason?: 'done' | 'ca
     d.showModal()
     return () => d.close()
   }, [])
+  useEffect(() => { api.auth.options().then((o) => setWaAvailable(o.whatsapp)).catch(() => setWaAvailable(false)) }, [])
   // fully signed in (mobile verified): done
   useEffect(() => { if (user) onClose('done') }, [user, onClose])
   useEffect(() => {
@@ -49,6 +57,9 @@ export default function AuthModal({ onClose }: { onClose: (reason?: 'done' | 'ca
     if (r.needs) return setStep('email')
     setDual(r.channels?.length === 2)
     setEmailHint(r.emailHint ?? null)
+    setMobileHint(r.mobileHint ?? null)
+    setMobileChannel(r.channels?.includes('whatsapp') ? 'whatsapp' : r.channels?.includes('sms') ? 'sms' : null)
+    setWaFailed(Boolean(r.whatsappFailed))
     setStep('otp')
     setCooldown(30)
   }
@@ -59,14 +70,24 @@ export default function AuthModal({ onClose }: { onClose: (reason?: 'done' | 'ca
     if (bad) return setError(bad)
     setCode('')
     setEmailCode('')
+    setViaWa(false)
     run(async () => gotOtp(await requestOtp(mobile)))
+  }
+
+  function sendOtpOnWhatsApp() {
+    const bad = validMobile(mobile)
+    if (bad) return setError(bad)
+    setCode('')
+    setEmailCode('')
+    setViaWa(true)
+    run(async () => gotOtp(await requestOtp(mobile, undefined, true)))
   }
 
   function sendEmailOtp(e: FormEvent) {
     e.preventDefault()
     const bad = validEmail(email)
     if (bad) return setError(bad)
-    run(async () => gotOtp(await requestOtp(mobile, email)))
+    run(async () => gotOtp(await requestOtp(mobile, email, viaWa)))
   }
 
   function verify(digits = code, emailDigits = emailCode) {
@@ -79,7 +100,9 @@ export default function AuthModal({ onClose }: { onClose: (reason?: 'done' | 'ca
   // verify as soon as the last digit lands (typed, pasted or SMS autofill)
   useEffect(() => { if (step === 'otp' && code.length === 6 && (!dual || emailCode.length === 6) && !busy) verify(code, emailCode) }, [code, emailCode]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const resend = () => run(async () => { setCode(''); setEmailCode(''); await requestOtp(mobile, email || undefined); setCooldown(30) })
+  const resend = () => run(async () => { setCode(''); setEmailCode(''); gotOtp(await requestOtp(mobile, email || undefined, viaWa)); setCooldown(30) })
+  // "Didn't get it on WhatsApp?" asks again by SMS (first sign-in) or email (later sign-ins)
+  const resendWithoutWhatsApp = () => run(async () => { setCode(''); setEmailCode(''); setViaWa(false); gotOtp(await requestOtp(mobile, email || undefined, false)); setCooldown(30) })
   const back = () => { setStep('phone'); setCode(''); setEmailCode(''); setEmail(''); setError(null) }
   const close = () => onClose('cancel')
 
@@ -108,10 +131,16 @@ export default function AuthModal({ onClose }: { onClose: (reason?: 'done' | 'ca
         {step === 'phone' && (
           <form onSubmit={sendOtp} noValidate>
             <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-            <p className="mt-2 text-[15px] leading-relaxed text-zinc-500">Enter your mobile number. We'll text you a 6-digit OTP to verify it.</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-zinc-500">Enter your mobile number. We'll send you a 6-digit OTP to verify it{waAvailable ? ', by SMS or on WhatsApp' : ''}.</p>
             <div className="mt-6">{field}</div>
             {error && <p role="alert" className="mt-3 text-sm text-rose-700">{error}</p>}
             <Button type="submit" variant="primary" loading={busy} className="mt-5 h-12 w-full text-[15px]">{busy ? 'Sending OTP…' : 'Get OTP'}</Button>
+            {waAvailable && (
+              <button type="button" onClick={sendOtpOnWhatsApp} disabled={busy}
+                className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-emerald-600 bg-white text-[15px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-50 disabled:opacity-60">
+                <MessageCircle size={18} />Get OTP on WhatsApp
+              </button>
+            )}
             <p className="mt-6 text-center text-xs leading-relaxed text-zinc-400">A verified mobile number is required for every account. One AskUs login works across all AskUs services. By continuing you agree to the Terms of Use and Privacy Policy.</p>
           </form>
         )}
@@ -119,7 +148,7 @@ export default function AuthModal({ onClose }: { onClose: (reason?: 'done' | 'ca
         {step === 'email' && (
           <form onSubmit={sendEmailOtp} noValidate>
             <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-            <p className="mt-2 text-[15px] leading-relaxed text-zinc-500">First sign-in: we verify your mobile (SMS) and your email once. After that, codes come to your email only.</p>
+            <p className="mt-2 text-[15px] leading-relaxed text-zinc-500">First sign-in: we verify your mobile ({viaWa ? 'WhatsApp' : 'SMS'}) and your email once. After that, codes come to your email{waAvailable ? ' or WhatsApp' : ' only'}.</p>
             <input type="email" inputMode="email" autoComplete="email" autoFocus value={email} aria-label="Email address" aria-invalid={Boolean(error)} placeholder="you@example.com"
               onChange={(e) => { setEmail(e.target.value); if (error) setError(null) }}
               className={cn('mt-6 h-14 w-full rounded-xl border-2 bg-white px-3.5 text-base  || (dual && emailCode.length < 6)text-zinc-900 outline-none transition-colors focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/15', error ? 'border-rose-400' : 'border-zinc-300')} />
@@ -132,14 +161,22 @@ export default function AuthModal({ onClose }: { onClose: (reason?: 'done' | 'ca
           <form onSubmit={(e) => { e.preventDefault(); verify() }} noValidate>
             <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
             {dual ? (
-              <p className="mt-2 text-[15px] leading-relaxed text-zinc-500">Enter the code sent by SMS to <b className="font-semibold text-zinc-900">+91 {mobile}</b>, then the code sent to your email.</p>
+              <p className="mt-2 text-[15px] leading-relaxed text-zinc-500">Enter the code sent {mobileChannel === 'whatsapp' ? 'on WhatsApp' : 'by SMS'} to <b className="font-semibold text-zinc-900">+91 {mobile}</b>, then the code sent to your email.</p>
+            ) : mobileChannel === 'whatsapp' ? (
+              <p className="mt-2 text-[15px] leading-relaxed text-zinc-500">Enter the 6-digit code we sent on WhatsApp to <b className="font-semibold text-zinc-900">{mobileHint ?? `+91 ${mobile}`}</b>.</p>
             ) : (
               <p className="mt-2 text-[15px] leading-relaxed text-zinc-500">Enter the 6-digit code we emailed to <b className="font-semibold text-zinc-900">{emailHint ?? 'your email'}</b>.</p>
             )}
+            {waFailed && <p role="status" className="mt-2 text-sm text-amber-700">WhatsApp isn't available right now, so we sent your code {dual ? 'by SMS' : 'by email'} instead.</p>}
             <div className="mt-6"><OtpInput value={code} onChange={(v) => { setCode(v); if (error) setError(null) }} disabled={busy} invalid={Boolean(error)} /></div>
             {dual && <div className="mt-4"><OtpInput value={emailCode} onChange={(v) => { setEmailCode(v); if (error) setError(null) }} disabled={busy} invalid={Boolean(error)} /></div>}
             {error && <p role="alert" className="mt-3 text-sm text-rose-700">{error}</p>}
             <Button type="submit" variant="primary" loading={busy} disabled={code.length < 6} className="mt-5 h-12 w-full text-[15px]">{busy ? 'Verifying…' : 'Verify and sign in'}</Button>
+            {mobileChannel === 'whatsapp' && (
+              <button type="button" onClick={resendWithoutWhatsApp} disabled={busy} className="mt-4 w-full text-center text-sm font-medium text-zinc-600 hover:text-zinc-900 disabled:text-zinc-400">
+                Didn't get it on WhatsApp? Send it by {dual ? 'SMS' : 'email'} instead
+              </button>
+            )}
             <div className="mt-5 flex items-center justify-between text-sm text-zinc-500">
               <button type="button" onClick={back} className="-my-2.5 py-2.5 font-medium text-zinc-600 hover:text-zinc-900">Change number</button>
               <button type="button" onClick={resend} disabled={cooldown > 0 || busy} className="-my-2.5 py-2.5 font-medium text-indigo-600 hover:underline disabled:text-zinc-400 disabled:no-underline">

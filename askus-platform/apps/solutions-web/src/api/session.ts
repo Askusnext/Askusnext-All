@@ -45,16 +45,23 @@ export interface OtpResult {
   status?: 'PENDING' | 'REJECTED';
   /** First sign-in: the other contact still has to be supplied. */
   needs?: 'email' | 'mobile';
-  /** Both channels on a first sign-in, email only afterwards. */
-  channels?: ('sms' | 'email')[];
+  /** Both channels on a first sign-in, email only afterwards (or WhatsApp, if it was asked for). */
+  channels?: ('sms' | 'email' | 'whatsapp')[];
   emailHint?: string;
+  /** A code sent on WhatsApp to a verified account: the number it went to, masked. */
+  mobileHint?: string;
+  /** WhatsApp was asked for but could not be used; the code went by SMS or email instead. */
+  whatsappFailed?: boolean;
 }
 
 /** Second contact of a first sign-in; `identifier` is omitted when the account already has it. */
 export interface OtherContact { identifier?: string; code: string }
 
-export const requestOtp = (identifier: string, app?: 'staff', otherIdentifier?: string) =>
-  postJson<OtpResult>('/auth/request-otp', { identifier, app, otherIdentifier });
+export const requestOtp = (identifier: string, app?: 'staff', otherIdentifier?: string, channel?: 'whatsapp') =>
+  postJson<OtpResult>('/auth/request-otp', { identifier, app, otherIdentifier, channel });
+
+/** What the sign-in screens may offer (is WhatsApp set up on the server?). Public, carries no secrets. */
+export const fetchAuthOptions = () => fetch(`${BASE}/auth/options`).then((r) => parse<{ whatsapp: boolean }>(r));
 
 export function saveTokens(keys: SessionKeys, t: Tokens) {
   localStorage.setItem(keys.access, t.accessToken);

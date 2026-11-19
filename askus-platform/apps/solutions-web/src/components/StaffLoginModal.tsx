@@ -6,6 +6,7 @@ import { NotStaffError, accessRequestApi } from '../api/api';
 import type { Me } from '../api/session';
 import { useAppDispatch, loginSuccess } from '../store';
 import type { AuthResponse } from '../types';
+import { useWhatsAppAvailable } from '../api/useWhatsApp';
 
 type Mode = 'otp' | 'password';
 
@@ -309,6 +310,10 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
   const [otherCode, setOtherCode] = useState('');
   const [dual, setDual] = useState(false);
   const [emailHint, setEmailHint] = useState('');
+  const [mobileChannel, setMobileChannel] = useState<'whatsapp' | 'sms' | null>(null);
+  const [mobileHint, setMobileHint] = useState('');
+  const [waFailed, setWaFailed] = useState(false);
+  const waAvailable = useWhatsAppAvailable();
   const idRef = useRef<HTMLInputElement>(null);
   const firstDigitRef = useRef<HTMLInputElement>(null);
 
@@ -324,6 +329,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
     setIdentifier(''); setPassword(''); setShowPw(false); setDigits(Array(6).fill(''));
     setCodeSent(false); setCooldown(0); setBusy(false); setError(''); setAccess(null); setBlocked(null);
     setNeeds(null); setOtherId(''); setOtherCode(''); setDual(false); setEmailHint('');
+    setMobileChannel(null); setMobileHint(''); setWaFailed(false);
     setMode(USE_REAL_API ? 'otp' : 'password');
   }, []);
 
@@ -371,15 +377,19 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
     return kind !== 'none';
   };
 
-  const sendCode = () => {
+  // `whatsapp` comes from which button was pressed (or what the last request used, for "Resend").
+  const sendCode = (whatsapp = false) => {
     if (!validId()) { setError('Enter a valid email address or 10-digit phone number'); return; }
     if (needs && !otherId.trim()) { setError(`Enter your ${needs === 'email' ? 'email address' : 'mobile number'}`); return; }
     return run(async () => {
-      const res = await api.sendOTP(cleanId(), needs ? otherId.trim() : undefined);
+      const res = await api.sendOTP(cleanId(), needs ? otherId.trim() : undefined, whatsapp ? 'whatsapp' : undefined);
       if (res.needs) { setNeeds(res.needs); return; }
       if (res.status) { setBlocked(res.status); return; }
       setDual(res.channels?.length === 2);
       setEmailHint(res.emailHint ?? '');
+      setMobileHint(res.mobileHint ?? '');
+      setMobileChannel(res.channels?.includes('whatsapp') ? 'whatsapp' : res.channels?.includes('sms') ? 'sms' : null);
+      setWaFailed(Boolean(res.whatsappFailed));
       setCodeSent(true);
       setDigits(Array(6).fill(''));
       setOtherCode('');
@@ -405,7 +415,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (mode === 'otp') {
-      if (!codeSent) return void sendCode();
+      if (!codeSent) return void sendCode(false);
       if (code.length < 6) return void setError('Enter the 6-digit code');
       if (dual && !/^\d{6}$/.test(otherCode.trim())) return void setError('Enter the 6-digit code sent to your ' + (kind === 'email' ? 'mobile' : 'email'));
       return void verify(code);
@@ -419,6 +429,10 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
 
   if (!open) return null;
 
+  // Where the code went, in words
+  const sentTo = mobileChannel === 'whatsapp'
+    ? (dual ? 'your WhatsApp and email' : `your WhatsApp${mobileHint ? ` (${mobileHint})` : ''}`)
+    : dual ? 'your mobile and email' : emailHint || cleanId();
   const idLabel = USE_REAL_API ? 'Email or phone number' : 'Username';
   const cta = busy ? 'Please wait…' : mode === 'otp' ? (codeSent ? 'Verify & sign in' : 'Send OTP') : 'Sign in';
 
@@ -450,7 +464,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
           <h2 id="slm-title" className="slm-title">{mode === 'otp' && codeSent ? 'Enter your code' : 'Welcome back'}</h2>
           <p className="slm-sub">
             {mode === 'otp' && codeSent
-              ? <>We sent a 6-digit code to <strong>{dual ? 'your mobile and email' : emailHint || cleanId()}</strong>. <button type="button" className="slm-linkbtn" onClick={() => { setCodeSent(false); setDigits(Array(6).fill('')); setNeeds(null); setOtherId(''); setOtherCode(''); setDual(false); setError(''); }}>Change</button></>
+              ? <>We sent a 6-digit code to <strong>{sentTo}</strong>. <button type="button" className="slm-linkbtn" onClick={() => { setCodeSent(false); setDigits(Array(6).fill('')); setNeeds(null); setOtherId(''); setOtherCode(''); setDual(false); setMobileChannel(null); setWaFailed(false); setError(''); }}>Change</button></>
               : 'Access is provisioned by an Admin or Super Admin.'}
           </p>
 
@@ -512,7 +526,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
                 <OtpBoxes digits={digits} onChange={(d) => { setDigits(d); setError(''); }} disabled={busy} firstRef={firstDigitRef} />
                 {dual && (
                   <>
-                    <label className="slm-label" htmlFor="slm-code2">Code sent to your {kind === 'email' ? 'phone (SMS)' : 'email'}</label>
+                    <label className="slm-label" htmlFor="slm-code2">Code sent to your {kind === 'email' ? `phone (${mobileChannel === 'whatsapp' ? 'WhatsApp' : 'SMS'})` : 'email'}</label>
                     <div className="slm-field">
                       <input
                         id="slm-code2" className="slm-input" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
@@ -524,14 +538,23 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
                 <div className="slm-resend">
                   {cooldown > 0
                     ? <span>Resend code in {cooldown}s</span>
-                    : <>Didn’t get it? <button type="button" className="slm-linkbtn" disabled={busy} onClick={sendCode}>Resend code</button></>}
+                    : <>Didn’t get it? <button type="button" className="slm-linkbtn" disabled={busy} onClick={() => void sendCode(mobileChannel === 'whatsapp')}>Resend code</button></>}
                 </div>
+                {waFailed && <div role="status" style={{ fontSize: 12, color: '#fbbf24', marginBottom: 6 }}>WhatsApp isn’t available right now, so we sent your code {dual ? 'by SMS' : 'to your email'} instead.</div>}
+                {mobileChannel === 'whatsapp' && (
+                  <div className="slm-resend">
+                    <button type="button" className="slm-linkbtn" disabled={busy} onClick={() => void sendCode(false)}>Didn’t get it on WhatsApp? Send it by {dual ? 'SMS' : 'email'}</button>
+                  </div>
+                )}
               </>
             )}
 
             <div className="slm-error" role="alert" aria-live="polite">{error}</div>
 
             <button type="submit" className="slm-cta" disabled={busy}>{cta}</button>
+            {mode === 'otp' && !codeSent && waAvailable && (
+              <button type="button" className="slm-wa" disabled={busy} onClick={() => void sendCode(true)}>Send code on WhatsApp</button>
+            )}
             <div className="slm-foot">{contact}</div>
           </form>
           </>
@@ -601,6 +624,9 @@ const CSS = `
 .slm-error{ min-height:22px; margin:2px 0 8px; font-size:13px; font-weight:600; color:#c0392b; }
 .slm-cta{ width:100%; border:none; border-radius:12px; padding:15px 18px; font:inherit; font-size:15.5px; font-weight:700; letter-spacing:.01em; color:#04223a; cursor:pointer;
   background:linear-gradient(180deg,#6fdcff,#3cc3f2); box-shadow:0 6px 18px rgba(60,195,242,.38); transition:transform .12s, box-shadow .12s, filter .12s; }
+.slm-wa{ width:100%; margin-top:10px; border:2px solid #25D366; background:transparent; border-radius:12px; padding:13px 18px; font:inherit; font-size:15px; font-weight:700; color:#25D366; cursor:pointer; }
+.slm-wa:hover:not(:disabled){ background:rgba(37,211,102,.12); }
+.slm-wa:disabled{ opacity:.6; cursor:not-allowed; }
 .slm-cta:hover:not(:disabled){ filter:brightness(1.04); box-shadow:0 8px 22px rgba(60,195,242,.5); }
 .slm-cta:active:not(:disabled){ transform:translateY(1px); }
 .slm-cta:disabled{ opacity:.65; cursor:default; box-shadow:none; }

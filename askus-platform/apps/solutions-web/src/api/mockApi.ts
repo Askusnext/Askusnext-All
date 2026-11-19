@@ -422,7 +422,7 @@ const CREDENTIALS: Record<string, { password: string; userKey: keyof typeof MOCK
 
 // ── Mock implementations ──────────────────────────────────────────────────────
 const mockImpl = {
-  sendOTP: async (_mobile: string, _other?: string): Promise<OTPResponse> => {
+  sendOTP: async (_mobile: string, _other?: string, _channel?: 'whatsapp'): Promise<OTPResponse> => {
     await delay(600);
     return { success: true, sessionId: 'mock-session-' + Date.now(), message: 'OTP sent' };
   },
@@ -616,8 +616,8 @@ export const api: typeof mockImpl & {
 } = USE_REAL_API
   ? {
       // Auth
-      sendOTP: async (identifier: string, other?: string) => {
-        const r = await apiClient.requestOtp(identifier, other);
+      sendOTP: async (identifier: string, other?: string, channel?: 'whatsapp') => {
+        const r = await apiClient.requestOtp(identifier, other, channel);
         return {
           success: r.sent,
           sessionId: 'otp-requested',
@@ -626,6 +626,8 @@ export const api: typeof mockImpl & {
           needs: r.needs,
           channels: r.channels,
           emailHint: r.emailHint,
+          mobileHint: r.mobileHint,
+          whatsappFailed: r.whatsappFailed,
         };
       },
       verifyOTP: (identifier: string, code: string, _sessionId: string, other?: OtherContact) =>

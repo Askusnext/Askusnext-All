@@ -51,7 +51,7 @@ async function request<T>(method: string, endpoint: string, body?: unknown, auth
 }
 
 export const customerApi = {
-	requestOtp: (identifier: string, otherIdentifier?: string) => requestOtp(identifier, undefined, otherIdentifier),
+	requestOtp: (identifier: string, otherIdentifier?: string, channel?: 'whatsapp') => requestOtp(identifier, undefined, otherIdentifier, channel),
 
 	// First sign-in creates the account, so there is no separate register call.
 	verifyOtp: async (identifier: string, code: string, other?: OtherContact): Promise<CustomerAuthResponse> => {

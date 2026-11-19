@@ -31,9 +31,18 @@ export interface OtpRequestResult {
   status?: 'PENDING' | 'REJECTED';
   /** First sign-in: the other contact still has to be supplied. */
   needs?: 'email' | 'mobile';
-  /** Where codes went: both channels on a first sign-in, email only afterwards. */
-  channels?: ('sms' | 'email')[];
+  /** Where codes went: both channels on a first sign-in, email only afterwards (or WhatsApp, if it was asked for). */
+  channels?: ('sms' | 'email' | 'whatsapp')[];
   emailHint?: string;
+  /** Code sent on WhatsApp to a verified account: the number it went to, masked (+91 ******3210). */
+  mobileHint?: string;
+  /** WhatsApp was asked for but could not be used; the code was sent by SMS or email instead. */
+  whatsappFailed?: boolean;
+}
+
+/** What the sign-in screens may offer. */
+export interface AuthOptions {
+  whatsapp: boolean;
 }
 
 export interface VehicleLookup {
@@ -75,8 +84,10 @@ export function createApiClient({ baseUrl, getAccessToken, refreshAccessToken }:
   return {
     request,
     auth: {
-      requestOtp: (identifier: string, otherIdentifier?: string) =>
-        request<OtpRequestResult>('/auth/request-otp', 'POST', { identifier, otherIdentifier }),
+      /** `channel: 'whatsapp'` asks for the mobile code on WhatsApp; the server falls back to SMS or email by itself. */
+      requestOtp: (identifier: string, otherIdentifier?: string, channel?: 'whatsapp') =>
+        request<OtpRequestResult>('/auth/request-otp', 'POST', { identifier, otherIdentifier, channel }),
+      options: () => request<AuthOptions>('/auth/options'),
       /** `other` is only for a first sign-in: the second contact (if not already on the account) and its code. */
       verifyOtp: (identifier: string, code: string, other?: { identifier?: string; code: string }) =>
         request<AuthTokens>('/auth/verify-otp', 'POST', {

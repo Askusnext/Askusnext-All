@@ -37,9 +37,17 @@ const maskEmail = (email: string) => {
   return `${name.slice(0, 2)}${'*'.repeat(Math.max(name.length - 2, 1))}@${domain}`;
 };
 
+// +919876543210 -> +91 ******3210
+const maskMobile = (mobile: string) => `${mobile.slice(0, 3)} ${'*'.repeat(Math.max(mobile.length - 7, 1))}${mobile.slice(-4)}`;
+
+// WhatsApp messages cost money and can be abused to pester a stranger, so a number gets only a few per window.
+const WHATSAPP_MAX_PER_WINDOW = 5;
+const WHATSAPP_WINDOW_MS = 10 * 60 * 1000;
+
 @Injectable()
 export class IdentityService implements OnApplicationBootstrap {
   private readonly logger = new Logger(IdentityService.name);
+  private readonly whatsappSends = new Map<string, number[]>();
 
   constructor(
     @InjectRepository(User) private readonly users: Repository<User>,
@@ -77,9 +85,20 @@ export class IdentityService implements OnApplicationBootstrap {
 
   // A fully verified account gets a single email OTP (no SMS cost). Until both mobile and email are
   // proven, the first sign-in needs an OTP on each; `needs` tells the client which contact to ask for.
-  async requestOtp(rawIdentifier: string, app?: 'staff', rawOther?: string) {
+  /** Whether the sign-in screens may offer "Get code on WhatsApp". */
+  whatsappAvailable() {
+    return this.notifications.whatsappAvailable();
+  }
+
+  /**
+   * `channel: 'whatsapp'` asks for the mobile code to arrive on WhatsApp instead of SMS (first sign-in) or instead
+   * of email (later sign-ins). If WhatsApp cannot deliver, the code goes by SMS or email as before and the answer
+   * says so (`whatsappFailed`), so a customer is never left waiting for a message that was not sent.
+   */
+  async requestOtp(rawIdentifier: string, app?: 'staff', rawOther?: string, channel?: 'whatsapp') {
     const identifier = normalizeIdentifier(rawIdentifier);
     const existing = await this.findByIdentifier(identifier);
+    const wantsWhatsApp = channel === 'whatsapp';
 
     // Staff sign-in: someone whose request is still waiting (or was declined) is told so up front
     // instead of being sent a code that cannot get them in. Only these two states are revealed.
@@ -88,16 +107,60 @@ export class IdentityService implements OnApplicationBootstrap {
     }
 
     if (existing?.mobileVerifiedAt && existing.emailVerifiedAt && existing.email) {
+      // A verified account may take its code on WhatsApp, at the mobile number already on the account.
+      if (wantsWhatsApp && existing.mobile && this.notifications.whatsappAvailable()) {
+        this.takeWhatsAppSlot(existing.mobile);
+        if (await this.sendOtp(identifier, 'whatsapp', existing.mobile)) {
+          return { sent: true, channels: ['whatsapp'] as ('sms' | 'email' | 'whatsapp')[], mobileHint: maskMobile(existing.mobile) };
+        }
+      }
       await this.sendOtp(identifier, 'email', existing.email);
-      return { sent: true, channels: ['email'] as const, emailHint: maskEmail(existing.email) };
+      return {
+        sent: true,
+        channels: ['email'] as ('sms' | 'email' | 'whatsapp')[],
+        emailHint: maskEmail(existing.email),
+        ...(wantsWhatsApp ? { whatsappFailed: true } : {}),
+      };
     }
 
     const other = await this.resolveOtherContact(identifier, existing, rawOther);
     if (!other) return { sent: false, needs: identifier.includes('@') ? ('mobile' as const) : ('email' as const) };
 
-    await this.sendOtp(identifier, identifier.includes('@') ? 'email' : 'sms', identifier);
-    await this.sendOtp(other, other.includes('@') ? 'email' : 'sms', other);
-    return { sent: true, channels: ['sms', 'email'] as const };
+    // First sign-in: one code to the mobile (WhatsApp or SMS) and one to the email.
+    const mobile = identifier.includes('@') ? other : identifier;
+    const email = identifier.includes('@') ? identifier : other;
+    // Each code is stored under the contact it was sent to, which is what verifyOtp checks it against.
+    const mobileChannel = await this.sendMobileOtp(mobile, mobile, wantsWhatsApp);
+    await this.sendOtp(email, 'email', email);
+    return {
+      sent: true,
+      channels: [mobileChannel.channel, 'email'] as ('sms' | 'email' | 'whatsapp')[],
+      ...(wantsWhatsApp && mobileChannel.channel !== 'whatsapp' ? { whatsappFailed: true } : {}),
+    };
+  }
+
+  /** Sends the mobile code on WhatsApp when asked and possible, otherwise (or if WhatsApp fails) by SMS. */
+  private async sendMobileOtp(key: string, mobile: string, viaWhatsApp: boolean): Promise<{ channel: 'whatsapp' | 'sms' }> {
+    if (viaWhatsApp && this.notifications.whatsappAvailable()) {
+      this.takeWhatsAppSlot(mobile);
+      if (await this.sendOtp(key, 'whatsapp', mobile)) return { channel: 'whatsapp' };
+    }
+    await this.sendOtp(key, 'sms', mobile);
+    return { channel: 'sms' };
+  }
+
+  /** Counts a WhatsApp send against the number; refuses once it has had its share for the window. */
+  private takeWhatsAppSlot(mobile: string) {
+    const now = Date.now();
+    const recent = (this.whatsappSends.get(mobile) ?? []).filter((t) => now - t < WHATSAPP_WINDOW_MS);
+    if (recent.length >= WHATSAPP_MAX_PER_WINDOW) {
+      this.whatsappSends.set(mobile, recent);
+      throw new HttpException('Too many WhatsApp codes for this number. Try again in a few minutes, or use SMS or email.', HttpStatus.TOO_MANY_REQUESTS);
+    }
+    recent.push(now);
+    this.whatsappSends.set(mobile, recent);
+    // keep the map small
+    if (this.whatsappSends.size > 5000) for (const [k, v] of this.whatsappSends) if (!v.some((t) => now - t < WHATSAPP_WINDOW_MS)) this.whatsappSends.delete(k);
   }
 
   /**
@@ -263,7 +326,7 @@ export class IdentityService implements OnApplicationBootstrap {
     return other;
   }
 
-  private async sendOtp(key: string, channel: 'sms' | 'email', to: string) {
+  private async sendOtp(key: string, channel: 'sms' | 'email' | 'whatsapp', to: string): Promise<boolean> {
     const code = (await this.dummyCode(key)) ?? String(randomInt(100000, 1000000));
     await this.otps.save(
       this.otps.create({
@@ -272,7 +335,7 @@ export class IdentityService implements OnApplicationBootstrap {
         expiresAt: new Date(Date.now() + OTP_TTL_MS),
       }),
     );
-    await this.notifications.send({
+    return this.notifications.send({
       channel,
       to,
       message: `Your AskUs verification code is ${code}. It is valid for 5 minutes.`,
