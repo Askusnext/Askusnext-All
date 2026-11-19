@@ -68,3 +68,18 @@ Admin = own reports (+ self); Employee/Agent = self only; Super Admin = all. App
 * WebSocket 403: origin missing from `CORS_ORIGINS`. 503: another API instance holds the lock. 4403: viewer not Admin/Super Admin or disabled. Repeated 4401: clock skew or token not refreshing.
 * Everyone Offline: expiry/timer blocked or heartbeats failing (401 = session expired; 403 = consent withdrawn).
 * Admin sees nobody: nobody is assigned yet (expected after rollout).
+
+## 17. Teams-style states and the employee live link (added on sanjay-dev2)
+**What managers see** (names changed, meaning unchanged): Active = **Available**, Background = **On another tab**, Away = **Away**, Offline = **Went away**. A *Went away* row also says why:
+* **Closed the browser or tab**: the browser told us it was closing (page-hide beacon or the live link's goodbye), or the person signed out.
+* **Device off, asleep or connection lost**: nothing was heard and no goodbye came (laptop lid, sleep, shutdown, network loss). The system cannot tell these apart and says so.
+Withdrawing permission shows *Not enabled*, never *Went away*. The reason is stored in `presence_states.offline_reason` and `presence_transitions.reason` (migration `1795900000000-AddPresenceOfflineReason`, two nullable columns).
+
+**Employee live link** (`/ws/presence/self`, separate from the manager socket `/ws/presence`, which still refuses Employees/Agents). Every Admin, Employee and Agent who has accepted the notice keeps one tiny WebSocket open while Solutions is open:
+* Auth is the first message (token never in the URL); Origin must be in `CORS_ORIGINS`; only the leader API instance serves it; closed at token expiry (4401), forbidden = 4403 (Super Admin and Customers cannot use it), binding to someone else's or an ended session = 4404.
+* The client sends `bind {sessionId}` once and `bye` on purpose. It sends no page, tab, app, key or location data.
+* The server pings every 10 s at protocol level. Browsers answer on their own, **even in a throttled background tab**, so each pong refreshes the session's `lastSeenAt` (at most every 10 s). No pong for 25 s drops the socket.
+* An unexpected drop starts an 8 s grace period (`PRESENCE_LINK_GRACE_MS`, tests use 150 ms). If the browser reconnects (a network blip) or reported again meanwhile, nothing changes. Otherwise the session ends as `lost`. A laptop lid closing is therefore noticed in roughly 35 seconds instead of the 120 s heartbeat timeout.
+* If a proxy blocks WebSockets the link just stays down; the ordinary REST heartbeat keeps working and a closed laptop is noticed after `PRESENCE_OFFLINE_SECONDS`.
+Who sees whom is unchanged: Super Admin sees all Admins, Employees and Agents; an Admin sees only the Employees/Agents assigned to them; Employees and Agents see nobody. An Admin's own presence is tracked too and is visible to the Super Admin.
+Tests: `npm test -w @askus/api` (92 presence tests including the live link) and `npm test -w @askus/solutions-web` (65). On Node 26 the web tests need `NODE_OPTIONS=--localstorage-file=<any path>`.

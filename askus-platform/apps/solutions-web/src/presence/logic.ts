@@ -1,10 +1,11 @@
-import type { PresenceRow, PresenceState } from '../api/presence';
+import type { OfflineReason, PresenceRow, PresenceState } from '../api/presence';
 
+// Named the way people expect from a chat app: Available, on another tab, Away, Went away.
 export const STATE_LABEL: Record<PresenceState, string> = {
-  active: 'Active in Solutions',
-  background: 'In background',
-  away: 'Away (10+ min)',
-  offline: 'Offline / disconnected',
+  active: 'Available',
+  background: 'On another tab',
+  away: 'Away',
+  offline: 'Went away',
   not_enabled: 'Not enabled',
 };
 
@@ -16,12 +17,23 @@ export const STATE_COLOR: Record<PresenceState, string> = {
   not_enabled: 'blue',
 };
 
+/** One line saying what the state means for THIS person, including why they went away. */
+export function stateDetail(row: Pick<PresenceRow, 'state'> & { offlineReason?: OfflineReason | null }): string {
+  switch (row.state) {
+    case 'active': return 'Using Solutions now';
+    case 'background': return 'Browser is open, another tab or window is in front';
+    case 'away': return 'Away from Solutions for a while';
+    case 'offline': return row.offlineReason === 'closed' ? 'Closed the browser or tab' : 'Device off, asleep or connection lost';
+    default: return 'Has not allowed presence';
+  }
+}
+
 /** Plain-language meaning of each state, including what it does NOT prove. */
 export const LEGEND: { state: PresenceState; meaning: string }[] = [
   { state: 'active', meaning: 'A Solutions tab is visible and focused. This does not prove typing, productivity or working time.' },
-  { state: 'background', meaning: 'No Solutions tab is in view, but the browser has recently checked in.' },
-  { state: 'away', meaning: 'Out of view continuously for the away threshold while still reachable.' },
-  { state: 'offline', meaning: 'No recent check-in. The cause is unknown: the tab may be closed, the device asleep, the browser suspended or the network lost.' },
+  { state: 'background', meaning: 'Solutions is open but another tab or window is in front. The browser is still connected.' },
+  { state: 'away', meaning: 'Solutions has been out of view for a while (the away threshold) while the browser is still connected.' },
+  { state: 'offline', meaning: 'Went away. Either they closed the browser or tab (shown as "Closed the browser or tab"), or the connection stopped: laptop closed, device asleep or off, or the network lost. We cannot tell those last cases apart.' },
   { state: 'not_enabled', meaning: 'This person has not allowed browser presence. It is different from Offline.' },
 ];
 

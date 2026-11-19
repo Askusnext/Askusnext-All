@@ -51,7 +51,7 @@ describe('labels and honesty', () => {
 
   it('never claims why someone is offline, and says Active is not proof of work', () => {
     const offline = LEGEND.find((l) => l.state === 'offline')!.meaning;
-    expect(offline).toMatch(/cause is unknown/i);
+    expect(offline).toMatch(/cannot tell/i); // it says what it cannot know
     expect(LEGEND.find((l) => l.state === 'active')!.meaning).toMatch(/does not prove/i);
     expect(DISCLAIMER).toMatch(/not proof of work/i);
     expect(DISCLAIMER).toMatch(/not used for attendance or payroll/i);

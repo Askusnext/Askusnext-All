@@ -5,7 +5,7 @@ import { DataSource, In, IsNull, LessThan, Repository } from 'typeorm';
 import { AuthUser } from '../common/access';
 import { User } from '../identity/identity.entities';
 import { PresenceConfig, NOTICE, NOTICE_VERSION, computeState, consentInForce, loadPresenceConfig, needsDecision } from './presence.logic';
-import { PresenceConsent, PresenceCurrent, PresenceSession, PresenceState, PresenceTransition } from './presence.entities';
+import { OfflineReason, PresenceConsent, PresenceCurrent, PresenceSession, PresenceState, PresenceTransition } from './presence.entities';
 import { PresenceBus, StaffHierarchyService, Viewer, staffName } from './staff-hierarchy.service';
 import { toTmsRole } from './tms-role';
 
@@ -18,6 +18,8 @@ export interface PresenceRow {
   reportingAdminId: string | null;
   reportingAdminName: string | null;
   state: DisplayState;
+  /** Why the person is Offline: closed the tab / signed out, or the connection was lost. Null in every other state. */
+  offlineReason: OfflineReason | null;
   stateSince: string | null;
   lastSeenAt: string | null;
   version: number;
@@ -159,18 +161,75 @@ export class PresenceService implements OnModuleInit, OnModuleDestroy {
       const sessions = await m.getRepository(PresenceSession).find({ where: { userId, endedAt: IsNull() } });
       const next = computeState(sessions, cur, now, this.cfg);
       const changed = next.state !== cur.state;
+      const reason = next.state === 'offline' ? await this.offlineReasonFor(m.getRepository(PresenceSession), userId) : null;
       if (changed) {
-        await m.getRepository(PresenceTransition).save(m.getRepository(PresenceTransition).create({ userId, fromState: cur.state, toState: next.state, at: now }));
+        await m.getRepository(PresenceTransition).save(m.getRepository(PresenceTransition).create({ userId, fromState: cur.state, toState: next.state, reason, at: now }));
         cur.state = next.state;
         cur.stateSince = now;
         cur.version = cur.version + 1;
       }
+      cur.offlineReason = reason;
       cur.backgroundSince = next.backgroundSince;
       cur.lastSeenAt = next.lastSeenAt;
       await m.getRepository(PresenceCurrent).save(cur);
       return { changed };
     });
     if (out && (out.changed || force)) await this.publish(userId);
+  }
+
+  /**
+   * Why someone went Offline, from their most recent session: it ended because they closed the tab or signed
+   * out ('closed'), or it simply stopped reporting or its live connection dropped ('lost'). Withdrawing consent
+   * is neither, so it gives no reason.
+   */
+  private async offlineReasonFor(repo: Repository<PresenceSession>, userId: string): Promise<OfflineReason | null> {
+    // The session that was active last decides: latest activity (last report or end), then latest start.
+    const rows: { end_reason: string | null; ended_at: Date | null }[] = await repo.query(
+      `SELECT end_reason, ended_at FROM solutions.presence_sessions WHERE user_id = $1
+        ORDER BY GREATEST(last_seen_at, COALESCE(ended_at, last_seen_at)) DESC, started_at DESC LIMIT 1`,
+      [userId],
+    );
+    const last = rows[0];
+    if (!last) return null;
+    if (last.end_reason === 'withdrawn') return null;
+    return last.ended_at && last.end_reason === 'logout' ? 'closed' : 'lost';
+  }
+
+  // ───────────────────────── live link (employee-side WebSocket) ─────────────────────────
+
+  /** True when this person takes part in presence (Admin, Employee or Agent) and has an accepted notice. */
+  async canTrack(userId: string): Promise<boolean> {
+    try {
+      await this.trackable({ id: userId });
+    } catch {
+      return false;
+    }
+    return consentInForce(await this.consents.findOneBy({ userId }));
+  }
+
+  /** Whether this open session belongs to this person. */
+  async ownsOpenSession(userId: string, sessionId: string): Promise<boolean> {
+    if (!ID40.test(sessionId)) return false;
+    const s = await this.sessions.findOneBy({ id: sessionId, userId });
+    return !!s && !s.endedAt;
+  }
+
+  /** The live connection answered a ping: the browser is reachable even if its timers are throttled. */
+  async touch(userId: string, sessionId: string): Promise<void> {
+    const r = await this.sessions.update({ id: sessionId, userId, endedAt: IsNull() }, { lastSeenAt: this.now() });
+    if (r.affected) await this.evaluate(userId);
+  }
+
+  /**
+   * The live connection dropped and did not come back. If the browser has not reported since, treat the session
+   * as lost now instead of waiting for the slower heartbeat timeout.
+   */
+  async expireIfSilent(userId: string, sessionId: string, since: Date): Promise<boolean> {
+    const s = await this.sessions.findOneBy({ id: sessionId, userId });
+    if (!s || s.endedAt || s.lastSeenAt > since) return false;
+    await this.sessions.update({ id: sessionId, userId, endedAt: IsNull() }, { endedAt: this.now(), endReason: 'lost' });
+    await this.evaluate(userId, true);
+    return true;
   }
 
   /** Broadcast a change once per version. Delivery to viewers re-checks their scope in the gateway. */
@@ -241,6 +300,7 @@ export class PresenceService implements OnModuleInit, OnModuleDestroy {
       reportingAdminId: u.reportingAdminId,
       reportingAdminName: admin ? staffName(admin) : null,
       state,
+      offlineReason: state === 'offline' ? ps?.offlineReason ?? 'lost' : null,
       stateSince: state === 'not_enabled' ? null : ps?.stateSince?.toISOString() ?? null,
       lastSeenAt: ps?.lastSeenAt?.toISOString() ?? null,
       version: ps?.version ?? 0,
@@ -305,7 +365,7 @@ export class PresenceService implements OnModuleInit, OnModuleDestroy {
       userId: subject.id,
       name: staffName(subject),
       retentionDays: this.cfg.historyRetentionDays,
-      transitions: rows.filter((r) => r.at >= since).map((r) => ({ from: r.fromState, to: r.toState, at: r.at.toISOString() })),
+      transitions: rows.filter((r) => r.at >= since).map((r) => ({ from: r.fromState, to: r.toState, reason: r.reason, at: r.at.toISOString() })),
     };
   }
 

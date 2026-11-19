@@ -3,6 +3,8 @@ import { BASE, STAFF_KEYS, authFetch } from './session';
 /** Browser presence and the staff hierarchy. Always separate from desktop monitoring (api/monitoring.ts). */
 
 export type PresenceState = 'active' | 'background' | 'away' | 'offline' | 'not_enabled';
+/** Why someone is Offline: they closed the tab or browser (we were told) or the connection simply stopped. */
+export type OfflineReason = 'closed' | 'lost';
 
 export interface Notice {
   version: string;
@@ -34,6 +36,7 @@ export interface PresenceRow {
   reportingAdminId: string | null;
   reportingAdminName: string | null;
   state: PresenceState;
+  offlineReason?: OfflineReason | null;
   stateSince: string | null;
   lastSeenAt: string | null;
   version: number;
@@ -53,7 +56,7 @@ export interface HistoryResponse {
   userId: string;
   name: string;
   retentionDays: number;
-  transitions: { from: PresenceState | null; to: PresenceState; at: string }[];
+  transitions: { from: PresenceState | null; to: PresenceState; reason?: OfflineReason | null; at: string }[];
 }
 
 export interface TeamFilter { role?: string; state?: string; adminId?: string; sort?: string; dir?: 'asc' | 'desc'; page?: number; pageSize?: number }
@@ -98,6 +101,8 @@ export function endSessionBestEffort(sessionId: string) {
 }
 
 export const wsUrl = () => `${BASE.replace(/^http/, 'ws').replace(/\/api\/?$/, '')}/ws/presence`;
+/** The employee-side live link (keeps the person reachable-or-not, carries no data). */
+export const linkUrl = () => `${wsUrl()}/self`;
 
 /** Makes sure the stored access token is fresh (refreshing it if needed) and returns it. */
 export async function freshAccessToken(): Promise<string | null> {

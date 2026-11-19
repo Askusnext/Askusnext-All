@@ -454,7 +454,7 @@ describe('presence lifecycle (fake clock, server time only)', () => {
     expect(h.status).toBe(400); // limit capped at 200
     const ok = (await call('adminA', 'GET', `/presence/team/${people.emp1.id}/history?limit=200`)).body;
     expect(ok.transitions.length).toBeGreaterThan(0);
-    expect(Object.keys(ok.transitions[0]).sort()).toEqual(['at', 'from', 'to']);
+    expect(Object.keys(ok.transitions[0]).sort()).toEqual(['at', 'from', 'reason', 'to']);
   });
 
   it('retention purge deletes only old presence rows', async () => {
@@ -504,7 +504,7 @@ describe('privacy', () => {
     const body = JSON.stringify((await call('sa', 'GET', '/presence/team?pageSize=200')).body);
     expect(body).not.toMatch(/activeApp|active_app|idle|devices|lat|lng|screenshot|url/i);
     expect(Object.keys((await call('sa', 'GET', '/presence/team')).body.rows[0]).sort()).toEqual(
-      ['lastSeenAt', 'name', 'reportingAdminId', 'reportingAdminName', 'role', 'state', 'stateSince', 'userId', 'version'],
+      ['lastSeenAt', 'name', 'offlineReason', 'reportingAdminId', 'reportingAdminName', 'role', 'state', 'stateSince', 'userId', 'version'],
     );
   });
 
@@ -719,5 +719,172 @@ describe('existing monitoring and attendance paths follow the same hierarchy', (
   it('self-service attendance still works (check-in / today)', async () => {
     const today = await call('emp1', 'GET', '/attendance/today');
     expect(today.status).toBe(200);
+  });
+});
+
+describe('Teams-style presence: why someone is offline, and the employee live link', () => {
+  const linkUrl = () => base.replace('http', 'ws').replace(/\/api$/, '') + '/ws/presence/self';
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  const row = async (who: string) => (await call('sa', 'GET', '/presence/team?pageSize=200')).body.rows.find((r: any) => r.userId === people[who].id);
+  const startTab = async (who: string, inView = true) => {
+    advance(1); // real time always moves on between a tab closing and the next one opening
+    await call(who, 'POST', '/presence/consent/accept', {});
+    const r = await call(who, 'POST', '/presence/sessions', { inView });
+    expect(r.status).toBe(201);
+    return r.body.sessionId as string;
+  };
+
+  function openLink(origin: string | null = ORIGIN) {
+    const ws = new WebSocket(linkUrl(), { headers: origin ? { origin } : {} });
+    const inbox: any[] = [];
+    let closed: { code: number } | null = null;
+    ws.on('message', (d) => inbox.push(JSON.parse(d.toString())));
+    ws.on('close', (code) => (closed = { code }));
+    const opened = new Promise<void>((res, rej) => { ws.on('open', () => res()); ws.on('error', rej); ws.on('unexpected-response', (_q, r) => rej(new Error(`HTTP ${r.statusCode}`))); });
+    const waitFor = async (type: string, ms = 3000) => { const end = Date.now() + ms; while (Date.now() < end) { const hit = inbox.find((m) => m.type === type); if (hit) return hit; await sleep(25); } return null; };
+    const waitClose = async (ms = 3000) => { const end = Date.now() + ms; while (!closed && Date.now() < end) await sleep(25); return closed; };
+    return { ws, inbox, opened, waitFor, waitClose, send: (m: unknown) => ws.send(JSON.stringify(m)) };
+  }
+  const link = async (who: string, sessionId?: string) => {
+    const c = openLink();
+    await c.opened;
+    c.send({ type: 'auth', token: people[who].token });
+    expect(await c.waitFor('ready')).toBeTruthy();
+    if (sessionId) {
+      c.send({ type: 'bind', sessionId });
+      expect(await c.waitFor('bound')).toBeTruthy();
+    }
+    return c;
+  };
+
+  beforeAll(async () => {
+    process.env.PRESENCE_LINK_GRACE_MS = '150';
+    // earlier tests left tabs open for these people; start from nobody being connected
+    for (const who of ['emp1', 'emp2', 'adminA', 'agent1']) {
+      await db.query(`UPDATE solutions.presence_sessions SET ended_at = $2, end_reason = 'logout' WHERE user_id = $1 AND ended_at IS NULL`, [people[who].id, clock]);
+      await presence.evaluate(people[who].id, true);
+    }
+  });
+  afterAll(() => { delete process.env.PRESENCE_LINK_GRACE_MS; });
+
+  it('closing the tab shows "closed"; a session that just stops reporting shows "lost"', async () => {
+    const closedTab = await startTab('emp1');
+    expect((await row('emp1')).state).toBe('active');
+    expect((await row('emp1')).offlineReason).toBeNull();
+    await call('emp1', 'POST', '/presence/sessions/end', { sessionId: closedTab });
+    expect(await row('emp1')).toMatchObject({ state: 'offline', offlineReason: 'closed' });
+
+    await startTab('emp1');
+    advance(500);
+    await presence.tick(); // no heartbeat arrived: laptop closed, asleep or network gone
+    expect(await row('emp1')).toMatchObject({ state: 'offline', offlineReason: 'lost' });
+
+    const history = (await call('adminA', 'GET', `/presence/team/${people.emp1.id}/history?limit=20`)).body.transitions;
+    expect(history.some((t: any) => t.to === 'offline' && t.reason === 'closed')).toBe(true);
+    expect(history.some((t: any) => t.to === 'offline' && t.reason === 'lost')).toBe(true);
+  });
+
+  it('withdrawing permission is neither closed nor lost', async () => {
+    await startTab('agent1');
+    await call('agent1', 'POST', '/presence/consent/withdraw', {});
+    expect((await call('agent1', 'GET', '/presence/me')).body.state).toBe('not_enabled');
+    await call('agent1', 'POST', '/presence/consent/accept', {});
+  });
+
+  it('an employee can open the live link but never the manager socket, and a customer can open neither', async () => {
+    const sid = await startTab('emp1');
+    const c = await link('emp1', sid);
+    expect(c.inbox.some((m) => m.type === 'snapshot' || m.type === 'upsert')).toBe(false); // it carries no team data at all
+    c.ws.close();
+
+    const cust = openLink();
+    await cust.opened;
+    cust.send({ type: 'auth', token: people.cust.token });
+    expect((await cust.waitClose())?.code).toBe(4403);
+
+    const mgr = new WebSocket(base.replace('http', 'ws').replace(/\/api$/, '') + '/ws/presence', { headers: { origin: ORIGIN } });
+    await new Promise<void>((res) => mgr.on('open', () => res()));
+    mgr.send(JSON.stringify({ type: 'auth', token: people.emp1.token }));
+    await sleep(300);
+    expect(mgr.readyState).not.toBe(WebSocket.OPEN); // the manager path still refuses employees
+  });
+
+  it('rejects a bad Origin and unauthenticated or tampered links', async () => {
+    await expect(openLink('https://evil.example').opened).rejects.toThrow(/403/);
+    const silent = openLink();
+    await silent.opened;
+    silent.send({ type: 'bind', sessionId: 'x'.repeat(24) });
+    expect((await silent.waitClose())?.code).toBe(4401);
+    const bad = openLink();
+    await bad.opened;
+    bad.send({ type: 'auth', token: people.emp1.token + 'tampered' });
+    expect((await bad.waitClose())?.code).toBe(4403);
+  });
+
+  it("a link can only bind to its owner's own open session", async () => {
+    const others = await startTab('emp2');
+    const c = openLink();
+    await c.opened;
+    c.send({ type: 'auth', token: people.emp1.token });
+    expect(await c.waitFor('ready')).toBeTruthy();
+    c.send({ type: 'bind', sessionId: others });
+    expect((await c.waitClose())?.code).toBe(4404);
+    expect((await row('emp2')).state).toBe('active'); // nothing happened to the other person
+  });
+
+  it('saying goodbye on the link ends the session as closed, at once', async () => {
+    const sid = await startTab('emp1');
+    const c = await link('emp1', sid);
+    c.send({ type: 'bye' });
+    await c.waitClose();
+    expect(await row('emp1')).toMatchObject({ state: 'offline', offlineReason: 'closed' });
+  });
+
+  it('a dropped link (laptop closed, network gone) makes the person "lost" after a short grace', async () => {
+    const sid = await startTab('emp1');
+    const c = await link('emp1', sid);
+    expect((await row('emp1')).state).toBe('active');
+    c.ws.terminate(); // no goodbye: the connection simply dies
+    await sleep(700);
+    expect(await row('emp1')).toMatchObject({ state: 'offline', offlineReason: 'lost' });
+    expect((await call('emp1', 'POST', '/presence/heartbeat', { sessionId: sid, inView: true, seq: ++seqCounter })).status).toBe(410); // the session is over
+  });
+
+  it('a link that reconnects within the grace period is not treated as lost', async () => {
+    const sid = await startTab('emp1');
+    const first = await link('emp1', sid);
+    first.ws.terminate();
+    const second = await link('emp1', sid); // a network blip: the browser reconnects at once
+    await sleep(700);
+    expect((await row('emp1')).state).toBe('active');
+    second.ws.close();
+    await sleep(700);
+    expect((await row('emp1')).offlineReason).toBe('lost');
+  });
+
+  it('the link keeps a throttled background tab from looking gone', async () => {
+    const sid = await startTab('emp1', false); // another tab is in front
+    expect((await row('emp1')).state).toBe('background');
+    advance(100); // close to the offline limit with no REST heartbeat
+    await presence.touch(people.emp1.id, sid); // the live link answered a ping
+    advance(100);
+    await presence.tick();
+    expect((await row('emp1')).state).not.toBe('offline'); // without the touch this would be 200 s of silence
+  });
+
+  it('an Admin on the live link is tracked too, and Super Admin sees them', async () => {
+    const sid = await startTab('adminA');
+    const c = await link('adminA', sid);
+    expect((await row('adminA')).state).toBe('active');
+    c.ws.terminate();
+    await sleep(700);
+    expect(await row('adminA')).toMatchObject({ state: 'offline', offlineReason: 'lost' });
+  });
+
+  it('the Super Admin is an observer and cannot open the live link', async () => {
+    const c = openLink();
+    await c.opened;
+    c.send({ type: 'auth', token: people.sa.token });
+    expect((await c.waitClose())?.code).toBe(4403);
   });
 });

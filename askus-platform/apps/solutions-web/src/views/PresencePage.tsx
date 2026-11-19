@@ -6,7 +6,7 @@ import { ReloadOutlined } from '@ant-design/icons';
 import { presenceApi, type HistoryResponse, type PresenceRow, type PresenceState } from '../api/presence';
 import { useAppSelector } from '../store';
 import { LiveFeed, type Connection } from '../presence/liveFeed';
-import { DISCLAIMER, LEGEND, STATE_COLOR, STATE_LABEL, applyFeedEvent, timeInState, type FeedEvent } from '../presence/logic';
+import { DISCLAIMER, LEGEND, STATE_COLOR, STATE_LABEL, applyFeedEvent, stateDetail, timeInState, type FeedEvent } from '../presence/logic';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -108,7 +108,12 @@ export default function PresencePage() {
       : []),
     {
       title: 'Presence', key: 'state',
-      render: (_: unknown, r: PresenceRow) => <Tag color={STATE_COLOR[r.state]} style={stale ? { opacity: 0.55 } : undefined}>{STATE_LABEL[r.state]}</Tag>,
+      render: (_: unknown, r: PresenceRow) => (
+        <div style={stale ? { opacity: 0.55 } : undefined}>
+          <Tag color={STATE_COLOR[r.state]} style={{ marginRight: 0 }}>{STATE_LABEL[r.state]}</Tag>
+          <div style={{ fontSize: 12, color: '#8c8c8c' }}>{stateDetail(r)}</div>
+        </div>
+      ),
     },
     { title: 'Time in state', key: 'since', render: (_: unknown, r: PresenceRow) => timeInState(r, offsetMs) ?? '—' },
     { title: 'Last seen', key: 'last', render: (_: unknown, r: PresenceRow) => (r.lastSeenAt ? new Date(r.lastSeenAt).toLocaleString() : '—') },
@@ -139,6 +144,12 @@ export default function PresencePage() {
         />
       )}
       {loadError && <Alert type="error" showIcon style={{ marginBottom: 12 }} message={loadError} />}
+
+      <Space wrap style={{ marginBottom: 12 }} data-testid="presence-summary">
+        {(['active', 'background', 'away', 'offline', 'not_enabled'] as PresenceState[]).map((s) => (
+          <Tag key={s} color={STATE_COLOR[s]} style={{ fontSize: 13, padding: '2px 10px' }}>{STATE_LABEL[s]}: {visible.filter((r) => r.state === s).length}</Tag>
+        ))}
+      </Space>
 
       <Space wrap style={{ marginBottom: 12 }}>
         <Select allowClear placeholder="Role" style={{ width: 150 }} value={filters.role} onChange={(v) => setFilters((f) => ({ ...f, role: v }))}
@@ -176,7 +187,7 @@ export default function PresencePage() {
             <Timeline
               items={history.transitions.map((t) => ({
                 color: STATE_COLOR[t.to] === 'default' ? 'gray' : STATE_COLOR[t.to],
-                children: <span><Tag color={STATE_COLOR[t.to]}>{STATE_LABEL[t.to]}</Tag> {new Date(t.at).toLocaleString()}</span>,
+                children: <span><Tag color={STATE_COLOR[t.to]}>{STATE_LABEL[t.to]}</Tag> {t.to === 'offline' && t.reason ? <Text type="secondary">{stateDetail({ state: 'offline', offlineReason: t.reason })} · </Text> : null}{new Date(t.at).toLocaleString()}</span>,
               }))}
             />
           ) : <Empty description="No changes recorded" />

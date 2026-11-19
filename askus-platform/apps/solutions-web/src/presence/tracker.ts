@@ -1,4 +1,5 @@
 import { endSessionBestEffort, presenceApi } from '../api/presence';
+import type { PresenceLink } from './link';
 
 type Api = Pick<typeof presenceApi, 'startSession' | 'heartbeat'>;
 interface Env {
@@ -39,6 +40,8 @@ export class PresenceTracker {
     private readonly api: Api = presenceApi,
     private readonly env: Env = browserEnv(),
     private readonly onStatus: (s: TrackerStatus) => void = () => undefined,
+    /** Optional live link (employee-side WebSocket). Absent in tests and when WebSockets are unavailable. */
+    private readonly link: Pick<PresenceLink, 'start' | 'stop'> | null = null,
   ) {}
 
   private inView() {
@@ -67,8 +70,9 @@ export class PresenceTracker {
         { target: 'document', type: 'visibilitychange', fn: onChange },
         { target: 'window', type: 'focus', fn: onChange },
         { target: 'window', type: 'blur', fn: onChange },
-        { target: 'window', type: 'pagehide', fn: () => this.sessionId && this.env.endSession(this.sessionId) },
+        { target: 'window', type: 'pagehide', fn: () => { if (this.sessionId) this.env.endSession(this.sessionId); this.link?.stop(true); } },
       ]);
+      this.link?.start(res.sessionId);
       this.set('running');
     } catch {
       this.set('idle'); // not enabled or the request failed: nothing is running
@@ -109,6 +113,7 @@ export class PresenceTracker {
     const id = this.sessionId;
     this.clear();
     this.sessionId = null;
+    this.link?.stop(endRemote);
     if (id && endRemote) this.env.endSession(id);
     if (this.status !== 'revoked') this.set('idle');
   }

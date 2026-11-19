@@ -136,7 +136,7 @@ describe('resume, indicator, withdrawal, logout', () => {
     render(<PresenceGate role="Employee" />);
     await waitFor(() => expect(api.startSession).toHaveBeenCalledTimes(1));
     expect(screen.queryByRole('dialog')).toBeNull();
-    expect(screen.getByTestId('presence-indicator').textContent).toMatch(/Active in Solutions/);
+    expect(screen.getByTestId('presence-indicator').textContent).toMatch(/Available/);
   });
 
   it('the persistent indicator shows Not enabled distinctly from Offline', async () => {
