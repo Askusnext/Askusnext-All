@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import SiteChrome from '../components/SiteChrome';
-import taxiImg from '../assets/solution-o2-taxi.jpeg';
+import SolutionVisual from '../components/SolutionVisual';
 
 const features = [
 	{ title: 'Verified drivers', text: 'Every driver on the platform is background-checked and rated by riders.' },
@@ -11,11 +11,11 @@ const features = [
 
 export default function O2TaxiPage() {
 	return (
-		<SiteChrome>
+		<SiteChrome animated>
 			<section className="sc-section">
 				<h2 className="sc-title">O2 Taxi</h2>
 				<div className="sc-detail">
-					<img className="sc-detail-img" src={taxiImg} alt="O2 Taxi driver and vehicle" />
+					<SolutionVisual className="sc-detail-visual" kind="taxi" />
 					<p className="sc-detail-lead">
 						O2 Taxi is a single connected mobility network that brings bikes, autos, cars, and shared rides together
 						across the whole city. One tap is all it takes to reach the nearest verified driver at a fair, upfront

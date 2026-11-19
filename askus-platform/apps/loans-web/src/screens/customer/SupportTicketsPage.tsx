@@ -71,7 +71,7 @@ export const SupportTicketsPage: React.FC = () => {
         <div className="flex justify-between items-center">
           <div>
             <h3 className="text-base font-bold text-slate-900">Your Support Inquiries</h3>
-            <p className="text-xs text-slate-500">Track responses from Askus Fin credit specialists.</p>
+            <p className="text-xs text-slate-500">Track responses from Askus Financial Services credit specialists.</p>
           </div>
 
           <button
@@ -124,7 +124,7 @@ export const SupportTicketsPage: React.FC = () => {
                 {t.reply && (
                   <div className="mt-3 p-3.5 rounded-2xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 leading-relaxed space-y-1">
                     <strong className="block font-bold text-blue-950">
-                      Response from Askus Fin Advisor:
+                      Response from Askus Financial Services Advisor:
                     </strong>
                     <p>{t.reply}</p>
                   </div>

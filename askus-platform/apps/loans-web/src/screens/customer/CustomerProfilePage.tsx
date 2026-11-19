@@ -221,7 +221,7 @@ export const CustomerProfilePage: React.FC = () => {
               <ShieldCheck className="text-[#0066ff]" size={22} /> Sign-in &amp; Security
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">
-              Your account is secured with one-time passwords sent to your verified mobile number, so there is no password to remember or reset. Your details are visible only to you and authorised Askus Fin staff.
+              Your account is secured with one-time passwords sent to your verified mobile number, so there is no password to remember or reset. Your details are visible only to you and authorised Askus Financial Services staff.
             </p>
             <div className="mt-6 grid gap-4 sm:grid-cols-3">
               <div className="rounded-xl bg-[#f7f8fa] p-4">

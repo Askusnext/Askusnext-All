@@ -17,7 +17,7 @@ import { ExpiryTag, StatusBadge, PriorityTag, AvatarInitials } from '../componen
 import CountersPanel from '../components/CountersPanel';
 import type { Ticket } from '../types';
 
-const BAR_COLORS = ['#C8102E', '#E8A0A8', '#A0BBD8', '#9DCCA8'];
+const BAR_COLORS = ['#1e40af', '#E8A0A8', '#A0BBD8', '#9DCCA8'];
 
 export default function DashboardPage() {
   const { data: kpis, loading: kloading } = useKPIs();
@@ -35,7 +35,7 @@ export default function DashboardPage() {
       dataIndex: 'vehicleRegNo',
       render: (v: string) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <CarOutlined style={{ color: '#C8102E', fontSize: 13 }} />
+          <CarOutlined style={{ color: '#1e40af', fontSize: 13 }} />
           <strong style={{ fontSize: 12 }}>{v}</strong>
         </div>
       ),
@@ -46,7 +46,7 @@ export default function DashboardPage() {
       render: (v: string, r: Ticket) => (
         <div>
           <div style={{ fontSize: 12, fontWeight: 500 }}>{v}</div>
-          <div style={{ fontSize: 11, color: '#888' }}>{(r as any).vehicleType ?? '—'}</div>
+          <div style={{ fontSize: 11, color: '#475569' }}>{(r as any).vehicleType ?? '—'}</div>
         </div>
       ),
     },
@@ -56,11 +56,11 @@ export default function DashboardPage() {
       render: (v: string, r: Ticket) => (
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <UserOutlined style={{ fontSize: 11, color: '#888' }} />
+            <UserOutlined style={{ fontSize: 11, color: '#475569' }} />
             <span style={{ fontSize: 12, fontWeight: 500 }}>{v}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
-            <PhoneOutlined style={{ fontSize: 11, color: '#888' }} />
+            <PhoneOutlined style={{ fontSize: 11, color: '#475569' }} />
             <span style={{ fontSize: 11, color: '#666' }}>{(r as any).customerPhone ?? '—'}</span>
           </div>
         </div>
@@ -71,7 +71,7 @@ export default function DashboardPage() {
       dataIndex: ['policy', 'insurer'],
       render: (v: string) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <SafetyOutlined style={{ fontSize: 11, color: '#1677ff' }} />
+          <SafetyOutlined style={{ fontSize: 11, color: '#1e40af' }} />
           <span style={{ fontSize: 12 }}>{v}</span>
         </div>
       ),
@@ -96,7 +96,7 @@ export default function DashboardPage() {
       key: 'action',
       render: (_: unknown, r: Ticket) => (
         <Button size="small" type="primary" ghost
-          style={{ borderColor: '#C8102E', color: '#C8102E', fontSize: 11 }}
+          style={{ borderColor: '#1e40af', color: '#1e40af', fontSize: 11 }}
           onClick={() => navigate(`/tickets/${r.id}`)}>
           View
         </Button>
@@ -133,13 +133,13 @@ export default function DashboardPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
                 width: 36, height: 36, borderRadius: 8,
-                background: '#fff0f0', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <CarOutlined style={{ color: '#C8102E', fontSize: 16 }} />
+                <CarOutlined style={{ color: '#1e40af', fontSize: 16 }} />
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#111' }}>{r.vehicleRegNo}</div>
-                <div style={{ fontSize: 11, color: '#888' }}>{r.vehicleType ?? 'Vehicle'}</div>
+                <div style={{ fontSize: 11, color: '#475569' }}>{r.vehicleType ?? 'Vehicle'}</div>
               </div>
             </div>
             <StatusBadge status={r.status} />
@@ -153,15 +153,15 @@ export default function DashboardPage() {
           {/* Details grid */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <UserOutlined style={{ fontSize: 12, color: '#888', width: 14 }} />
+              <UserOutlined style={{ fontSize: 12, color: '#475569', width: 14 }} />
               <span style={{ fontSize: 12, color: '#444' }}>{r.customerName}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <PhoneOutlined style={{ fontSize: 12, color: '#888', width: 14 }} />
+              <PhoneOutlined style={{ fontSize: 12, color: '#475569', width: 14 }} />
               <span style={{ fontSize: 12, color: '#444' }}>{r.customerPhone ?? '—'}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <SafetyOutlined style={{ fontSize: 12, color: '#1677ff', width: 14 }} />
+              <SafetyOutlined style={{ fontSize: 12, color: '#1e40af', width: 14 }} />
               <span style={{ fontSize: 12, color: '#444' }}>{r.policy?.insurer ?? '—'}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -178,7 +178,7 @@ export default function DashboardPage() {
           }}>
             <PriorityTag priority={r.priority} />
             <Button size="small" type="primary"
-              style={{ background: '#C8102E', borderColor: '#C8102E', fontSize: 11 }}
+              style={{ background: '#e8efff', borderColor: '#1e40af', fontSize: 11 }}
               onClick={e => { e.stopPropagation(); navigate(`/tickets/${r.id}`); }}>
               View →
             </Button>
@@ -209,7 +209,7 @@ export default function DashboardPage() {
                     value={k.value ?? 0}
                     valueStyle={{ color: k.color, fontWeight: 600, fontSize: 28 }}
                   />
-                  <div style={{ fontSize: 11, marginTop: 4, color: '#888' }}>
+                  <div style={{ fontSize: 11, marginTop: 4, color: '#475569' }}>
                     {k.delta}
                   </div>
                 </>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
                   value={kpis?.supportTickets ?? 0}
                   valueStyle={{ color: '#5c6bc0', fontWeight: 600, fontSize: 28 }}
                 />
-                <div style={{ fontSize: 11, marginTop: 4, color: '#888' }}>Support and issue tracking</div>
+                <div style={{ fontSize: 11, marginTop: 4, color: '#475569' }}>Support and issue tracking</div>
               </>
             )}
           </Card>
@@ -237,7 +237,7 @@ export default function DashboardPage() {
       <Row gutter={12} style={{ marginBottom: 20 }}>
         {[
           { label: 'Total tickets', value: kpis?.totalTickets, color: undefined, delta: '↑ 12 this week', up: true },
-          { label: 'Open', value: kpis?.openTickets, color: '#1677ff', delta: 'Awaiting action' },
+          { label: 'Open', value: kpis?.openTickets, color: '#1e40af', delta: 'Awaiting action' },
           { label: 'Expiring ≤ 30 days', value: kpis?.expiringIn30Days, color: '#d46b08', delta: '⚠ Renewal needed', warn: true },
           { label: 'Expired policies', value: kpis?.expiredPolicies, color: '#cf1322', delta: 'Immediate action', danger: true },
         ].map(k => (
@@ -250,7 +250,7 @@ export default function DashboardPage() {
                     value={k.value ?? 0}
                     valueStyle={{ color: k.color, fontWeight: 600, fontSize: 28 }}
                   />
-                  <div style={{ fontSize: 11, marginTop: 4, color: k.danger ? '#cf1322' : k.warn ? '#d46b08' : k.up ? '#389e0d' : '#888' }}>
+                  <div style={{ fontSize: 11, marginTop: 4, color: k.danger ? '#cf1322' : k.warn ? '#d46b08' : k.up ? '#389e0d' : '#475569' }}>
                     {k.up && <ArrowUpOutlined style={{ marginRight: 3 }} />}{k.delta}
                   </div>
                 </>
@@ -268,14 +268,14 @@ export default function DashboardPage() {
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 110, paddingTop: 8 }}>
                 {monthly.map((m, i) => (
                   <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                    <div style={{ fontSize: 10, color: '#888', fontWeight: 500 }}>{m.tickets}</div>
+                    <div style={{ fontSize: 10, color: '#475569', fontWeight: 500 }}>{m.tickets}</div>
                     <div style={{
                       width: '100%', borderRadius: '4px 4px 0 0',
-                      background: i === monthly.length - 1 ? '#C8102E' : BAR_COLORS[i] ?? '#B5D4F4',
+                      background: i === monthly.length - 1 ? '#1e40af' : BAR_COLORS[i] ?? '#B5D4F4',
                       height: `${Math.round((m.tickets / maxTickets) * 80)}px`,
                       minHeight: 8, transition: 'height .4s',
                     }} />
-                    <div style={{ fontSize: 11, color: i === monthly.length - 1 ? '#C8102E' : '#888', fontWeight: i === monthly.length - 1 ? 600 : 400 }}>
+                    <div style={{ fontSize: 11, color: i === monthly.length - 1 ? '#1e40af' : '#475569', fontWeight: i === monthly.length - 1 ? 600 : 400 }}>
                       {m.month}
                     </div>
                   </div>
@@ -333,8 +333,8 @@ export default function DashboardPage() {
                   onClick={() => setViewMode('list')}
                   style={{
                     padding: '4px 10px', border: 'none', cursor: 'pointer',
-                    background: viewMode === 'list' ? '#C8102E' : '#fff',
-                    color: viewMode === 'list' ? '#fff' : '#888',
+                    background: viewMode === 'list' ? '#e8efff' : '#fff',
+                    color: viewMode === 'list' ? '#1e40af' : '#475569',
                     transition: 'all 0.2s',
                     display: 'flex', alignItems: 'center',
                   }}
@@ -347,8 +347,8 @@ export default function DashboardPage() {
                   onClick={() => setViewMode('card')}
                   style={{
                     padding: '4px 10px', border: 'none', cursor: 'pointer',
-                    background: viewMode === 'card' ? '#C8102E' : '#fff',
-                    color: viewMode === 'card' ? '#fff' : '#888',
+                    background: viewMode === 'card' ? '#e8efff' : '#fff',
+                    color: viewMode === 'card' ? '#1e40af' : '#475569',
                     transition: 'all 0.2s',
                     display: 'flex', alignItems: 'center',
                   }}
@@ -357,7 +357,7 @@ export default function DashboardPage() {
                 </button>
               </Tooltip>
             </div>
-            <Button type="link" style={{ color: '#C8102E' }} onClick={() => navigate('/renewals')}>
+            <Button type="link" style={{ color: '#1e40af' }} onClick={() => navigate('/renewals')}>
               View all →
             </Button>
           </div>

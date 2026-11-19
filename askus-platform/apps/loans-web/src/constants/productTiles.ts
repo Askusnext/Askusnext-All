@@ -1,7 +1,5 @@
-// Homepage product-tile sections, modelled on the reference marketplace layout.
-// Icons live in /public/assets/pb. Tiles with a `lottie` file play a looping
-// animation (same behaviour as the reference); the others get a hover motion.
-// Tiles marked `soon` have no live product/flow yet and say so.
+// Homepage catalogue. Featured tiles appear as loan cards; all others remain
+// in the service directory. `soon` marks products without a live flow.
 
 export interface ProductTile {
   label: string
@@ -10,6 +8,8 @@ export interface ProductTile {
   lottie?: string
   badge?: string
   soon?: boolean
+  featured?: boolean
+  description?: string
 }
 
 export interface ProductSection {
@@ -21,11 +21,11 @@ export const PRODUCT_SECTIONS: ProductSection[] = [
   {
     title: 'Loans and Cards',
     tiles: [
-      { label: 'Personal Loan', to: '/loans/quotes?type=personal-loan', icon: 'personalLoanTile.png', lottie: 'lottie/personal-loan.json', badge: 'Popular' },
+      { label: 'Personal Loan', to: '/loans/quotes?type=personal-loan', icon: 'personalLoanTile.png', lottie: 'lottie/personal-loan.json', badge: 'Popular', featured: true, description: 'For life milestones, planned purchases, and the unexpected.' },
       { label: 'Credit Cards', to: '/explore/credit-card', icon: 'creditCardTile.png', lottie: 'lottie/credit-cards.json', badge: 'Guide' },
-      { label: 'Business Loan', to: '/loans/quotes?type=business-loan', icon: 'products/business-loan.svg' },
-      { label: 'Home Loan', to: '/loans/quotes?type=home-loan', icon: 'products/home-loan.svg' },
-      { label: 'Loan Against\nProperty', to: '/loans/quotes?type=loan-against-property', icon: 'products/loan-against-property.svg' },
+      { label: 'Business Loan', to: '/loans/quotes?type=business-loan', icon: 'products/business-loan.svg', featured: true, description: 'Explore funding for your next idea, expansion, or working capital.' },
+      { label: 'Home Loan', to: '/loans/quotes?type=home-loan', icon: 'products/home-loan.svg', featured: true, description: 'Take the next step towards a place you can call your own.' },
+      { label: 'Loan Against\nProperty', to: '/loans/quotes?type=loan-against-property', icon: 'products/loan-against-property.svg', featured: true, description: 'Understand borrowing options secured against your property.' },
       { label: 'FD\nCredit Cards', to: '/explore/fd-credit-cards', icon: 'CCFD_icon.png' },
       { label: 'Instant\nPersonal Loan', to: '/loans/quotes?type=instant-personal-loan', icon: 'products/instant-personal-loan.svg' },
       { label: 'Consumer\nDurable Loan', to: '/loans/quotes?type=consumer-durable-loan', icon: 'durableLoan.svg' },

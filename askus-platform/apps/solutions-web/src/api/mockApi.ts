@@ -8,7 +8,7 @@ export const USE_REAL_API = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);
 const delay = (ms = 400) => new Promise(r => setTimeout(r, ms));
 
 // ── Access policy ─────────────────────────────────────────────────────────────
-// Only company email accounts may sign in to AskusNext Global Solutions Private Limited.
+// Only company email accounts may sign in to Askus Next Global Solutions Private Limited.
 export const ALLOWED_EMAIL_DOMAIN = 'askussolutions.in';
 export const isAllowedEmail = (email: string): boolean =>
   email.trim().toLowerCase().endsWith('@' + ALLOWED_EMAIL_DOMAIN);

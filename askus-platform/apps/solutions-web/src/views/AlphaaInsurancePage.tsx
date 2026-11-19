@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import SiteChrome from '../components/SiteChrome';
-import insuranceImg from '../assets/solution-alphaa-insurance.jpeg';
+import SolutionVisual from '../components/SolutionVisual';
 
 const features = [
 	{ title: 'Instant policy issuance', text: 'Get a vehicle insurance policy issued in minutes, online.' },
@@ -11,13 +11,13 @@ const features = [
 
 export default function AlphaaInsurancePage() {
 	return (
-		<SiteChrome>
+		<SiteChrome animated>
 			<section className="sc-section">
-				<h2 className="sc-title">Alphaa Insurance</h2>
+				<h2 className="sc-title">Askus Insurance</h2>
 				<div className="sc-detail">
-					<img className="sc-detail-img" src={insuranceImg} alt="Alphaa Insurance" />
+					<SolutionVisual className="sc-detail-visual" kind="insurance" />
 					<p className="sc-detail-lead">
-						Alphaa Insurance makes protecting your vehicle and livelihood simple, transparent, and genuinely fast. It
+						Askus Insurance makes protecting your vehicle and livelihood simple, transparent, and genuinely fast. It
 						is cover designed for both everyday commuters and full taxi fleets — clear on what it protects, honest on
 						what it costs, and quick when you actually need it most.
 					</p>
@@ -30,7 +30,7 @@ export default function AlphaaInsurancePage() {
 						few minutes and happens entirely online, without paperwork or branch visits.
 					</p>
 					<p>
-						When something goes wrong, the moment that matters most, Alphaa Insurance moves quickly. Guided digital
+						When something goes wrong, the moment that matters most, Askus Insurance moves quickly. Guided digital
 						claims walk you through each step, and cashless repairs at network garages are settled directly with the
 						insurer, so you are not left out of pocket. For incidents on the road, claims agents can assist right at the
 						site, turning a stressful situation into a managed one. Every document lives in one place, ready to access
@@ -44,7 +44,7 @@ export default function AlphaaInsurancePage() {
 					</p>
 					<p>
 						The result is dependable protection that gives drivers and fleet owners real peace of mind on every single
-						trip. Whether you drive for a living or simply want your family vehicle secured, Alphaa Insurance is cover
+						trip. Whether you drive for a living or simply want your family vehicle secured, Askus Insurance is cover
 						you can understand, afford, and trust when it counts.
 					</p>
 				</div>

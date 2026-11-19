@@ -18,7 +18,7 @@ const STATUS_OPTS = STATUS_OPTIONS;
 function VRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div style={{ display:'flex', padding:'7px 0', borderBottom:'1px solid #f0f0f0', gap:8 }}>
-      <span style={{ fontSize:12, color:'#888', minWidth:140, flexShrink:0 }}>{label}</span>
+      <span style={{ fontSize:12, color:'#475569', minWidth:140, flexShrink:0 }}>{label}</span>
       <span style={{ fontSize:12, fontWeight:500, color:'#222', flex:1 }}>{value ?? '—'}</span>
     </div>
   );
@@ -56,7 +56,7 @@ export default function TicketDetailPage() {
 
   /* ── guards ─────────────────────────────────────────────────────── */
   if (loading) return <Spin size="large" style={{ display:'block', margin:'80px auto' }} />;
-  if (!ticket) return <div style={{ padding:40, color:'#888' }}>Ticket not found</div>;
+  if (!ticket) return <div style={{ padding:40, color:'#475569' }}>Ticket not found</div>;
 
   const expiryDays = Math.ceil((new Date(ticket.policy.expiryDate).getTime() - Date.now()) / 86400000);
   const hasRC  = ticket.documents.some(d => d.type === 'RC');
@@ -265,21 +265,21 @@ export default function TicketDetailPage() {
               <div style={{ fontWeight:500, fontSize:13, marginBottom:12 }}>Record payment</div>
               <div style={{ ...grid2, marginBottom:10 }}>
                 <div>
-                  <div style={{ fontSize:12, color:'#888', marginBottom:4 }}>Payment mode</div>
+                  <div style={{ fontSize:12, color:'#475569', marginBottom:4 }}>Payment mode</div>
                   <Select style={fw} defaultValue="UPI">
                     {['UPI','NEFT','Cash','Cheque','Card'].map(m => <Select.Option key={m} value={m}>{m}</Select.Option>)}
                   </Select>
                 </div>
                 <div>
-                  <div style={{ fontSize:12, color:'#888', marginBottom:4 }}>Transaction ID</div>
+                  <div style={{ fontSize:12, color:'#475569', marginBottom:4 }}>Transaction ID</div>
                   <Input placeholder="UTR / ref number" />
                 </div>
               </div>
-              <Button type="primary" size="small" style={{ background:'#C8102E', borderColor:'#C8102E' }} onClick={handleMarkPaid}>
+              <Button type="primary" size="small" style={{ background:'#e8efff', borderColor:'#1e40af' }} onClick={handleMarkPaid}>
                 Mark as paid
               </Button>
               {ticket.payment.amount > 0 && (
-                <Button type="primary" size="small" style={{ marginLeft:8, background:'#0f9d58', borderColor:'#0f9d58' }} onClick={handlePayOnline}>
+                <Button type="primary" size="small" style={{ marginLeft:8, background:'#e6f4ea', borderColor:'#166534', color:'#166534' }} onClick={handlePayOnline}>
                   Pay online ₹{ticket.payment.amount.toLocaleString('en-IN')}
                 </Button>
               )}
@@ -302,7 +302,7 @@ export default function TicketDetailPage() {
             <div key={doc.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', background:'#f8f8f8', borderRadius:8, marginBottom:8 }}>
               <Tag color="blue">{doc.type}</Tag>
               <span style={{ flex:1, fontSize:12 }}>{doc.fileName}</span>
-              <span style={{ fontSize:11, color:'#bbb' }}>{(doc.fileSizeBytes/1024/1024).toFixed(1)} MB</span>
+              <span style={{ fontSize:11, color:'#475569' }}>{(doc.fileSizeBytes/1024/1024).toFixed(1)} MB</span>
               <Button size="small" href={doc.fileUrl} target="_blank">View</Button>
               <Button size="small" danger icon={<DeleteOutlined />}
                 onClick={async () => { await api.deleteDocument(ticket.id, doc.id); refetch(); }} />
@@ -315,11 +315,11 @@ export default function TicketDetailPage() {
                 <div style={{ border:'1.5px dashed #c5d8f5', borderRadius:10, padding:'18px 16px', textAlign:'center', cursor:'pointer', background:'#f4f8ff' }}>
                   <UploadOutlined style={{ fontSize:20, color:'#1565C0', marginBottom:6 }} />
                   <div style={{ fontSize:12, color:'#1565C0' }}>Upload {type} copy</div>
-                  <div style={{ fontSize:11, color:'#bbb' }}>PDF · JPG · PNG · max 10 MB</div>
+                  <div style={{ fontSize:11, color:'#475569' }}>PDF · JPG · PNG · max 10 MB</div>
                 </div>
               </Upload>
             ))}
-            {hasRC && hasIns && <div style={{ gridColumn:'1/-1', textAlign:'center', color:'#52c41a', fontSize:13 }}>✓ Both documents attached</div>}
+            {hasRC && hasIns && <div style={{ gridColumn:'1/-1', textAlign:'center', color:'#166534', fontSize:13 }}>✓ Both documents attached</div>}
           </div>
         </div>
       ),
@@ -334,7 +334,7 @@ export default function TicketDetailPage() {
               <div>
                 <div style={{ fontSize:12 }}><strong>{log.performedByName}</strong> {log.action}</div>
                 {log.note && <div style={{ fontSize:12, color:'#666', background:'#f8f8f8', padding:'6px 10px', borderRadius:6, marginTop:4 }}>{log.note}</div>}
-                <div style={{ fontSize:11, color:'#bbb', marginTop:3 }}>{new Date(log.createdAt).toLocaleString('en-IN')}</div>
+                <div style={{ fontSize:11, color:'#475569', marginTop:3 }}>{new Date(log.createdAt).toLocaleString('en-IN')}</div>
               </div>
             </div>
           ))}
@@ -342,7 +342,7 @@ export default function TicketDetailPage() {
             <Input.TextArea rows={3} placeholder="Add a comment or note…" value={comment}
               onChange={e => setComment(e.target.value)} style={{ marginBottom:8 }} />
             <Button type="primary" size="small" loading={commenting} onClick={handleComment}
-              style={{ background:'#C8102E', borderColor:'#C8102E' }}>Post comment</Button>
+              style={{ background:'#e8efff', borderColor:'#1e40af' }}>Post comment</Button>
           </div>
         </div>
       ),
@@ -495,7 +495,7 @@ export default function TicketDetailPage() {
           <Button onClick={() => navigate('/tickets')}>← Back</Button>
           <div>
             <h2 style={{ margin:0, fontSize:18 }}>{ticket.ticketNumber} · {ticket.title}</h2>
-            <p style={{ margin:0, color:'#888', fontSize:12 }}>
+            <p style={{ margin:0, color:'#475569', fontSize:12 }}>
               Created {new Date(ticket.createdAt).toLocaleDateString('en-IN')}
               {editMode && <span style={{ marginLeft:10, color:'#1565C0', fontWeight:600 }}>✏️ Edit Mode</span>}
             </p>
@@ -523,7 +523,7 @@ export default function TicketDetailPage() {
                 {STATUS_OPTS.map(o => <Select.Option key={o.value} value={o.value}>{o.label}</Select.Option>)}
               </Select>
               <Button type="primary" loading={statusSaving} onClick={handleStatusSave}
-                style={{ background:'#C8102E', borderColor:'#C8102E' }}>Save status</Button>
+                style={{ background:'#e8efff', borderColor:'#1e40af' }}>Save status</Button>
             </>
           )}
         </div>
@@ -556,7 +556,7 @@ export default function TicketDetailPage() {
               ['Updated',     new Date(ticket.updatedAt).toLocaleDateString('en-IN')],
             ].map(([k, v]) => (
               <div key={k as string} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'5px 0', borderBottom:'1px solid #f5f5f5', fontSize:12 }}>
-                <span style={{ color:'#888' }}>{k}</span><span>{v}</span>
+                <span style={{ color:'#475569' }}>{k}</span><span>{v}</span>
               </div>
             ))}
           </Card>
@@ -569,17 +569,17 @@ export default function TicketDetailPage() {
           <Card size="small" title="Insurance status" style={{ borderRadius:10 }}>
             <div style={{ fontSize:12 }}>
               <div style={{ display:'flex', justifyContent:'space-between', padding:'5px 0', borderBottom:'1px solid #f5f5f5' }}>
-                <span style={{ color:'#888' }}>Status</span>
+                <span style={{ color:'#475569' }}>Status</span>
                 <InsuranceStatusTag status={ticket.policy.insuranceStatus} />
               </div>
               <div style={{ display:'flex', justifyContent:'space-between', padding:'5px 0', borderBottom:'1px solid #f5f5f5' }}>
-                <span style={{ color:'#888' }}>Expiry</span>
+                <span style={{ color:'#475569' }}>Expiry</span>
                 <span style={{ color: expiryDays <= 0 ? '#cf1322' : expiryDays <= 30 ? '#d46b08' : undefined, fontWeight:600 }}>
                   {new Date(ticket.policy.expiryDate).toLocaleDateString('en-IN')}
                 </span>
               </div>
               <div style={{ display:'flex', justifyContent:'space-between', padding:'5px 0' }}>
-                <span style={{ color:'#888' }}>Payment</span>
+                <span style={{ color:'#475569' }}>Payment</span>
                 <PaymentStatusTag status={ticket.payment.paymentStatus} />
               </div>
             </div>

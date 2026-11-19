@@ -52,7 +52,7 @@ const STATUS_ICON: Record<Status, string> = {
 // Mon=0 … Sat=5, Sun=6 (isoWeek: Mon is day 1)
 const WEEK_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const ROLE_COLOR: Record<string, string> = {
-  Admin: '#C8102E', Employee: '#1677ff', Agent: '#52c41a',
+  Admin: '#1e40af', Employee: '#1677ff', Agent: '#52c41a',
 };
 
 // ── Staff master ───────────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ function DayCell({
           position: 'relative',
         }}>
           {isSunday ? (
-            <div style={{ fontSize: 10, color: '#bfbfbf', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
+            <div style={{ fontSize: 10, color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3 }}>
               <LockOutlined style={{ fontSize: 9 }} /> SUN
             </div>
           ) : hasEntry ? (
@@ -141,7 +141,7 @@ function DayCell({
           onChange={e => onChange({ ...entry, hours: parseFloat(e.target.value) || 0 })} />
         <Button size="small" type="primary" icon={<SaveOutlined />}
           onClick={() => setOpen(false)}
-          style={{ background: '#C8102E', borderColor: '#C8102E' }}>
+          style={{ background: '#e8efff', borderColor: '#1e40af' }}>
           Save
         </Button>
       </div>
@@ -234,7 +234,7 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, on
           <div style={{ fontWeight: 700, fontSize: 16, color: '#1f1f1f' }}>
             My Attendance Entry
           </div>
-          <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
             <CalendarOutlined /> Week: {weekLabel}
           </div>
         </div>
@@ -242,12 +242,12 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, on
           {isAdmin && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Button size="small" icon={<span>‹</span>} onClick={() => setMyWeekStart(w => w.subtract(1, 'week'))} />
-              <span style={{ fontSize: 12, fontWeight: 600, color: isCurrentWk ? '#C8102E' : '#555' }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: isCurrentWk ? '#1e40af' : '#555' }}>
                 {weekLabel}
               </span>
               <Button size="small" icon={<span>›</span>} onClick={() => setMyWeekStart(w => w.add(1, 'week'))} disabled={isCurrentWk} />
               {!isCurrentWk && (
-                <Button size="small" onClick={() => setMyWeekStart(currentWkStart)} style={{ color: '#C8102E', borderColor: '#C8102E' }}>
+                <Button size="small" onClick={() => setMyWeekStart(currentWkStart)} style={{ color: '#1e40af', borderColor: '#1e40af' }}>
                   Current
                 </Button>
               )}
@@ -265,8 +265,9 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, on
             icon={<SaveOutlined />}
             onClick={handleSave}
             style={{
-              background: saved ? '#52c41a' : '#C8102E',
-              borderColor: saved ? '#52c41a' : '#C8102E',
+              background: saved ? '#e6f4ea' : '#e8efff',
+              borderColor: saved ? '#52c41a' : '#1e40af',
+              color: saved ? '#166534' : '#1e40af',
               fontWeight: 600,
               minWidth: 130,
             }}
@@ -279,14 +280,14 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, on
       {/* Stats */}
       <Row gutter={12} style={{ marginBottom: 18 }}>
         {[
-          { label: 'Total Hours',  val: `${totalHrs}h`, color: '#52c41a' },
-          { label: 'Days Worked',  val: workDays,        color: '#1677ff' },
-          { label: 'Present',      val: presentCt,       color: '#52c41a' },
-          { label: 'Absent',       val: absentCt,        color: '#f5222d' },
+          { label: 'Total Hours',  val: `${totalHrs}h`, color: '#166534' },
+          { label: 'Days Worked',  val: workDays,        color: '#1e40af' },
+          { label: 'Present',      val: presentCt,       color: '#166534' },
+          { label: 'Absent',       val: absentCt,        color: '#b91c1c' },
         ].map(s => (
           <Col key={s.label} xs={12} sm={6}>
             <Card style={{ borderRadius: 8 }} styles={{ body: { padding: '10px 14px' } }}>
-              <div style={{ fontSize: 11, color: '#8c8c8c' }}>{s.label}</div>
+              <div style={{ fontSize: 11, color: '#475569' }}>{s.label}</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.val}</div>
             </Card>
           </Col>
@@ -306,25 +307,25 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, on
           return (
             <div key={dateKey} style={{
               borderRadius: 10, overflow: 'hidden',
-              border: isToday ? '2px solid #C8102E' : isSun ? '1px solid #e8e8e8' : editable ? '1px solid #d6e4ff' : '1px solid #e8e8e8',
+              border: isToday ? '2px solid #1e40af' : isSun ? '1px solid #e8e8e8' : editable ? '1px solid #d6e4ff' : '1px solid #e8e8e8',
               background: isSun ? '#fafafa' : editable ? '#fff' : '#f9f9f9',
-              boxShadow: isToday ? '0 0 0 3px rgba(200,16,46,0.12)' : 'none',
+              boxShadow: isToday ? '0 0 0 3px rgba(30,64,175,0.12)' : 'none',
             }}>
               {/* Day header */}
               <div style={{
                 padding: '8px 10px',
-                background: isSun ? '#f0f0f0' : isToday ? '#C8102E' : editable ? '#1677ff' : '#f5f5f5',
+                background: isSun ? '#f8fafc' : isToday ? '#dbeafe' : editable ? '#eff6ff' : '#f8fafc',
                 textAlign: 'center',
               }}>
                 <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase',
-                  color: isSun || (!isToday && !editable) ? '#8c8c8c' : '#fff' }}>
+                  color: isSun || (!isToday && !editable) ? '#475569' : '#1e40af' }}>
                   {WEEK_DAYS[i]}
                 </div>
                 <div style={{ fontSize: 18, fontWeight: 800,
-                  color: isSun || (!isToday && !editable) ? '#8c8c8c' : '#fff', lineHeight: 1.1 }}>
+                  color: isSun || (!isToday && !editable) ? '#475569' : '#1e40af', lineHeight: 1.1 }}>
                   {d.format('DD')}
                 </div>
-                <div style={{ fontSize: 10, color: isSun || (!isToday && !editable) ? '#bfbfbf' : 'rgba(255,255,255,0.8)' }}>
+                <div style={{ fontSize: 10, color: '#334155' }}>
                   {d.format('MMM')}
                 </div>
               </div>
@@ -334,7 +335,7 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, on
                 {isSun ? (
                   <div style={{ textAlign: 'center', padding: '8px 0' }}>
                     <LockOutlined style={{ color: '#d9d9d9', fontSize: 16 }} />
-                    <div style={{ fontSize: 10, color: '#bfbfbf', marginTop: 4 }}>Sunday</div>
+                    <div style={{ fontSize: 10, color: '#475569', marginTop: 4 }}>Sunday</div>
                     <div style={{ fontSize: 9, color: '#d9d9d9' }}>Non-working</div>
                   </div>
                 ) : editable ? (
@@ -366,7 +367,7 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, on
                       {STATUS_ICON[entry.status]}{' '}
                       {(entry.status === 'Present' || entry.status === 'Half Day') ? `${entry.hours}h` : entry.status}
                     </div>
-                    <div style={{ fontSize: 9, color: '#bfbfbf', marginTop: 2 }}>
+                    <div style={{ fontSize: 9, color: '#475569', marginTop: 2 }}>
                       {d.isBefore(currentWkStart) ? 'Past' : 'Future'}
                     </div>
                   </div>
@@ -379,14 +380,14 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, on
 
       {/* Legend */}
       <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        <span style={{ fontSize: 11, color: '#8c8c8c', fontWeight: 600 }}>Status:</span>
+        <span style={{ fontSize: 11, color: '#475569', fontWeight: 600 }}>Status:</span>
         {STATUS_OPTIONS.map(s => (
           <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11 }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, background: STATUS_COLOR[s], display: 'inline-block' }} />
             <span style={{ color: '#595959' }}>{s}</span>
           </span>
         ))}
-        <span style={{ fontSize: 11, color: '#bfbfbf', marginLeft: 8 }}>
+        <span style={{ fontSize: 11, color: '#475569', marginLeft: 8 }}>
           <LockOutlined /> = Non-editable
         </span>
       </div>
@@ -401,7 +402,7 @@ function AddStaffModal({ open, onClose, onAdd }: {
   const [form] = Form.useForm();
   return (
     <Modal open={open} onCancel={onClose} title="Add Staff Member"
-      okText="Add" okButtonProps={{ style: { background: '#C8102E', borderColor: '#C8102E' } }}
+      okText="Add" okButtonProps={{ style: { background: '#e8efff', borderColor: '#1e40af' } }}
       onOk={() => form.validateFields().then(v => {
         onAdd({ id: 'user-' + Date.now(), employeeName: v.name, employeeId: v.empId, role: v.role, days: {} });
         form.resetFields(); onClose();
@@ -614,7 +615,7 @@ export default function TimesheetPage() {
               {r.employeeName}
               {r.id === userId && <Tag color="blue" style={{ marginLeft: 5, fontSize: 9 }}>You</Tag>}
             </div>
-            <div style={{ fontSize: 11, color: '#8c8c8c' }}>
+            <div style={{ fontSize: 11, color: '#475569' }}>
               {r.employeeId} · <span style={{ color: ROLE_COLOR[r.role] }}>{r.role}</span>
             </div>
           </div>
@@ -632,18 +633,18 @@ export default function TimesheetPage() {
           <div style={{ textAlign: 'center' as const }}>
             <div style={{
               fontSize: 10, fontWeight: 700, textTransform: 'uppercase' as const,
-              color: isSun ? '#f5222d' : i >= 5 ? '#fa8c16' : '#8c8c8c',
+              color: isSun ? '#b91c1c' : i >= 5 ? '#9a3412' : '#475569',
             }}>
               {isSun ? '🔒' : ''}{WEEK_DAYS[i]}
             </div>
             <div style={{
               fontSize: 12, fontWeight: 600,
-              color: isToday ? '#C8102E' : isSun ? '#bfbfbf' : '#262626',
+              color: isToday ? '#1e40af' : isSun ? '#475569' : '#262626',
             }}>
               {d.format('DD')}
             </div>
             {!editable && !isSun && (
-              <div style={{ fontSize: 9, color: '#bfbfbf' }}>
+              <div style={{ fontSize: 9, color: '#475569' }}>
                 {isPastFut && <LockOutlined style={{ fontSize: 8 }} />}
               </div>
             )}
@@ -671,8 +672,8 @@ export default function TimesheetPage() {
         const h = calcHours(r, dates); const d = calcDays(r, dates);
         return (
           <div style={{ textAlign: 'center' }}>
-            <div style={{ fontWeight: 700, fontSize: 14, color: h >= 40 ? '#52c41a' : h > 0 ? '#faad14' : '#d9d9d9' }}>{h}h</div>
-            <div style={{ fontSize: 10, color: '#8c8c8c' }}>{d}d</div>
+            <div style={{ fontWeight: 700, fontSize: 14, color: h >= 40 ? '#166534' : h > 0 ? '#854d0e' : '#d9d9d9' }}>{h}h</div>
+            <div style={{ fontSize: 10, color: '#475569' }}>{d}d</div>
           </div>
         );
       },
@@ -697,7 +698,7 @@ export default function TimesheetPage() {
               </Tooltip>
               {!LIVE && (
               <Button size="small" icon={<PlusOutlined />} type="primary"
-                style={{ background: '#C8102E', borderColor: '#C8102E' }}
+                style={{ background: '#e8efff', borderColor: '#1e40af' }}
                 onClick={() => setShowAdd(true)}>
                 Add Staff
               </Button>
@@ -727,11 +728,11 @@ export default function TimesheetPage() {
             </div>
           </div>
           <div style={{ marginBottom: 10, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, color: '#8c8c8c' }}>
+            <span style={{ fontSize: 12, color: '#475569' }}>
               <TeamOutlined /> {visibleRows.length} staff &nbsp;·&nbsp;
-              Total hours this week: <strong style={{ color: '#C8102E' }}>{totalHoursAll}h</strong>
+              Total hours this week: <strong style={{ color: '#1e40af' }}>{totalHoursAll}h</strong>
             </span>
-            {LIVE && <span style={{ fontSize: 12, color: '#8c8c8c' }}>Saved to the database · staff come from User Management</span>}
+            {LIVE && <span style={{ fontSize: 12, color: '#475569' }}>Saved to the database · staff come from User Management</span>}
           </div>
           <Table
             columns={adminColumns}
@@ -780,10 +781,10 @@ export default function TimesheetPage() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 700, color: '#1f1f1f' }}>
-            <FileExcelOutlined style={{ color: '#C8102E', marginRight: 8 }} />
+            <FileExcelOutlined style={{ color: '#1e40af', marginRight: 8 }} />
             Time Sheet
           </div>
-          <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
             Weekly attendance &amp; hours tracker
           </div>
         </div>
@@ -791,12 +792,12 @@ export default function TimesheetPage() {
         {userRole !== 'Agent' && tab === 'all' && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Button size="small" icon={<span>‹</span>} onClick={() => setWeekStart(w => w.subtract(1, 'week'))} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: isCurrentWeek ? '#C8102E' : '#555' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: isCurrentWeek ? '#1e40af' : '#555' }}>
               <CalendarOutlined style={{ marginRight: 4 }} />{weekLabel}
             </span>
             <Button size="small" icon={<span>›</span>} onClick={() => setWeekStart(w => w.add(1, 'week'))} disabled={isCurrentWeek} />
             {!isCurrentWeek && (
-              <Button size="small" onClick={() => setWeekStart(currentWkStart)} style={{ color: '#C8102E', borderColor: '#C8102E' }}>
+              <Button size="small" onClick={() => setWeekStart(currentWkStart)} style={{ color: '#1e40af', borderColor: '#1e40af' }}>
                 Current Week
               </Button>
             )}

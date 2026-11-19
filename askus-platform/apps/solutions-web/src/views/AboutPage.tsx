@@ -12,7 +12,7 @@ export default function AboutPage() {
 			<section className="sc-section">
 				<h2 className="sc-title">A software company building the intelligence behind everyday movement.</h2>
 				<p className="sc-sub">
-					AskusNext Global Solutions Private Limited designs and operates the technology layer that keeps mobility, insurance, lending, and field
+					Askus Next Global Solutions Private Limited designs and operates the technology layer that keeps mobility, insurance, lending, and field
 					operations connected — from the apps riders and customers use, to the systems that keep everything in sync
 					behind the scenes.
 				</p>

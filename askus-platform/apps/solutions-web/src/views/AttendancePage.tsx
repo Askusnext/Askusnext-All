@@ -373,7 +373,7 @@ function RegisterPanel() {
     return [
       { title: 'Employee', dataIndex: 'employeeName', fixed: 'left', width: 170, render: (n: string, r) => <div><div>{n}</div><Text type="secondary" style={{ fontSize: 11 }}>{r.role}</Text></div> },
       ...reg.days.map((d, i) => ({
-        title: <div style={{ textAlign: 'center', lineHeight: 1.1 }}><div>{Number(d.slice(8))}</div><div style={{ fontSize: 10, color: '#999' }}>{WEEKDAYS[dayjs(d).day()][0]}</div></div>,
+        title: <div style={{ textAlign: 'center', lineHeight: 1.1 }}><div>{Number(d.slice(8))}</div><div style={{ fontSize: 10, color: '#475569' }}>{WEEKDAYS[dayjs(d).day()][0]}</div></div>,
         key: d, width: 38, align: 'center' as const,
         render: (_: unknown, row: RegisterRow) => {
           const c = row.cells[i];

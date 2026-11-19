@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import SiteChrome from '../components/SiteChrome';
-import loansImg from '../assets/solution-alphaa-loans.jpeg';
+import SolutionVisual from '../components/SolutionVisual';
 
 const features = [
 	{ title: 'Quick approval', text: 'Get a lending decision in as little as 24 hours.' },
@@ -11,13 +11,13 @@ const features = [
 
 export default function AlphaaLoansPage() {
 	return (
-		<SiteChrome>
+		<SiteChrome animated>
 			<section className="sc-section">
-				<h2 className="sc-title">Alphaa Loans</h2>
+				<h2 className="sc-title">Askus Financial Services</h2>
 				<div className="sc-detail">
-					<img className="sc-detail-img" src={loansImg} alt="Alphaa Loans" />
+					<SolutionVisual className="sc-detail-visual" kind="loans" />
 					<p className="sc-detail-lead">
-						Alphaa Loans gives drivers, fleet owners, and small businesses fast, fair access to the money they need to
+						Askus Financial Services gives drivers, fleet owners, and small businesses fast, fair access to the money they need to
 						move forward. It is financing designed around real earnings and real workdays — quick to approve,
 						transparent on cost, and flexible enough to fit the way people actually earn.
 					</p>
@@ -30,7 +30,7 @@ export default function AlphaaLoansPage() {
 						working capital that keeps operations running, there is a plan built for the purpose.
 					</p>
 					<p>
-						Repayment is where Alphaa Loans truly stands apart. EMIs are structured around a driver-partner's daily
+						Repayment is where Askus Financial Services truly stands apart. EMIs are structured around a driver-partner's daily
 						earnings rather than a rigid calendar, so instalments stay manageable even when income varies week to week.
 						Interest rates are clear and disclosed upfront, with no hidden charges and no surprises later. You always
 						know the total cost before you commit, and every statement is easy to read and available online.
@@ -44,7 +44,7 @@ export default function AlphaaLoansPage() {
 					</p>
 					<p>
 						The outcome is dependable financing that helps people grow — buy the vehicle, take the contract, expand the
-						fleet, or simply smooth out a tough month. Alphaa Loans turns ambition into achievable steps, with money you
+						fleet, or simply smooth out a tough month. Askus Financial Services turns ambition into achievable steps, with money you
 						can access quickly and repay on terms that respect how you earn.
 					</p>
 				</div>

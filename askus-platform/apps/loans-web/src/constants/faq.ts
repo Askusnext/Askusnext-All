@@ -7,13 +7,13 @@ export interface FaqItem {
 export const FAQS: FaqItem[] = [
   {
     category: 'general',
-    question: 'What is Askus Fin and how does it work?',
-    answer: 'Askus Fin provides lender reference links and an application workflow. Current lender terms must be checked directly with the lender. Application assistance does not guarantee eligibility, approval, or disbursal.'
+    question: 'What is Askus Financial Services and how does it work?',
+    answer: 'Askus Financial Services provides lender reference links and an application workflow. Current lender terms must be checked directly with the lender. Application assistance does not guarantee eligibility, approval, or disbursal.'
   },
   {
     category: 'cash_salary',
     question: 'Can I get a personal loan if I receive my salary in cash?',
-    answer: 'Cash salary acceptance and required evidence depend on the lender and product. Confirm directly with the lender before applying and submit only authentic documents. Askus Fin cannot promise approval.'
+    answer: 'Cash salary acceptance and required evidence depend on the lender and product. Confirm directly with the lender before applying and submit only authentic documents. Askus Financial Services cannot promise approval.'
   },
   {
     category: 'documents',
@@ -22,23 +22,23 @@ export const FAQS: FaqItem[] = [
   },
   {
     category: 'general',
-    question: 'Does using Askus Fin or checking my CIBIL score harm my credit score?',
-    answer: 'The EMI calculator does not request a credit report. Askus Fin does not currently provide a bureau check. Use the bureau’s official channel to access your report and ask the lender how its application process affects your credit file.'
+    question: 'Does using Askus Financial Services or checking my CIBIL score harm my credit score?',
+    answer: 'The EMI calculator does not request a credit report. Askus Financial Services does not currently provide a bureau check. Use the bureau’s official channel to access your report and ask the lender how its application process affects your credit file.'
   },
   {
     category: 'loans',
-    question: 'What is the reducing-balance EMI method used on Askus Fin?',
+    question: 'What is the reducing-balance EMI method used on Askus Financial Services?',
     answer: 'The calculator estimates installments using a reducing-balance formula and an illustrative rate. It is not a lender quote or approval decision. The lender sets the actual rate, fees, and repayment schedule.'
   },
   {
     category: 'general',
-    question: 'Why is mobile OTP verification mandatory on Askus Fin?',
+    question: 'Why is mobile OTP verification mandatory on Askus Financial Services?',
     answer: 'Customer routes require a mobile number verified with a one-time code (OTP). Google and WhatsApp sign-in are not available.'
   },
   {
     category: 'loans',
-    question: 'Does Askus Fin charge any upfront fee for loan assistance?',
-    answer: 'Askus Fin does not currently collect payments through this website. Lender fees and taxes, if any, are set by the lender and must be confirmed in its official terms.'
+    question: 'Does Askus Financial Services charge any upfront fee for loan assistance?',
+    answer: 'Askus Financial Services does not currently collect payments through this website. Lender fees and taxes, if any, are set by the lender and must be confirmed in its official terms.'
   },
   {
     category: 'loans',

@@ -1,6 +1,6 @@
 import { STAFF_KEYS, authFetch, authFileUrl } from './session';
 
-/** Askus Loans data for staff, read from and written to the central AskUs API (PostgreSQL). */
+/** Askus Financial Services data for staff, read from and written to the central AskUs API (PostgreSQL). */
 
 /** The loans console needs the real backend; without it the app runs on mock data. */
 export const LOANS_LIVE = Boolean(process.env.NEXT_PUBLIC_API_BASE_URL);

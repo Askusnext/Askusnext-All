@@ -4,6 +4,7 @@ import './globals.css'
 import { Providers } from './providers'
 
 export const metadata: Metadata = {
+  publisher: 'Askus Next Global Solutions Private Limited',
   title: 'Askus Insurance | Compare Insurance Plans',
   description: 'Askus Insurance: explore insurance, compare plans and plan your financial future.',
 }

@@ -58,7 +58,7 @@ export default function BoardPage() {
       <div style={{ display:'flex', justifyContent:'space-between', marginBottom:16, flexWrap:'wrap', gap:8 }}>
         <div>
           <h2 style={{ margin:0 }}>Ticket board</h2>
-          <p style={{ margin:0, color:'#888', fontSize:13 }}>{data?.total ?? 0} tickets · drag a card to another column to change its status</p>
+          <p style={{ margin:0, color:'#475569', fontSize:13 }}>{data?.total ?? 0} tickets · drag a card to another column to change its status</p>
         </div>
         <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
           <Select placeholder="All categories" allowClear style={{ width:160 }} value={category || undefined}
@@ -66,7 +66,7 @@ export default function BoardPage() {
           <Select placeholder="All agents" allowClear style={{ width:160 }} onChange={(v) => setAgentFilter(v ?? '')}
             options={agents.map(a => ({ value:a, label:a }))} />
           <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/tickets/new')}
-            style={{ background:'#C8102E', borderColor:'#C8102E' }}>New ticket</Button>
+            style={{ background:'#e8efff', borderColor:'#1e40af' }}>New ticket</Button>
         </div>
       </div>
 
@@ -95,9 +95,9 @@ export default function BoardPage() {
                         onDragEnd={() => { setDragging(null); setOverCol(null); }}
                         style={{ borderRadius:8, cursor:'grab', border:'1px solid #f0f0f0', opacity: dragging === t.id ? 0.4 : 1 }}
                         styles={{ body:{ padding:'10px 12px' } }} onClick={() => navigate(`/tickets/${t.id}`)}>
-                        <div style={{ fontSize:10, color:'#bbb', marginBottom:2 }}>{t.ticketNumber} · {t.ticketType}</div>
+                        <div style={{ fontSize:10, color:'#475569', marginBottom:2 }}>{t.ticketNumber} · {t.ticketType}</div>
                         <div style={{ fontWeight:500, fontSize:12, marginBottom:4, lineHeight:1.4 }}>{t.title}</div>
-                        <div style={{ fontSize:11, color:'#888', marginBottom:5 }}>{t.vehicleRegNo} · {t.customerName}</div>
+                        <div style={{ fontSize:11, color:'#475569', marginBottom:5 }}>{t.vehicleRegNo} · {t.customerName}</div>
                         {days <= 30 && (
                           <div style={{ fontSize:10, color: days < 0 ? '#cf1322' : '#d46b08', marginBottom:5 }}>
                             {days < 0 ? `Expired ${Math.abs(days)}d ago` : `Expiry in ${days}d`}
@@ -105,13 +105,13 @@ export default function BoardPage() {
                         )}
                         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                           <PriorityTag priority={t.priority} />
-                          <span style={{ fontSize:10, color:'#bbb' }}>{t.assignedToName}</span>
+                          <span style={{ fontSize:10, color:'#475569' }}>{t.assignedToName}</span>
                         </div>
                       </Card>
                     );
                   })}
                   <Button type="dashed" size="small" block icon={<PlusOutlined />}
-                    onClick={() => navigate('/tickets/new')} style={{ fontSize:11, color:'#888' }}>
+                    onClick={() => navigate('/tickets/new')} style={{ fontSize:11, color:'#475569' }}>
                     Add ticket
                   </Button>
                 </div>

@@ -51,7 +51,7 @@ export const EmiCalculatorPage: React.FC = () => {
           <div className="p-6 rounded-2xl bg-white border border-slate-200 space-y-2">
             <h3 className="font-bold text-slate-900 text-sm">Zero Upfront Surprise</h3>
             <p className="leading-relaxed">
-              Always review the one-time processing fee and GST quoted by the lending bank before signing the sanction agreement. Askus Fin charges zero upfront advisory fees.
+              Always review the one-time processing fee and GST quoted by the lending bank before signing the sanction agreement. Askus Financial Services charges zero upfront advisory fees.
             </p>
           </div>
         </div>

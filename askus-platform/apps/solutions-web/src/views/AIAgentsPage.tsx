@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import SiteChrome from '../components/SiteChrome';
-import aiImg from '../assets/solution-ai-agents.jpeg';
+import SolutionVisual from '../components/SolutionVisual';
 
 const features = [
 	{ title: '24/7 availability', text: 'Always-on agents that answer instantly, day or night.' },
@@ -11,11 +11,11 @@ const features = [
 
 export default function AIAgentsPage() {
 	return (
-		<SiteChrome>
+		<SiteChrome animated>
 			<section className="sc-section">
 				<h2 className="sc-title">AskUs AI Agents</h2>
 				<div className="sc-detail">
-					<img className="sc-detail-img" src={aiImg} alt="AskUs AI Agents" />
+					<SolutionVisual className="sc-detail-visual" kind="ai" />
 					<p className="sc-detail-lead">
 						AskUs AI Agents are intelligent virtual assistants that handle customer conversations end to end — answering
 						questions, resolving requests, and taking action across your systems. They combine the speed of automation

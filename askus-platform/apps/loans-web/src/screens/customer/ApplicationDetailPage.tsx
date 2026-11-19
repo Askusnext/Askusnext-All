@@ -178,7 +178,7 @@ export const ApplicationDetailPage: React.FC = () => {
             {application.status === 'approved' ? (
               <p className="mt-1">Approval is not disbursement. Once the lender disburses the loan, follow the final interest rate, repayment dates, and schedule in your lender’s loan agreement.</p>
             ) : (
-              <p className="mt-1">Repayments are due under your lender’s final loan agreement. Pay through the lender’s official app, website, bank mandate, or other channel the lender provides. Askus Fin does not collect loan repayments here.</p>
+              <p className="mt-1">Repayments are due under your lender’s final loan agreement. Pay through the lender’s official app, website, bank mandate, or other channel the lender provides. Askus Financial Services does not collect loan repayments here.</p>
             )}
             <p className="mt-2 text-xs">The interest and EMI shown during application are estimates. The lender’s signed sanction and repayment schedule control the actual amount due.</p>
           </section>

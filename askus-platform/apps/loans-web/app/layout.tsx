@@ -4,7 +4,8 @@ import '../src/index.css'
 import '../src/App.css'
 
 export const metadata: Metadata = {
-  title: "Askus Fin — India's Premier Credit & Personal Loan Hub",
+  publisher: 'Askus Next Global Solutions Private Limited',
+  title: "Askus Financial Services — India's Premier Credit & Personal Loan Hub",
   description:
     'Compare personal loans across leading Indian banks and NBFCs, explore company-wise documentation requirements, calculate reducing-balance EMIs, and submit applications.',
   icons: { icon: '/favicon.svg' },

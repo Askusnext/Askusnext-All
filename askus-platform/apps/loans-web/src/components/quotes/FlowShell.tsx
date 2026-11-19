@@ -65,7 +65,7 @@ export const FlowShell: React.FC<FlowShellProps> = ({ title, lender, summary, on
           </div>
         </div>
         <div className="flex-1 px-8 pb-5 pt-6">
-          <p className="text-[12px] uppercase tracking-wide text-[#6A6D71]">Why apply with Askus Fin</p>
+          <p className="text-[12px] uppercase tracking-wide text-[#6A6D71]">Why apply with Askus Financial Services</p>
           <ul className="mt-3 space-y-3">
             {REASONS.map((r) => (
               <li key={r.text} className="flex items-center gap-3 text-[14px] text-[#1C1D1F]">

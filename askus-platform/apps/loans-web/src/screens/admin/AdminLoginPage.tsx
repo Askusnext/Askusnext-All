@@ -55,7 +55,7 @@ export const AdminLoginPage: React.FC = () => {
     <main className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
       <form onSubmit={handleSubmit} className="w-full max-w-md rounded-3xl border border-slate-800 bg-slate-900 p-8 space-y-5">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-blue-400">Askus Fin</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-blue-400">Askus Financial Services</p>
           <h1 className="mt-2 text-2xl font-extrabold">Administrator sign-in</h1>
           <p className="mt-2 text-sm text-slate-400">
             Enter your staff email. We send a one-time code. Only accounts with loans admin access can open this console.

@@ -29,7 +29,7 @@ export const PERMISSION_OPTIONS = [
   { value: 'kb', label: 'Knowledge base (edit)' },
   { value: 'users', label: 'View staff list' },
   { value: 'reports', label: 'Dashboard & reports' },
-  { value: 'loans', label: 'Askus Loans (view and work on applications)' },
+  { value: 'loans', label: 'Askus Financial Services (view and work on applications)' },
   { value: 'insurance', label: 'Insurance requests (view and work on them)' },
 ] as const;
 export type Permission = (typeof PERMISSION_OPTIONS)[number]['value'];

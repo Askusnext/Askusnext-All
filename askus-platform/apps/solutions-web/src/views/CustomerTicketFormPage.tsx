@@ -6,8 +6,8 @@ import customerApi from '../api/customerApi';
 
 const ticketTypes = [
 	{ value: 'O2Taxi', label: '02 Taxi' },
-	{ value: 'Insurance', label: 'Alphaa Insurance' },
-	{ value: 'Support', label: 'Alphaa Loans / General Support' },
+	{ value: 'Insurance', label: 'Askus Insurance' },
+	{ value: 'Support', label: 'Askus Financial Services / General Support' },
 ];
 
 const priorities = ['Low', 'Medium', 'High'];
@@ -95,13 +95,13 @@ const styles: Record<string, React.CSSProperties> = {
 		margin: '0 0 20px',
 		fontSize: '1.5rem',
 		fontWeight: 800,
-		color: '#0F2747',
+		color: '#172b4d',
 	},
 	card: {
 		background: '#FFF',
 		borderRadius: 14,
 		padding: '28px 28px',
-		border: '1px solid #E7ECF3',
+		border: '1px solid #dbe5f4',
 		maxWidth: 560,
 	},
 	label: {
@@ -110,7 +110,7 @@ const styles: Record<string, React.CSSProperties> = {
 		marginBottom: 8,
 		fontSize: '.82rem',
 		fontWeight: 700,
-		color: '#0F2747',
+		color: '#172b4d',
 	},
 	pillRow: {
 		display: 'flex',
@@ -120,23 +120,23 @@ const styles: Record<string, React.CSSProperties> = {
 	pill: {
 		padding: '8px 16px',
 		borderRadius: 999,
-		border: '1px solid #E7ECF3',
-		background: '#F4F7FB',
-		color: '#5b6b83',
+		border: '1px solid #dbe5f4',
+		background: '#ffffff',
+		color: '#334155',
 		fontWeight: 700,
 		fontSize: '.82rem',
 		cursor: 'pointer',
 	},
 	pillActive: {
-		background: '#0F2747',
-		borderColor: '#0F2747',
-		color: '#FFF',
+		background: '#eff6ff',
+		borderColor: '#bfdbfe',
+		color: '#1e40af',
 	},
 	input: {
 		width: '100%',
 		padding: '11px 14px',
 		borderRadius: 8,
-		border: '1px solid #E7ECF3',
+		border: '1px solid #dbe5f4',
 		fontSize: '.95rem',
 		boxSizing: 'border-box',
 	},
@@ -144,7 +144,7 @@ const styles: Record<string, React.CSSProperties> = {
 		width: '100%',
 		padding: '12px 14px',
 		borderRadius: 8,
-		border: '1px solid #E7ECF3',
+		border: '1px solid #dbe5f4',
 		fontSize: '.9rem',
 		boxSizing: 'border-box',
 		fontFamily: 'inherit',
@@ -155,8 +155,8 @@ const styles: Record<string, React.CSSProperties> = {
 		padding: '13px 26px',
 		borderRadius: 8,
 		border: 0,
-		background: '#C8102E',
-		color: '#FFF',
+		background: '#e8efff',
+		color: '#1e40af',
 		fontWeight: 700,
 		fontSize: '.95rem',
 		cursor: 'pointer',

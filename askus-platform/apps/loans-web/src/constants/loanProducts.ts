@@ -50,7 +50,7 @@ const commonSteps = (product: string) => [
 const commonFaqs = (product: string): LoanFaq[] => [
   {
     q: `Who decides ${product} approval and the interest rate?`,
-    a: 'The lender. Askus Fin does not lend money and cannot guarantee approval, a rate or a loan amount.',
+    a: 'The lender. Askus Financial Services does not lend money and cannot guarantee approval, a rate or a loan amount.',
   },
   {
     q: 'Does using the calculator or readiness check affect my credit score?',

@@ -16,7 +16,7 @@ export default function CountersPanel() {
   if (failed) return null; // e.g. no "reports" permission: the other cards still show
   const rows = (data?.categories ?? []).filter((c) => c.queue || c.open || c.expiring || c.expired || ['insurance', 'taxi', 'general', 'daily_activity', 'support'].includes(c.category));
 
-  const num = (v: number, color?: string) => <Typography.Text strong={v > 0} style={{ color: v > 0 ? color : '#bbb' }}>{v}</Typography.Text>;
+  const num = (v: number, color?: string) => <Typography.Text strong={v > 0} style={{ color: v > 0 ? color : '#475569' }}>{v}</Typography.Text>;
   return (
     <Card size="small" loading={!data} style={{ borderRadius: 10, marginBottom: 20 }}
       title="Live counters by category" extra={data && <Tag>as of {data.asOf}</Tag>}>

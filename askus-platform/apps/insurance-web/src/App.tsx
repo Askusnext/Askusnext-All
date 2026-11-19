@@ -589,7 +589,7 @@ export default function App() {
                   unknown callers. Verify an insurer or intermediary through official channels.
                 </p>
                 <div className="footer-bottom">
-                  <span>2026 · Askus Insurance</span
+                  <span>{new Date().getFullYear()} · Askus Next Global Solutions Private Limited</span
                   ><a href="#contact">Contact & Help <Ic n="arrow-right" /></a>
                 </div>
               </div>

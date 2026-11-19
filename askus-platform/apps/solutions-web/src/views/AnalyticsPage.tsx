@@ -37,7 +37,7 @@ export default function AnalyticsPage() {
       <div style={{ display:'flex', justifyContent:'space-between', marginBottom:20 }}>
         <div>
           <h2 style={{ margin:0 }}>Analytics</h2>
-          <p style={{ margin:0, color:'#888', fontSize:13 }}>{monthLabel} · All agents</p>
+          <p style={{ margin:0, color:'#475569', fontSize:13 }}>{monthLabel} · All agents</p>
         </div>
         <Select value={months} onChange={setMonths} style={{ width:150 }}
           options={[{ value: 3, label: 'Last 3 months' }, { value: 6, label: 'Last 6 months' }, { value: 12, label: 'Last 12 months' }]} />
@@ -53,7 +53,7 @@ export default function AnalyticsPage() {
           <Col span={6} key={k.label}>
             <div style={{ background:'#f5f5f5', borderRadius:10, padding:'14px 18px', textAlign:'center' }}>
               <div style={{ fontSize:26, fontWeight:700, color: k.color }}>{k.value}</div>
-              <div style={{ fontSize:11, color:'#888', marginTop:3 }}>{k.label}</div>
+              <div style={{ fontSize:11, color:'#475569', marginTop:3 }}>{k.label}</div>
             </div>
           </Col>
         ))}
@@ -77,12 +77,12 @@ export default function AnalyticsPage() {
               <>
                 <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:10 }}>
                   <span style={{ fontSize:32, fontWeight:700 }}>{avgHours !== null && avgHours !== undefined && avgHours >= 48 ? `${(avgHours / 24).toFixed(1)} d` : `${avgHours ?? 0} h`}</span>
-                  <span style={{ fontSize:13, color:'#888' }}>average, {resolved} resolved</span>
+                  <span style={{ fontSize:13, color:'#475569' }}>average, {resolved} resolved</span>
                 </div>
                 {(volume?.resolution.byCategory ?? []).map(c => (
                   <div key={c.category} style={{ display:'flex', justifyContent:'space-between', padding:'6px 0', borderBottom:'1px solid #f5f5f5', fontSize:12 }}>
                     <span>{CATEGORY_LABEL[c.category] ?? c.category}</span>
-                    <span style={{ color:'#888' }}>{c.avgHours >= 48 ? `${(c.avgHours / 24).toFixed(1)} d` : `${c.avgHours} h`} · {c.resolvedCount} resolved</span>
+                    <span style={{ color:'#475569' }}>{c.avgHours >= 48 ? `${(c.avgHours / 24).toFixed(1)} d` : `${c.avgHours} h`} · {c.resolvedCount} resolved</span>
                   </div>
                 ))}
               </>
@@ -100,13 +100,13 @@ export default function AnalyticsPage() {
               <div style={{ display:'flex', alignItems:'flex-end', gap:12, height:110, paddingTop:8 }}>
                 {monthly.map((m, i) => (
                   <div key={m.month} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
-                    <span style={{ fontSize:11, color:'#888', fontWeight:500 }}>{m.tickets}</span>
+                    <span style={{ fontSize:11, color:'#475569', fontWeight:500 }}>{m.tickets}</span>
                     <div style={{
                       width:'100%', borderRadius:'4px 4px 0 0', minHeight:8,
-                      background: i === (monthly?.length ?? 0)-1 ? '#C8102E' : '#B5D4F4',
+                      background: i === (monthly?.length ?? 0)-1 ? '#1e40af' : '#B5D4F4',
                       height:`${Math.round((m.tickets/maxT)*80)}px`, transition:'height .4s',
                     }} />
-                    <span style={{ fontSize:12, color: i === (monthly?.length ?? 0)-1 ? '#C8102E' : '#888', fontWeight: i === (monthly?.length ?? 0)-1 ? 600 : 400 }}>{m.month}</span>
+                    <span style={{ fontSize:12, color: i === (monthly?.length ?? 0)-1 ? '#1e40af' : '#475569', fontWeight: i === (monthly?.length ?? 0)-1 ? 600 : 400 }}>{m.month}</span>
                   </div>
                 ))}
               </div>
@@ -122,11 +122,11 @@ export default function AnalyticsPage() {
                 {[
                   { label:'Expired',    count: expiredCount,                             color:'#cf1322', sub:'Immediate action' },
                   { label:'1–30 days',  count: kpis?.expiringIn30Days ?? 0,             color:'#d46b08', sub:'Follow up now' },
-                  { label:'Active',     count: totalTickets - expiredCount - (kpis?.expiringIn30Days ?? 0), color:'#52c41a', sub:'Active' },
+                  { label:'Active',     count: totalTickets - expiredCount - (kpis?.expiringIn30Days ?? 0), color:'#166534', sub:'Active' },
                 ].map(e => (
                   <div key={e.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'8px 0', borderBottom:'1px solid #f5f5f5' }}>
                     <span style={{ fontSize:12, fontWeight:500, color:e.color }}>{e.label}</span>
-                    <span style={{ fontSize:11, color:'#888' }}>{e.sub}</span>
+                    <span style={{ fontSize:11, color:'#475569' }}>{e.sub}</span>
                     <span style={{ fontSize:14, fontWeight:700, color:e.color }}>{e.count}</span>
                   </div>
                 ))}
@@ -140,10 +140,10 @@ export default function AnalyticsPage() {
         <Col span={12}>
           <Card title="Payment collection" style={{ borderRadius:10 }}>
             <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:10 }}>
-              <span style={{ fontSize:32, fontWeight:700, color:'#52c41a' }}>₹{premiumL}L</span>
-              <span style={{ fontSize:13, color:'#888' }}>collected</span>
+              <span style={{ fontSize:32, fontWeight:700, color:'#166534' }}>₹{premiumL}L</span>
+              <span style={{ fontSize:13, color:'#475569' }}>collected</span>
             </div>
-            <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#888', marginBottom:14 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', fontSize:11, color:'#475569', marginBottom:14 }}>
               <span>Collected: ₹{premiumL}L</span><span>Pending: ₹{pendingL}L</span>
             </div>
             {parseFloat(premiumL) === 0 && parseFloat(pendingL) === 0 && (

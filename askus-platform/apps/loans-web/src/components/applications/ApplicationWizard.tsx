@@ -781,7 +781,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
                   <div className="mt-3 flex items-start gap-2 text-xs text-amber-800 bg-amber-100/70 p-3 rounded-xl border border-amber-300">
                     <AlertTriangle size={16} className="text-amber-600 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-bold">Cash Salary Notice:</span> Acceptance and documentation vary by lender and product. Confirm requirements with the lender. Askus Fin cannot guarantee approval.
+                      <span className="font-bold">Cash Salary Notice:</span> Acceptance and documentation vary by lender and product. Confirm requirements with the lender. Askus Financial Services cannot guarantee approval.
                     </div>
                   </div>
                 )}
@@ -1185,7 +1185,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
               <div>
                 <h3 className="text-xl font-bold text-slate-900">Step 5: Review & Submit Application</h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Verify your details before submitting to Askus Fin credit advisory network.
+                  Verify your details before submitting to Askus Financial Services credit advisory network.
                 </p>
               </div>
 
@@ -1285,7 +1285,7 @@ export const ApplicationWizard: React.FC<ApplicationWizardProps> = ({
                     className="mt-1 h-4 w-4 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                   <label htmlFor="consent-check" className="text-xs text-slate-600 leading-relaxed cursor-pointer">
-                    <strong className="text-slate-900">Declaration & Consent:</strong> I confirm that the information provided is accurate and consent to its storage in Askus Fin to manage this application. This form does not request a credit bureau report or automatically send my information to a lender. Any lender sharing or credit check requires separate explanation and consent. Loan decisions are made by the lender.
+                    <strong className="text-slate-900">Declaration & Consent:</strong> I confirm that the information provided is accurate and consent to its storage in Askus Financial Services to manage this application. This form does not request a credit bureau report or automatically send my information to a lender. Any lender sharing or credit check requires separate explanation and consent. Loan decisions are made by the lender.
                   </label>
                 </div>
               </div>

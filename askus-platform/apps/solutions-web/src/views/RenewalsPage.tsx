@@ -34,7 +34,7 @@ export default function RenewalsPage() {
 
   const columns: ColumnsType<RenewalRow> = [
     { title: 'Reg. no.', dataIndex: 'vehicleRegNo', render: (v: string | null) => <strong>{v ?? '—'}</strong> },
-    { title: 'Customer', render: (_, r) => <div>{r.customerName}<div style={{ fontSize: 11, color: '#888' }}>{r.customerMobile}</div></div> },
+    { title: 'Customer', render: (_, r) => <div>{r.customerName}<div style={{ fontSize: 11, color: '#475569' }}>{r.customerMobile}</div></div> },
     { title: 'Insurer', dataIndex: 'insurer' },
     { title: 'Expiry', dataIndex: 'expiryDate', render: (d: string, r) => (
       <Space direction="vertical" size={0}>
@@ -59,7 +59,7 @@ export default function RenewalsPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
         <div>
           <h2 style={{ margin: 0 }}>Renewals</h2>
-          <p style={{ margin: 0, color: '#888', fontSize: 13 }}>Insurance policies about to expire, and ones that already have</p>
+          <p style={{ margin: 0, color: '#475569', fontSize: 13 }}>Insurance policies about to expire, and ones that already have</p>
         </div>
         <Space wrap>
           <Select value={days} onChange={setDays} style={{ width: 150 }} options={[{ value: 7, label: 'Next 7 days' }, { value: 15, label: 'Next 15 days' }, { value: 30, label: 'Next 30 days' }, { value: 60, label: 'Next 60 days' }, { value: 90, label: 'Next 90 days' }]} />

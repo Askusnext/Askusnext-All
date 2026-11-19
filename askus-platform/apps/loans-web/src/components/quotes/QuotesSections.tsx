@@ -7,12 +7,12 @@ import { QuotesModal } from './QuotesModal'
 import type { OngoingItem, PricedLender } from '../../utils/quotes'
 
 export const QuotesHeaderLogo: React.FC = () => (
-  <Link to="/" className="flex items-center gap-2" aria-label="Askus Fin home">
-    <span className="flex h-[32px] w-[32px] items-center justify-center rounded-lg bg-gradient-to-tr from-[#0052cc] to-[#0066ff] text-white md:h-[36px] md:w-[36px]">
+  <Link to="/" className="flex items-center gap-2" aria-label="Askus Financial Services home">
+    <span className="flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-lg bg-gradient-to-tr from-[#0052cc] to-[#0066ff] text-white md:h-[36px] md:w-[36px]">
       <Zap className="h-[18px] w-[18px] fill-current" />
     </span>
     <span className="font-poppins text-[20px] font-bold leading-none tracking-tight text-[#052F5F] md:text-[22px]">
-      Askus <span className="text-[#0066FF]">Fin</span>
+      Askus <span className="block text-[11px] leading-4 text-[#0066FF]">Financial Services</span>
     </span>
   </Link>
 )
@@ -173,10 +173,10 @@ export const WhySection: React.FC<{ title: string }> = ({ title }) => {
   ]
   return (
     <div className="flex flex-col gap-4 min-[321px]:max-md:px-[16px] max-[320px]:px-[8px]">
-      <section aria-label="Why Askus Fin?" className="flex w-full flex-col gap-4 rounded-[16px] border border-[#EAEAEA] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.06)] md:gap-5 md:p-5">
+      <section aria-label="Why Askus Financial Services?" className="flex w-full flex-col gap-4 rounded-[16px] border border-[#EAEAEA] bg-white p-4 shadow-[0_1px_2px_rgba(0,0,0,0.06)] md:gap-5 md:p-5">
         <div className="flex w-full flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-6">
           <div className="flex min-w-0 flex-col items-start gap-1">
-            <p className="font-poppins text-[10px] font-medium uppercase leading-[16px] text-[#45484D] md:text-[16px] md:leading-[24px]">Why Askus Fin?</p>
+            <p className="font-poppins text-[10px] font-medium uppercase leading-[16px] text-[#45484D] md:text-[16px] md:leading-[24px]">Why Askus Financial Services?</p>
             <h2 className="font-poppins text-[14px] font-semibold leading-[22px] text-[#1C1D1F] md:text-[18px] md:leading-[28px]">{title}</h2>
             <button
               type="button"
@@ -201,7 +201,7 @@ export const WhySection: React.FC<{ title: string }> = ({ title }) => {
         </div>
         {more && (
           <p className="hidden rounded-lg bg-[#F7F8FA] p-3 font-poppins text-[12px] leading-[18px] text-[#45484D] md:block">
-            Askus Fin helps you compare information and plan before you apply. Lenders alone decide eligibility, rates, fees and approval, and the offers on this page are sample data.
+            Askus Financial Services helps you compare information and plan before you apply. Lenders alone decide eligibility, rates, fees and approval, and the offers on this page are sample data.
           </p>
         )}
         <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
@@ -346,8 +346,8 @@ export const Disclosures: React.FC = () => {
         </button>
         {open && (
           <div className="space-y-2 border-t border-[#e4e4e3] bg-white px-4 py-4 font-poppins text-[12px] leading-[18px] text-[#45484D] md:px-5">
-            <p>Lender rates, limits and offers on this page are sample data for demonstration; no lender has offered or approved anything shown here. Lender names and logos belong to their owners. Your name, income and in-progress applications come from your Askus Fin account, and approval chances are estimated from the income in your profile.</p>
-            <p>Askus Fin does not lend money. Interest rates, fees, limits, eligibility and approval are determined by each lender, and an application is not a guarantee of a loan.</p>
+            <p>Lender rates, limits and offers on this page are sample data for demonstration; no lender has offered or approved anything shown here. Lender names and logos belong to their owners. Your name, income and in-progress applications come from your Askus Financial Services account, and approval chances are estimated from the income in your profile.</p>
+            <p>Askus Financial Services does not lend money. Interest rates, fees, limits, eligibility and approval are determined by each lender, and an application is not a guarantee of a loan.</p>
             <p>Calculated EMIs use the reducing-balance method on the amount, tenure and rate shown.</p>
           </div>
         )}

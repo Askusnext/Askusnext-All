@@ -166,7 +166,7 @@ export const LoanProductPage: React.FC = () => {
         </section>
 
         <p className="rounded-xl bg-[#f7f8fa] p-4 text-[11px] leading-relaxed text-slate-500">
-          Askus Fin does not lend money. Rates, fees, eligibility, limits and approvals are determined by the lender. Figures on this page are planning aids using values you control.
+          Askus Financial Services does not lend money. Rates, fees, eligibility, limits and approvals are determined by the lender. Figures on this page are planning aids using values you control.
         </p>
       </div>
     </PageShell>

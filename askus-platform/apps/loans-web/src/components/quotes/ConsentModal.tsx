@@ -93,7 +93,7 @@ export const ConsentModal: React.FC<ConsentModalProps> = ({ lender, loading, err
         <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border border-[#E4E4E3] p-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#EAF2FF] text-[#0066FF]"><UserSearch size={18} /></span>
           <span className="min-w-0 flex-1 text-[13px] leading-5 text-[#1C1D1F]">
-            By ticking this box, I confirm that I have read and agree to the Askus Fin <a href="#terms" className="text-[#0066FF] hover:underline">Terms of Use</a> &amp; <a href="#privacy" className="text-[#0066FF] hover:underline">Privacy Policy</a>, and I consent to Askus Fin collecting my details and uploaded documents and sharing them with {lender.name} to process this application.
+            By ticking this box, I confirm that I have read and agree to the Askus Financial Services <a href="#terms" className="text-[#0066FF] hover:underline">Terms of Use</a> &amp; <a href="#privacy" className="text-[#0066FF] hover:underline">Privacy Policy</a>, and I consent to Askus Financial Services collecting my details and uploaded documents and sharing them with {lender.name} to process this application.
           </span>
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-[#0066FF]" aria-label="I agree to the terms and consent to share my data" />
         </label>

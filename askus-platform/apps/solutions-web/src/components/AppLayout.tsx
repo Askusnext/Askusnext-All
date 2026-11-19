@@ -1,151 +1,70 @@
-import React from 'react';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useRef, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { CloseOutlined, MenuOutlined } from '@ant-design/icons';
 import { logout, useAppDispatch, useAppSelector } from '../store';
 import { STAFF_KEYS, clearSession } from '../api/session';
 import { NAV_ITEMS, canOpen } from '../access';
 import PresenceGate from './PresenceGate';
+import Brand from './Brand';
 import { stopPresenceForLogout } from '../presence/session';
 
 export default function AppLayout() {
 	const dispatch = useAppDispatch();
 	const navigate = useNavigate();
+	const { pathname } = useLocation();
 	const user = useAppSelector((state) => state.auth.user);
 	const isAuthenticated = Boolean(localStorage.getItem('tms_token'));
-
+	const [menuOpen, setMenuOpen] = useState(false);
+	const menuButton = useRef<HTMLButtonElement>(null);
 	const visibleItems = NAV_ITEMS.filter((item) => canOpen(user, item));
 
 	const handleLogout = () => {
-		stopPresenceForLogout(); // end the browser-presence session while the token is still valid
+		stopPresenceForLogout(); // End presence while the token is still valid.
 		clearSession(STAFF_KEYS);
 		dispatch(logout());
 		navigate('/home', { replace: true });
 	};
 
-	// Unauthenticated visits to "/" resolve to the public landing page (via HomeGate)
-	// or get redirected to /login by ProtectedRoute on individual routes — either way,
-	// skip the authenticated sidebar chrome so nothing flashes in the meantime.
-	if (!isAuthenticated) {
-		return <Outlet />;
-	}
+	if (!isAuthenticated) return <Outlet />;
 
 	return (
-		<div style={styles.shell}>
-			<aside style={styles.sidebar}>
-				<div style={styles.brandBlock}>
-					<img src="/askus-wordmark.png" alt="Askus" style={{ height: 38, width: 'auto', display: 'block', marginBottom: 14 }} />
-					<div style={styles.brand}>AskusNext Global Solutions Private Limited</div>
-					<div style={styles.meta}>Insurance Management System</div>
-				</div>
-
-				<nav style={styles.nav}>
-					{visibleItems.map((item) => (
-						<NavLink
-							key={item.to}
-							to={item.to}
-							style={({ isActive }) => ({
-								...styles.navLink,
-								...(isActive ? styles.navLinkActive : {}),
-							})}
-						>
-							{item.label}
-						</NavLink>
-					))}
-				</nav>
-
-				<div style={styles.footer}>
-					<div style={styles.userName}>{user?.name ?? 'Signed in user'}</div>
-					<div style={styles.userRole}>{user?.role === 'SuperAdmin' ? 'Super Admin' : user?.role ?? 'Agent'}</div>
-					<div style={{ marginTop: 12 }}><PresenceGate role={user?.role} /></div>
-					<button type="button" style={styles.logoutButton} onClick={handleLogout}>
-						Logout
+		<div className="workspace">
+			<aside className="workspace-sidebar" onKeyDown={(event) => {
+				if (event.key === 'Escape' && menuOpen) {
+					setMenuOpen(false);
+					menuButton.current?.focus();
+				}
+			}}>
+				<div className="workspace-brand-row">
+					<Link to="/home" aria-label="Askus Next Global Solutions Private Limited home"><Brand /></Link>
+					<button ref={menuButton} className="workspace-menu" type="button" aria-expanded={menuOpen} aria-controls="workspace-navigation" aria-label={menuOpen ? 'Close workspace navigation' : 'Open workspace navigation'} onClick={() => setMenuOpen(!menuOpen)}>
+						{menuOpen ? <CloseOutlined aria-hidden /> : <MenuOutlined aria-hidden />}
 					</button>
 				</div>
+				<div id="workspace-navigation" className={`workspace-panel${menuOpen ? ' is-open' : ''}`}>
+					<p className="workspace-label">Team workspace</p>
+					<nav className="workspace-nav" aria-label="Workspace navigation">
+						{visibleItems.map((item) => (
+							<NavLink key={item.to} to={item.to} onClick={() => setMenuOpen(false)}>
+								{item.label}
+							</NavLink>
+						))}
+					</nav>
+					<div className="workspace-profile">
+						<strong>{user?.name ?? 'Signed in user'}</strong>
+						<span>{user?.role === 'SuperAdmin' ? 'Super Admin' : user?.role ?? 'Agent'}</span>
+						<div className="workspace-presence"><PresenceGate role={user?.role} /></div>
+						<button type="button" className="workspace-logout" onClick={handleLogout}>Logout</button>
+					</div>
+				</div>
 			</aside>
-
-			<main style={styles.main}>
-				<Outlet />
+			<main className="workspace-main">
+				<div className="workspace-heading">
+					<span>Workspace / <strong>{visibleItems.find((item) => pathname.startsWith(item.to))?.label ?? 'Overview'}</strong></span>
+					<Link to="/home">Visit website</Link>
+				</div>
+				<div className="workspace-content"><Outlet /></div>
 			</main>
 		</div>
 	);
 }
-
-const styles: Record<string, React.CSSProperties> = {
-	shell: {
-		display: 'grid',
-		gridTemplateColumns: '260px minmax(0, 1fr)',
-		minHeight: '100vh',
-		background: '#F4F7FB',
-	},
-	sidebar: {
-		display: 'flex',
-		flexDirection: 'column',
-		justifyContent: 'space-between',
-		padding: '28px 18px',
-		background: 'linear-gradient(180deg, #0F2747 0%, #143B69 100%)',
-		color: '#FFF',
-		boxShadow: '8px 0 24px rgba(15, 39, 71, 0.14)',
-	},
-	brandBlock: {
-		padding: '0 14px',
-	},
-	brand: {
-		fontSize: 28,
-		fontWeight: 800,
-		lineHeight: 1.15,
-	},
-	meta: {
-		marginTop: 8,
-		fontSize: 12,
-		letterSpacing: 0.6,
-		textTransform: 'uppercase',
-		color: 'rgba(255, 255, 255, 0.74)',
-	},
-	nav: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: 10,
-		marginTop: 32,
-	},
-	navLink: {
-		display: 'block',
-		padding: '12px 14px',
-		borderRadius: 12,
-		color: 'rgba(255, 255, 255, 0.86)',
-		textDecoration: 'none',
-		fontWeight: 600,
-		transition: 'background 160ms ease, color 160ms ease',
-	},
-	navLinkActive: {
-		background: 'rgba(255, 255, 255, 0.14)',
-		color: '#FFF',
-	},
-	footer: {
-		marginTop: 24,
-		padding: '20px 14px 0',
-		borderTop: '1px solid rgba(255, 255, 255, 0.14)',
-	},
-	userName: {
-		fontSize: 15,
-		fontWeight: 700,
-	},
-	userRole: {
-		marginTop: 4,
-		fontSize: 12,
-		color: 'rgba(255, 255, 255, 0.74)',
-	},
-	logoutButton: {
-		marginTop: 16,
-		width: '100%',
-		border: 0,
-		borderRadius: 12,
-		padding: '11px 14px',
-		background: '#C8102E',
-		color: '#FFF',
-		fontWeight: 700,
-		cursor: 'pointer',
-	},
-	main: {
-		minWidth: 0,
-		padding: 24,
-	},
-};

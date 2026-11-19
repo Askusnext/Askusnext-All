@@ -295,30 +295,30 @@ export default function TicketFormPage() {
     }
   };
 
-  /* ─── shared style tokens (mirrors RegisterPage) ─────────────────────── */
   const pageStyle: React.CSSProperties = {
     minHeight: '100%',
-    background: 'linear-gradient(145deg, #e8f0fe 0%, #f0e8ff 50%, #fce4ec 100%)',
-    padding: '24px 28px 40px',
+    background: '#ffffff',
+    padding: '8px 0 32px',
     fontFamily: "'Segoe UI', system-ui, sans-serif",
   };
 
   const card: React.CSSProperties = {
     background: '#fff',
     borderRadius: 14,
-    boxShadow: '0 2px 16px rgba(21,101,192,0.08)',
-    padding: '20px 24px 8px',
+    boxShadow: '0 4px 20px rgba(16,43,54,0.04)',
+    border: '1px solid #dbe5f4',
+    padding: '20px clamp(16px, 3vw, 24px) 8px',
     marginBottom: 16,
   };
 
   const cardTitle: React.CSSProperties = {
     fontSize: 13,
     fontWeight: 700,
-    color: '#1565C0',
+    color: '#1e40af',
     letterSpacing: 0.3,
     marginBottom: 16,
     paddingBottom: 10,
-    borderBottom: '1px solid #e8f0fe',
+    borderBottom: '1px solid #eff6ff',
   };
 
   const lbl: React.CSSProperties = { fontSize: 11, color: '#666', marginBottom: 4, marginTop: 2, display: 'block' };
@@ -331,9 +331,9 @@ export default function TicketFormPage() {
   const fl: React.CSSProperties = { fontSize: 11, color: '#666' };
 
   const primaryBtn: React.CSSProperties = {
-    padding: '9px 28px', color: '#fff', border: 'none',
+    padding: '9px 28px', color: '#1e40af', border: '1px solid #adc6f5',
     borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-    background: 'linear-gradient(135deg, #1565C0 0%, #1976D2 100%)',
+    background: '#e8efff',
   };
   const ghostBtn: React.CSSProperties = {
     padding: '8px 20px', color: '#555', border: '1px solid #d0d0d0',
@@ -359,10 +359,10 @@ export default function TicketFormPage() {
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <button style={ghostBtn} onClick={() => navigate(isEdit ? `/tickets/${id}` : '/tickets')}>← Back</button>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: '#1565C0', margin: 0 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: '#1e40af', margin: 0 }}>
               {isEdit ? 'Edit Ticket' : 'New Ticket'}
             </div>
-            <div style={{ fontSize: 12, color: '#888', margin: 0 }}>
+            <div style={{ fontSize: 12, color: '#475569', margin: 0 }}>
               {isEdit ? 'Update vehicle & insurance details' : 'Fill in vehicle & insurance details'}
             </div>
           </div>
@@ -409,15 +409,15 @@ export default function TicketFormPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
                 <Form.Item name="vehicleRegNo" rules={[{ required:true, message:'Required' }]}
                   style={{ marginBottom: 14 }}>
-                  <label style={lbl}>Registration No. <span style={{ color:'#f5222d' }}>*</span></label>
+                  <label style={lbl}>Registration No. <span style={{ color:'#b91c1c' }}>*</span></label>
                   <Input placeholder="TN40AE6775" style={{ ...inp }} />
                 </Form.Item>
                 <Form.Item name="make" rules={[{ required:true, message:'Required' }]} style={{ marginBottom: 14 }}>
-                  <label style={lbl}>Make <span style={{ color:'#f5222d' }}>*</span></label>
+                  <label style={lbl}>Make <span style={{ color:'#b91c1c' }}>*</span></label>
                   <Input placeholder="Mahindra" style={inp} />
                 </Form.Item>
                 <Form.Item name="model" rules={[{ required:true, message:'Required' }]} style={{ marginBottom: 14 }}>
-                  <label style={lbl}>Model <span style={{ color:'#f5222d' }}>*</span></label>
+                  <label style={lbl}>Model <span style={{ color:'#b91c1c' }}>*</span></label>
                   <Input placeholder="XUV3XO MX2 PRO" style={inp} />
                 </Form.Item>
                 <Form.Item name="year" style={{ marginBottom: 14 }}>
@@ -445,14 +445,14 @@ export default function TicketFormPage() {
                 </Form.Item>
               </div>
 
-              <div style={{ borderTop: '1px solid #e8f0fe', marginTop: 4, paddingTop: 14,
+              <div style={{ borderTop: '1px solid #eff6ff', marginTop: 4, paddingTop: 14,
                 display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
                 <Form.Item name="ownerName" rules={[{ required:true, message:'Required' }]} style={{ marginBottom: 14 }}>
-                  <label style={lbl}>Owner Name <span style={{ color:'#f5222d' }}>*</span></label>
+                  <label style={lbl}>Owner Name <span style={{ color:'#b91c1c' }}>*</span></label>
                   <Input placeholder="Full name" style={inp} />
                 </Form.Item>
                 <Form.Item name="mobile" rules={[{ required:true, message:'Required' }]} style={{ marginBottom: 14 }}>
-                  <label style={lbl}>Mobile <span style={{ color:'#f5222d' }}>*</span></label>
+                  <label style={lbl}>Mobile <span style={{ color:'#b91c1c' }}>*</span></label>
                   <Input placeholder="+91 98xxxxxxxx" style={inp} />
                 </Form.Item>
                 <Form.Item name="address" style={{ marginBottom: 14, gridColumn: '1 / -1' }}>
@@ -465,7 +465,7 @@ export default function TicketFormPage() {
             <div style={card}>
               <div style={cardTitle}>Ticket Category</div>
               <Form.Item name="ticketType" rules={[{ required:true, message:'Required' }]} style={{ marginBottom: 14 }}>
-                <label style={lbl}>Ticket Type <span style={{ color:'#f5222d' }}>*</span></label>
+                <label style={lbl}>Ticket Type <span style={{ color:'#b91c1c' }}>*</span></label>
                 <Select placeholder="Select ticket type" style={fw} onChange={(v: TicketType) => setTicketType(v)}>
                   <Select.Option value="Insurance">Insurance</Select.Option>
                   <Select.Option value="O2Taxi">O2 Taxi Query</Select.Option>
@@ -492,8 +492,8 @@ export default function TicketFormPage() {
                       padding: '18px 16px', textAlign: 'center', cursor: 'pointer',
                       background: '#f4f8ff',
                     }}>
-                      <UploadOutlined style={{ fontSize: 22, color: '#1565C0', marginBottom: 6 }} />
-                      <div style={{ fontSize: 12, color: '#1565C0', fontWeight: 500 }}>Upload {label}</div>
+                      <UploadOutlined style={{ fontSize: 22, color: '#1e40af', marginBottom: 6 }} />
+                      <div style={{ fontSize: 12, color: '#1e40af', fontWeight: 500 }}>Upload {label}</div>
                       <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>PDF · JPG · PNG · max 10 MB</div>
                     </div>
                   </Upload>
@@ -548,14 +548,14 @@ export default function TicketFormPage() {
 
             {/* Helper hint */}
             <div style={{
-              background: 'linear-gradient(135deg,#e8f0fe 0%,#f0e8ff 100%)',
+              background: '#eff6ff',
               borderRadius: 12, padding: '14px 16px',
               fontSize: 11, color: '#555', lineHeight: 1.8,
               border: '1px solid #d0e2ff',
             }}>
-              <div style={{ fontWeight: 700, color: '#1565C0', marginBottom: 4 }}>Required fields</div>
+              <div style={{ fontWeight: 700, color: '#1e40af', marginBottom: 4 }}>Required fields</div>
               Registration no., owner name, mobile, ticket type and category-specific required fields.
-              <div style={{ marginTop: 8, color: '#888' }}>
+              <div style={{ marginTop: 8, color: '#475569' }}>
                 Documents are optional and can be uploaded anytime after ticket creation.
               </div>
             </div>

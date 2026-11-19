@@ -75,7 +75,7 @@ export const ExploreTopicPage: React.FC = () => {
             ))}
           </div>
         </section>
-        <p className="text-[11px] text-slate-400">Askus Fin does not provide investment, tax or credit advice.</p>
+        <p className="text-[11px] text-slate-400">Askus Financial Services does not provide investment, tax or credit advice.</p>
       </div>
     </PageShell>
   )

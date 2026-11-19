@@ -7,8 +7,8 @@ import customerApi, { type KBArticle } from '../api/customerApi';
 const categories = [
 	{ value: '', label: 'All' },
 	{ value: 'O2Taxi', label: '02 Taxi' },
-	{ value: 'AlphaaInsurance', label: 'Alphaa Insurance' },
-	{ value: 'AlphaaLoans', label: 'Alphaa Loans' },
+	{ value: 'AlphaaInsurance', label: 'Askus Insurance' },
+	{ value: 'AlphaaLoans', label: 'Askus Financial Services' },
 	{ value: 'General', label: 'General' },
 ];
 
@@ -29,7 +29,7 @@ export default function HelpCenterPage() {
 		<PublicLayout>
 			<section style={styles.banner}>
 				<h1 style={styles.bannerTitle}>Help Center</h1>
-				<p style={styles.bannerSubtitle}>Answers for 02 Taxi, Alphaa Insurance, and Alphaa Loans customers.</p>
+				<p style={styles.bannerSubtitle}>Answers for 02 Taxi, Askus Insurance, and Askus Financial Services customers.</p>
 				<input
 					value={search}
 					onChange={(e) => setSearch(e.target.value)}
@@ -73,8 +73,8 @@ export default function HelpCenterPage() {
 
 const styles: Record<string, React.CSSProperties> = {
 	banner: {
-		background: 'linear-gradient(135deg, #0F2747 0%, #143B69 100%)',
-		color: '#FFF',
+		background: '#eff6ff',
+		color: '#172b4d',
 		padding: '64px 24px',
 		textAlign: 'center',
 	},
@@ -85,7 +85,7 @@ const styles: Record<string, React.CSSProperties> = {
 	},
 	bannerSubtitle: {
 		marginTop: 12,
-		color: 'rgba(255,255,255,.8)',
+		color: '#334155',
 		fontSize: '1rem',
 	},
 	search: {
@@ -93,7 +93,7 @@ const styles: Record<string, React.CSSProperties> = {
 		width: 'min(480px, 100%)',
 		padding: '13px 18px',
 		borderRadius: 999,
-		border: 0,
+		border: '1px solid #dbe5f4',
 		fontSize: '.95rem',
 	},
 	section: {
@@ -110,29 +110,29 @@ const styles: Record<string, React.CSSProperties> = {
 	pill: {
 		padding: '8px 16px',
 		borderRadius: 999,
-		border: '1px solid #E7ECF3',
+		border: '1px solid #dbe5f4',
 		background: '#FFF',
-		color: '#5b6b83',
+		color: '#334155',
 		fontWeight: 700,
 		fontSize: '.82rem',
 		cursor: 'pointer',
 	},
 	pillActive: {
-		background: '#0F2747',
-		borderColor: '#0F2747',
-		color: '#FFF',
+		background: '#eff6ff',
+		borderColor: '#bfdbfe',
+		color: '#1e40af',
 	},
 	empty: {
 		background: '#FFF',
 		borderRadius: 14,
 		padding: '40px 24px',
 		textAlign: 'center',
-		color: '#5b6b83',
-		border: '1px solid #E7ECF3',
+		color: '#334155',
+		border: '1px solid #dbe5f4',
 	},
 	grid: {
 		display: 'grid',
-		gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+		gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))',
 		gap: 18,
 	},
 	card: {
@@ -141,13 +141,13 @@ const styles: Record<string, React.CSSProperties> = {
 		borderRadius: 14,
 		padding: '20px 22px',
 		textDecoration: 'none',
-		border: '1px solid #E7ECF3',
+		border: '1px solid #dbe5f4',
 		boxShadow: '0 4px 20px rgba(15,39,71,.06)',
 	},
 	cardCategory: {
 		fontSize: '.74rem',
 		fontWeight: 700,
-		color: '#C8102E',
+		color: '#1e40af',
 		letterSpacing: 0.4,
 		textTransform: 'uppercase',
 	},
@@ -155,6 +155,6 @@ const styles: Record<string, React.CSSProperties> = {
 		marginTop: 8,
 		fontSize: '1rem',
 		fontWeight: 700,
-		color: '#0F2747',
+		color: '#172b4d',
 	},
 };

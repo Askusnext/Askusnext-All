@@ -119,7 +119,7 @@ export default function LoansPage() {
   if (!LOANS_LIVE) {
     return (
       <div style={{ padding: 28 }}>
-        <Title level={3}>Askus Loans</Title>
+        <Title level={3}>Askus Financial Services</Title>
         <Alert
           type="info"
           showIcon
@@ -136,7 +136,7 @@ export default function LoansPage() {
     <div style={{ padding: 28 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <Title level={3} style={{ margin: 0 }}>Askus Loans</Title>
+          <Title level={3} style={{ margin: 0 }}>Askus Financial Services</Title>
           <Text type="secondary">Everything customers submit on the loans site, live from the database.</Text>
         </div>
         <Button icon={<ReloadOutlined />} onClick={() => void load()} loading={loading}>Refresh</Button>

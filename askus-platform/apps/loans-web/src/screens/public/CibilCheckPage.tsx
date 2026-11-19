@@ -17,7 +17,7 @@ export const CibilCheckPage: React.FC = () => (
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">Credit Score Information</h1>
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-            Askus Fin does not currently request or retrieve credit bureau reports. No PAN, date of birth, or mobile number is collected on this page.
+            Askus Financial Services does not currently request or retrieve credit bureau reports. No PAN, date of birth, or mobile number is collected on this page.
           </p>
         </div>
       </div>
@@ -26,7 +26,7 @@ export const CibilCheckPage: React.FC = () => (
       <div className="rounded-3xl bg-white border border-slate-200 p-7 sm:p-10 shadow-xl space-y-4">
         <h2 className="text-xl font-bold">Use your credit bureau’s official channel</h2>
         <p className="text-sm text-slate-600 leading-relaxed">
-          To access your report, contact the bureau directly through its official website. Askus Fin will only add a bureau integration after the provider, consent flow, security controls, and testing are in place.
+          To access your report, contact the bureau directly through its official website. Askus Financial Services will only add a bureau integration after the provider, consent flow, security controls, and testing are in place.
         </p>
       </div>
     </main>

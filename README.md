@@ -1,2 +1,2 @@
 # Askusnext-All
-All Askusnext code has pushed in this repository.
+Applications for **Askus Next Global Solutions Private Limited** are maintained in this repository.

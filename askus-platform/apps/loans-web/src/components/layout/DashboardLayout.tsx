@@ -46,13 +46,13 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
       {/* Header */}
       <header className="border-b border-[#e4e4e3] bg-white shadow-[0_2px_12px_rgba(5,47,95,0.05)]">
         <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-4 sm:px-6 md:h-[72px]">
-          <Link to="/" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0052cc] to-[#0066ff] text-white shadow-md shadow-blue-500/25">
+          <Link to="/" className="flex items-center gap-2.5" aria-label="Askus Financial Services home">
+            <span className="hidden h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0052cc] to-[#0066ff] text-white shadow-md shadow-blue-500/25 sm:flex">
               <Zap className="h-[18px] w-[18px] fill-current" />
             </span>
             <span className="leading-none">
               <span className="block text-xl font-bold tracking-tight text-[#052f5f]">
-                Askus <span className="text-[#0066ff]">Fin</span>
+                Askus <span className="block text-[11px] leading-4 text-[#0066ff]">Financial Services</span>
               </span>
               <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400">Customer Portal</span>
             </span>
@@ -117,7 +117,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children, titl
       </div>
 
       <footer className="border-t border-[#e4e4e3] bg-white py-6 text-center text-xs text-slate-500">
-        © {new Date().getFullYear()} Askus Fin. Askus Fin does not lend money; lenders decide all credit outcomes.
+        © {new Date().getFullYear()} Askus Next Global Solutions Private Limited. Askus Financial Services does not lend money; lenders decide all credit outcomes.
       </footer>
     </div>
   )

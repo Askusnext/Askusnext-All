@@ -94,7 +94,7 @@ export default function PolicyAmountChecker({
               <div
                 style={{
                   flex: 1,
-                  background: 'linear-gradient(135deg, #e8f0fe 0%, #f3e5f5 100%)',
+                  background: '#eff6ff',
                   padding: 40,
                   display: 'flex',
                   alignItems: 'center',
@@ -271,7 +271,7 @@ export default function PolicyAmountChecker({
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: 13, color: '#666', marginBottom: 4 }}>Premium</div>
-                    <div style={{ fontSize: 24, fontWeight: 800, color: '#C8102E' }}>
+                    <div style={{ fontSize: 24, fontWeight: 800, color: '#1e40af' }}>
                       ₹{policyDetails?.totalPremium.toLocaleString()}
                     </div>
                   </div>
@@ -289,25 +289,25 @@ export default function PolicyAmountChecker({
               >
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
-                    <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>Policy No.</div>
+                    <div style={{ fontSize: 12, color: '#475569', marginBottom: 6 }}>Policy No.</div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#1f1f1f' }}>
                       {policyDetails?.policyNumber}
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>Insurer</div>
+                    <div style={{ fontSize: 12, color: '#475569', marginBottom: 6 }}>Insurer</div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#1f1f1f' }}>
                       {policyDetails?.insurer}
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>Policy Type</div>
+                    <div style={{ fontSize: 12, color: '#475569', marginBottom: 6 }}>Policy Type</div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#1f1f1f' }}>
                       {policyDetails?.policyType}
                     </div>
                   </div>
                   <div>
-                    <div style={{ fontSize: 12, color: '#888', marginBottom: 6 }}>Expiry Date</div>
+                    <div style={{ fontSize: 12, color: '#475569', marginBottom: 6 }}>Expiry Date</div>
                     <div style={{ fontSize: 14, fontWeight: 600, color: '#1f1f1f' }}>
                       {policyDetails?.expiryDate}
                     </div>
@@ -325,7 +325,7 @@ export default function PolicyAmountChecker({
                   <span style={{ color: '#666' }}>GST (18%)</span>
                   <span style={{ fontWeight: 600 }}>₹{policyDetails?.gst.toLocaleString()}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 12, fontSize: 16, fontWeight: 700, color: '#C8102E' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 12, fontSize: 16, fontWeight: 700, color: '#1e40af' }}>
                   <span>Total Premium</span>
                   <span>₹{policyDetails?.totalPremium.toLocaleString()}</span>
                 </div>
@@ -345,7 +345,7 @@ export default function PolicyAmountChecker({
                   block
                   size="large"
                   type="primary"
-                  style={{ background: '#C8102E', borderRadius: 8, fontWeight: 600 }}
+                  style={{ background: '#e8efff', borderRadius: 8, fontWeight: 600 }}
                   onClick={handleClose}
                 >
                   Done

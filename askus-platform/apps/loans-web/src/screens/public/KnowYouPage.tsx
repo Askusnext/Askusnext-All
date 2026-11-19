@@ -251,7 +251,7 @@ export const KnowYouPage: React.FC = () => {
                 </Row>
               </div>
             </section>
-            <p className="mt-3 text-[11px] text-[#8F9194]">Saved to your Askus Fin profile, where you can edit it any time.</p>
+            <p className="mt-3 text-[11px] text-[#8F9194]">Saved to your Askus Financial Services profile, where you can edit it any time.</p>
           </>
         )}
 

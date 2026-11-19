@@ -92,9 +92,31 @@ export default function App() {
       <ConfigProvider
         theme={{
           token: {
-            colorPrimary: '#C8102E',
-            borderRadius: 8,
+            colorPrimary: '#1e40af',
+            colorLink: '#1e40af',
+            colorText: '#172b4d',
+            colorTextSecondary: '#334155',
+            colorTextDescription: '#334155',
+            colorTextPlaceholder: '#475569',
+            colorTextDisabled: '#475569',
+            colorTextHeading: '#1e40af',
+            colorBgLayout: '#ffffff',
+            colorBorder: '#dbe5f4',
+            colorBorderSecondary: '#dbe5f4',
+            borderRadius: 12,
+            controlHeight: 40,
             fontFamily: "'Segoe UI', Roboto, Arial, sans-serif",
+          },
+          components: {
+            Button: {
+              colorPrimary: '#e8efff',
+              colorPrimaryHover: '#dbeafe',
+              colorPrimaryActive: '#c4d9fa',
+              primaryColor: '#1e40af',
+              primaryShadow: 'none',
+            },
+            Table: { headerBg: '#ffffff', rowHoverBg: '#eff6ff' },
+            Tabs: { itemSelectedColor: '#1e40af', inkBarColor: '#1e40af' },
           },
         }}
       >

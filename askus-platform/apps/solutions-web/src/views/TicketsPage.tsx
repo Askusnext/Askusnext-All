@@ -20,12 +20,12 @@ export default function TicketsPage() {
       <div style={{ display:'flex', justifyContent:'space-between', marginBottom:16 }}>
         <div>
           <h2 style={{ margin:0 }}>Tickets</h2>
-          <p style={{ margin:0, color:'#888', fontSize:13 }}>{filteredData?.total ?? 0} tickets</p>
+          <p style={{ margin:0, color:'#475569', fontSize:13 }}>{filteredData?.total ?? 0} tickets</p>
         </div>
         <div style={{ display:'flex', gap:8 }}>
           <Button>Export CSV</Button>
           <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/tickets/new')}
-            style={{ background:'#C8102E', borderColor:'#C8102E' }}>New ticket</Button>
+            style={{ background:'#e8efff', borderColor:'#1e40af' }}>New ticket</Button>
         </div>
       </div>
 
@@ -76,7 +76,7 @@ export default function TicketsPage() {
             <thead>
               <tr style={{ background:'#fafafa', borderBottom:'1px solid #f0f0f0' }}>
                 {['Ticket','Type','Vehicle / Owner','Insurer','Expiry','Status','Priority','Actions'].map(h => (
-                  <th key={h} style={{ padding:'10px 14px', textAlign:'left', fontSize:11, fontWeight:600, color:'#888', textTransform:'uppercase', letterSpacing:'.03em' }}>{h}</th>
+                  <th key={h} style={{ padding:'10px 14px', textAlign:'left', fontSize:11, fontWeight:600, color:'#475569', textTransform:'uppercase', letterSpacing:'.03em' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -87,14 +87,14 @@ export default function TicketsPage() {
                   onMouseLeave={e => (e.currentTarget as HTMLTableRowElement).style.background=''}
                   onClick={() => navigate(`/tickets/${t.id}`)}>
                   <td style={{ padding:'10px 14px' }}>
-                    <span style={{ color:'#1677ff', fontWeight:600, fontSize:12 }}>{t.ticketNumber}</span>
+                    <span style={{ color:'#1e40af', fontWeight:600, fontSize:12 }}>{t.ticketNumber}</span>
                   </td>
                   <td style={{ padding:'10px 14px' }}>
                     {t.ticketType}
                   </td>
                   <td style={{ padding:'10px 14px' }}>
                     <div style={{ fontWeight:500, fontSize:12 }}>{t.vehicleRegNo} · {t.vehicleName}</div>
-                    <div style={{ fontSize:11, color:'#888' }}>{t.customerName}</div>
+                    <div style={{ fontSize:11, color:'#475569' }}>{t.customerName}</div>
                   </td>
                   <td style={{ padding:'10px 14px', fontSize:12 }}>{t.policy?.insurer || '—'}</td>
                   <td style={{ padding:'10px 14px' }}><ExpiryTag date={t.policy?.expiryDate} /></td>
@@ -103,7 +103,7 @@ export default function TicketsPage() {
                   <td style={{ padding:'10px 14px' }} onClick={e => e.stopPropagation()}>
                     <div style={{ display:'flex', gap:5 }}>
                       <Button size="small" onClick={() => navigate(`/tickets/${t.id}`)}>View</Button>
-                      <Button size="small" type="primary" style={{ background:'#C8102E', borderColor:'#C8102E' }}
+                      <Button size="small" type="primary" style={{ background:'#e8efff', borderColor:'#1e40af' }}
                         onClick={() => navigate(`/tickets/${t.id}`)}>Edit</Button>
                     </div>
                   </td>
@@ -113,7 +113,7 @@ export default function TicketsPage() {
           </table>
         )}
         <div style={{ padding:'12px 16px', display:'flex', justifyContent:'space-between', alignItems:'center', borderTop:'1px solid #f0f0f0' }}>
-          <span style={{ fontSize:12, color:'#888' }}>Showing {filteredData?.data.length ?? 0} of {filteredData?.total ?? 0}</span>
+          <span style={{ fontSize:12, color:'#475569' }}>Showing {filteredData?.data.length ?? 0} of {filteredData?.total ?? 0}</span>
           <div style={{ display:'flex', gap:6 }}>
             <Button size="small" disabled={filters.page <= 1} onClick={() => setFilters(f => ({ ...f, page:f.page-1 }))}>← Prev</Button>
             <Button size="small" disabled={(filters.page * filters.pageSize) >= (filteredData?.total ?? 0)}

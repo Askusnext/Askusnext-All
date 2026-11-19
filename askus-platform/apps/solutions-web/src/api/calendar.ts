@@ -5,6 +5,15 @@ import { STAFF_KEYS, authFetch } from './session';
 export type CalendarProvider = 'google' | 'microsoft';
 export const TEAM_NAMES = ['AskUs Taxi', 'Alphaa Insurance', 'Alphaa Loans', 'Organic Port', 'Software team'] as const;
 
+// Team values are persisted identifiers; rebranding only changes their UI labels.
+export function teamLabel(team: string): string {
+  switch (team) {
+    case 'Alphaa Insurance': return 'Askus Insurance';
+    case 'Alphaa Loans': return 'Askus Financial Services';
+    default: return team;
+  }
+}
+
 export interface MeetingItem {
   id: string;
   title: string;

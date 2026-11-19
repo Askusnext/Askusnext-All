@@ -97,7 +97,7 @@ export const Navbar: React.FC = () => {
         <div aria-hidden onClick={closeAll} className="fixed inset-x-0 bottom-0 top-[69px] hidden bg-black/30 lg:block" />
       )}
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="flex h-16 items-center gap-4 lg:h-[68px]">
+        <div className="flex h-16 items-center gap-2 sm:gap-4 lg:h-[68px]">
           {/* Mobile hamburger */}
           <button
             type="button"
@@ -110,13 +110,13 @@ export const Navbar: React.FC = () => {
           </button>
 
           {/* Logo */}
-          <Link to="/" className="group flex shrink-0 items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0052cc] to-[#0066ff] text-white shadow-md shadow-blue-500/25 transition-transform group-hover:scale-105">
+          <Link to="/" className="group flex shrink-0 items-center gap-2.5" aria-label="Askus Financial Services home">
+            <span className="hidden h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-[#0052cc] to-[#0066ff] text-white shadow-md shadow-blue-500/25 transition-transform group-hover:scale-105 sm:flex">
               <Zap className="h-[18px] w-[18px] fill-current" />
             </span>
             <span className="leading-none">
               <span className="block text-xl font-bold tracking-tight text-[#052f5f]">
-                Askus <span className="text-[#0066ff]">Fin</span>
+                Askus <span className="block text-[11px] leading-4 text-[#0066ff]">Financial Services</span>
               </span>
               <span className="hidden text-[9px] font-semibold uppercase tracking-[0.18em] text-slate-400 sm:block">India's Credit Hub</span>
             </span>

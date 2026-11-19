@@ -1,0 +1,222 @@
+.finance-home {
+  --finance-ink: #152947;
+  --finance-muted: #64738a;
+  --finance-blue: #285cf5;
+  --finance-line: #e4e9f2;
+  color: var(--finance-ink);
+  background: #fff;
+  font-family: 'Plus Jakarta Sans', Inter, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.finance-home h1, .finance-home h2, .finance-home h3, .finance-home p { margin: 0; }
+.finance-home a { text-decoration: none; }
+.finance-home a:focus-visible, .finance-home summary:focus-visible, .finance-home input:focus-visible { outline: 3px solid #285cf5; outline-offset: 5px; }
+.finance-container { width: min(1216px, calc(100% - 64px)); margin-inline: auto; }
+.finance-hero { position: relative; background: radial-gradient(ellipse at 90% 5%, #e3ebff 0, transparent 50%), linear-gradient(135deg, #f6f8fd, #f2f5fc 65%, #eef4ff); border-bottom: 1px solid var(--finance-line); }
+.finance-hero-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 76px; align-items: center; padding-block: 62px; }
+.finance-eyebrow { display: inline-flex; align-items: center; gap: 8px; color: #36558a; font-size: 9px; letter-spacing: 1.5px; font-weight: 700; }
+.finance-eyebrow > span { width: 6px; height: 6px; border-radius: 50%; background: var(--finance-blue); box-shadow: 0 0 0 4px #285cf510; }
+.finance-home .finance-hero-title { font-size: clamp(42px, 4.5vw, 64px); letter-spacing: -2px; line-height: 1.12; font-weight: 700; margin-block: 24px; }
+.finance-hero-title > span { color: var(--finance-blue); }
+.finance-hero-description { max-width: 460px; font-size: 15px; line-height: 1.9; color: var(--finance-muted); }
+.finance-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; }
+.finance-button { display: inline-flex; align-items: center; justify-content: center; gap: 16px; min-height: 50px; padding: 13px 22px; border-radius: 9px; font-size: 12px; font-weight: 700; transition: background .2s, transform .2s; }
+.finance-button-primary { background: var(--finance-blue); color: #fff; border: 1px solid var(--finance-blue); box-shadow: 0 6px 12px #285cf521; }
+.finance-button-primary:hover { background: #1643cb; transform: translateY(-2px); }
+.finance-button-secondary { background: #fff; color: var(--finance-ink); border: 1px solid #dce3ef; }
+.finance-button-secondary:hover { background: #e8efff; }
+.finance-hero-checks { display: flex; flex-wrap: wrap; gap: 7px 18px; margin-top: 20px; color: #52637c; font-size: 9px; }
+.finance-hero-checks > span { display: inline-flex; align-items: center; gap: 5px; }
+.finance-hero-checks svg { color: #397c68; }
+.finance-guide-link { display: flex; align-items: center; gap: 13px; max-width: 410px; margin-top: 36px; padding-top: 24px; border-top: 1px solid #dce4f0; color: var(--finance-ink); }
+.finance-guide-icon { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 11px; background: #e5edfb; color: #416394; flex-shrink: 0; }
+.finance-guide-link strong { display: block; font-size: 11px; font-weight: 600; }
+.finance-guide-link span > span { display: block; color: var(--finance-muted); font-size: 10px; margin-top: 3px; }
+.finance-guide-link > svg { margin-left: auto; flex-shrink: 0; }
+.finance-guide-link:hover strong { color: var(--finance-blue); }
+.finance-planner { scroll-margin-top: 100px; background: #fff; border: 1px solid #dee5f1; border-radius: 20px; padding: 25px; box-shadow: 0 20px 55px -25px #1d3c7240; min-width: 0; }
+.finance-planner-heading { display: flex; gap: 11px; align-items: center; margin-bottom: 18px; }
+.finance-planner-icon { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 10px; background: #eef3ff; color: var(--finance-blue); flex-shrink: 0; }
+.finance-planner-heading h2 { font-size: 14px; font-weight: 700; letter-spacing: -.3px; }
+.finance-planner-heading p { color: var(--finance-muted); font-size: 11px; margin-top: 3px; }
+.finance-planner-result { background: radial-gradient(ellipse at 100% 0%, #274973, transparent 80%), #162c4c; color: #fff; border-radius: 13px; padding: 20px; }
+.finance-result-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.finance-result-top p { font-size: 9px; color: #bac9e1; letter-spacing: 1.1px; margin-bottom: 7px; }
+.finance-result-top output { font-size: 31px; font-weight: 700; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.finance-per-month { color: #becce0; font-size: 10px; }
+.finance-estimate-badge { border: 1px solid #6385b26b; background: #ffffff08; border-radius: 20px; padding: 3px 7px; font-size: 8px; color: #c9d9ee; }
+.finance-repayment-bar { height: 5px; background: #8ab6ff; border-radius: 10px; margin-block: 17px; overflow: hidden; }
+.finance-repayment-bar > span { display: block; height: 100%; background: #6bdfc2; border-radius: inherit; }
+.finance-repayment { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 0; }
+.finance-repayment dt { font-size: 9px; color: #c1cfe3; display: flex; align-items: center; gap: 5px; }
+.finance-repayment dd { margin: 3px 0 0; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.finance-principal-dot, .finance-interest-dot { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: #6bdfc2; flex-shrink: 0; }
+.finance-interest-dot { background: #8ab6ff; }
+.finance-planner-fields { display: grid; gap: 12px; margin-top: 23px; }
+.finance-planner-fields input[type='range'] { height: 24px; background-size: 100% 6px !important; background-repeat: no-repeat !important; background-position: center !important; }
+.finance-planner-fields label { font-size: 11px; color: #4e5c73; }
+.finance-planner-fields output { font-size: 12px; padding: 3px 9px; }
+.finance-planner-footer { margin-top: 21px; padding-top: 15px; border-top: 1px solid var(--finance-line); }
+.finance-planner-footer > a { display: flex; justify-content: space-between; align-items: center; color: var(--finance-blue); font-size: 11px; font-weight: 600; padding-block: 3px; }
+.finance-planner-footer > a:hover { color: #123fc5; }
+.finance-planner-footer > p { display: flex; gap: 6px; font-size: 10px; line-height: 1.7; color: var(--finance-muted); margin-top: 9px; }
+.finance-planner-footer > p svg { flex-shrink: 0; margin-top: 2px; }
+.finance-principles { border-bottom: 1px solid var(--finance-line); background: #fff; }
+.finance-principles-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-block: 25px; gap: 32px; }
+.finance-principles-grid > div { display: flex; gap: 12px; align-items: center; }
+.finance-principles-grid > div + div { border-left: 1px solid var(--finance-line); padding-left: 30px; }
+.finance-principles-grid svg { color: #5e79a3; flex-shrink: 0; }
+.finance-principles-grid strong { display: block; font-size: 11px; font-weight: 600; }
+.finance-principles-grid span > span { display: block; font-size: 9px; color: var(--finance-muted); margin-top: 3px; }
+.finance-loans { padding-block: 72px 58px; scroll-margin-top: 100px; }
+.finance-section-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 30px; }
+.finance-kicker { font-size: 9px; font-weight: 700; color: #597094; letter-spacing: 1.5px; margin-bottom: 12px !important; }
+.finance-home .finance-section-heading h1, .finance-home .finance-section-heading h2, .finance-tools h2 { font-size: clamp(25px, 2.6vw, 35px); line-height: 1.3; letter-spacing: -1.2px; font-weight: 600; }
+.finance-section-heading h1 span, .finance-section-heading h2 span, .finance-tools h2 span { color: #6f829f; }
+.finance-text-link { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; color: var(--finance-blue); font-weight: 600; flex-shrink: 0; padding-bottom: 4px; }
+.finance-text-link:hover { text-decoration: underline; }
+.finance-section-description { font-size: 12px; color: var(--finance-muted); margin-top: 12px !important; }
+.finance-loan-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin-top: 30px; }
+.finance-loan-card { border: 1px solid var(--finance-line); border-radius: 15px; padding: 22px; display: flex; flex-direction: column; color: var(--finance-ink); background: #fff; transition: border-color .2s, transform .2s, box-shadow .2s; }
+.finance-loan-card:hover { transform: translateY(-4px); border-color: #9ab4fa; box-shadow: 0 12px 25px #1b397a0a; }
+.finance-loan-card-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 25px; color: #6d7e95; }
+.finance-product-icon { width: 56px; height: 56px; border-radius: 15px; display: grid; place-items: center; background: #edf2ff; }
+.finance-product-icon img { width: 38px; height: 38px; object-fit: contain; }
+.finance-loan-card-1 .finance-product-icon { background: #f1ecfc; }
+.finance-loan-card-2 .finance-product-icon { background: #eaf7f0; }
+.finance-loan-card-3 .finance-product-icon { background: #fff4e2; }
+.finance-product-badge { font-size: 9px; color: #386456; background: #eaf5ec; padding: 3px 9px; border-radius: 20px; }
+.finance-loan-card h2 { font-size: 17px; font-weight: 700; letter-spacing: -.4px; }
+.finance-loan-card > p { font-size: 12px; color: var(--finance-muted); line-height: 1.8; margin-block: 9px 24px; }
+.finance-card-cta { margin-top: auto; display: flex; justify-content: space-between; align-items: center; padding-top: 15px; border-top: 1px solid var(--finance-line); font-size: 11px; font-weight: 600; color: #34517f; }
+.finance-lender-note { margin-top: 19px !important; font-size: 10px; color: #69778d; }
+.finance-steps { background: #142b4c; color: #fff; padding-block: 54px; }
+.finance-steps .finance-kicker { color: #95b5e6; }
+.finance-steps .finance-section-heading h2 { font-size: 29px; }
+.finance-steps .finance-section-heading h2 span { color: #a1b8d7; }
+.finance-steps .finance-text-link { color: #bbd1fa; }
+.finance-step-grid { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 38px; margin: 34px 0 0; padding: 0; }
+.finance-step-grid > li { border-top: 1px solid #ffffff26; padding-top: 18px; }
+.finance-step-top { display: flex; align-items: center; justify-content: space-between; color: #98b5da; margin-bottom: 15px; }
+.finance-step-top > span { font-size: 11px; letter-spacing: 1px; }
+.finance-step-grid h3 { font-size: 15px; font-weight: 600; margin-bottom: 9px; }
+.finance-step-grid p { font-size: 12px; line-height: 1.9; color: #b8c8df; }
+.finance-directory { padding-bottom: 65px; }
+.finance-directory .finance-section-heading > p { max-width: 330px; font-size: 11px; color: var(--finance-muted); line-height: 1.8; }
+.finance-directory-groups { display: grid; gap: 14px; margin-top: 30px; }
+.finance-directory-group { border: 1px solid var(--finance-line); border-radius: 12px; padding-inline: 22px; background: #fafbfe; }
+.finance-directory-group summary { list-style: none; display: flex; align-items: center; gap: 14px; cursor: pointer; padding-block: 20px; }
+.finance-directory-group summary::-webkit-details-marker { display: none; }
+.finance-directory-number { font-size: 10px; font-weight: 600; color: #8191a9; }
+.finance-directory-group h3 { font-size: 13px; font-weight: 600; }
+.finance-directory-group summary > svg { margin-left: auto; color: #687b97; flex-shrink: 0; transition: transform .2s; }
+.finance-directory-group[open] summary > svg { transform: rotate(180deg); }
+.finance-directory-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; padding-block: 0 20px; }
+.finance-directory-link { display: flex; align-items: center; gap: 10px; min-height: 76px; padding: 14px; border-radius: 9px; border: 1px solid #e7ebf3; background: #fff; color: var(--finance-ink); }
+.finance-directory-link:hover { border-color: #aac0f6; background: #f1f5ff; }
+.finance-directory-link > img { width: 30px; height: 30px; object-fit: contain; flex-shrink: 0; }
+.finance-directory-link strong { display: block; font-size: 11px; font-weight: 600; line-height: 1.5; }
+.finance-directory-link > svg { margin-left: auto; flex-shrink: 0; color: #6e83a4; }
+.finance-directory-badge { font-size: 8px; display: inline-block; color: #396791; margin-top: 4px; }
+.finance-directory-soon { color: #936516; }
+.finance-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 70px; align-items: center; padding-block: 65px 70px; }
+.finance-tools > div > p:last-child { color: var(--finance-muted); margin-top: 15px; font-size: 12px; max-width: 340px; line-height: 1.8; }
+.finance-tool-links { display: grid; gap: 12px; }
+.finance-tool-links > a { display: flex; align-items: center; gap: 14px; border: 1px solid var(--finance-line); border-radius: 11px; padding: 15px 18px; color: var(--finance-ink); }
+.finance-tool-links > a:hover { background: #f5f8ff; border-color: #abc0ee; }
+.finance-tool-icon { color: #5477af; background: #edf3ff; border-radius: 10px; width: 42px; height: 42px; display: grid; place-items: center; flex-shrink: 0; }
+.finance-tool-links strong { display: block; font-size: 12px; font-weight: 600; }
+.finance-tool-links span > span { display: block; color: var(--finance-muted); font-size: 10px; margin-top: 3px; }
+.finance-tool-links > a > svg { margin-left: auto; flex-shrink: 0; color: #6b82a4; }
+@media (max-width: 1100px) {
+  .finance-hero-grid { gap: 36px; padding-block: 46px; }
+  .finance-home .finance-hero-title { font-size: 48px; letter-spacing: -2px; }
+  .finance-planner { padding: 20px; }
+  .finance-loan-card { padding: 19px; }
+  .finance-loan-card h2 { font-size: 14px; }
+  .finance-loan-grid { gap: 14px; }
+  .finance-principles-grid { gap: 20px; }
+  .finance-principles-grid > div + div { padding-left: 20px; }
+  .finance-directory-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 800px) {
+  .finance-hero-grid { grid-template-columns: 1fr; gap: 35px; padding-block: 40px; }
+  .finance-hero-copy { max-width: 600px; }
+  .finance-home .finance-hero-title { font-size: 56px; max-width: 600px; }
+  .finance-hero-description { max-width: 550px; }
+  .finance-guide-link { margin-top: 25px; }
+  .finance-planner { width: 100%; max-width: 560px; justify-self: center; padding: 25px; }
+  .finance-principles-grid { gap: 18px; }
+  .finance-principles-grid > div { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .finance-principles-grid > div + div { padding-left: 18px; }
+  .finance-principles-grid strong { font-size: 10px; }
+  .finance-loan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .finance-loan-card { padding: 24px; }
+  .finance-loan-card h2 { font-size: 17px; }
+  .finance-loans { padding-block: 48px; }
+  .finance-section-heading { align-items: flex-start; flex-direction: column; gap: 16px; }
+  .finance-step-grid { gap: 22px; }
+  .finance-directory { padding-bottom: 48px; }
+  .finance-directory .finance-section-heading > p { max-width: 100%; }
+  .finance-tools { gap: 35px; padding-block: 48px; }
+}
+@media (max-width: 540px) {
+  .finance-container { width: calc(100% - 36px); }
+  .finance-hero-grid { padding-block: 32px; gap: 30px; }
+  .finance-eyebrow { font-size: 8px; letter-spacing: 1px; }
+  .finance-home .finance-hero-title { font-size: clamp(38px, 10vw, 50px); letter-spacing: -1.8px; margin-block: 20px; }
+  .finance-hero-description { font-size: 13px; }
+  .finance-button { gap: 10px; padding: 12px 17px; font-size: 11px; }
+  .finance-hero-checks { font-size: 9px; flex-direction: column; gap: 8px; }
+  .finance-guide-link strong { font-size: 10px; }
+  .finance-planner { padding: 18px; border-radius: 16px; }
+  .finance-planner-heading h2 { font-size: 12px; }
+  .finance-planner-heading p { font-size: 9px; }
+  .finance-planner-result { padding: 17px; }
+  .finance-result-top output { font-size: 29px; }
+  .finance-estimate-badge { font-size: 7px; }
+  .finance-repayment { gap: 7px; }
+  .finance-repayment dt { font-size: 8px; }
+  .finance-repayment dd { font-size: 11px; }
+  .finance-principles-grid { grid-template-columns: 1fr; padding-block: 23px; gap: 18px; }
+  .finance-principles-grid > div { flex-direction: row; align-items: center; gap: 14px; }
+  .finance-principles-grid > div + div { border-left: 0; padding-left: 0; }
+  .finance-principles-grid strong { font-size: 11px; }
+  .finance-principles-grid span > span { font-size: 10px; }
+  .finance-home .finance-section-heading h1, .finance-home .finance-section-heading h2, .finance-tools h2 { font-size: 27px; }
+  .finance-loan-grid { gap: 12px; margin-top: 24px; }
+  .finance-loan-card { padding: 16px; }
+  .finance-loan-card-top { margin-bottom: 19px; gap: 5px; }
+  .finance-product-icon { width: 43px; height: 43px; border-radius: 11px; }
+  .finance-product-icon img { width: 30px; height: 30px; }
+  .finance-product-badge { font-size: 8px; padding-inline: 7px; }
+  .finance-loan-card h2 { font-size: 14px; }
+  .finance-loan-card > p { font-size: 11px; }
+  .finance-card-cta { font-size: 10px; }
+  .finance-steps { padding-block: 40px; }
+  .finance-step-grid { grid-template-columns: 1fr; gap: 25px; margin-top: 25px; }
+  .finance-step-top { margin-bottom: 12px; }
+  .finance-step-grid p { max-width: 380px; }
+  .finance-directory-group { padding-inline: 15px; }
+  .finance-directory-group summary { gap: 10px; }
+  .finance-directory-group h3 { font-size: 11px; }
+  .finance-directory-link { padding: 12px; gap: 8px; }
+  .finance-directory-grid { grid-template-columns: 1fr; }
+  .finance-directory-link strong { font-size: 11px; }
+  .finance-directory-link > img { width: 28px; height: 28px; }
+  .finance-tools { grid-template-columns: 1fr; gap: 25px; }
+  .finance-tools > div > p:last-child { font-size: 11px; }
+  .finance-tool-links > a { padding: 13px; gap: 11px; }
+  .finance-tool-links strong { font-size: 11px; }
+  .finance-tool-links span > span { font-size: 9px; }
+}
+@media (max-width: 360px) {
+  .finance-loan-grid { grid-template-columns: 1fr; }
+  .finance-planner { padding: 15px; }
+  .finance-planner-heading h2 { font-size: 11px; }
+  .finance-planner-heading p { font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .finance-home *, .finance-home *::before, .finance-home *::after { transition: none !important; }
+}

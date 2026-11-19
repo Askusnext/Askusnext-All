@@ -54,7 +54,7 @@ export const CreditCardBillPage: React.FC = () => {
               Credit Card Bill Payment
             </h1>
             <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-              Credit card bill payment is not available through Askus Fin. Use your card issuer’s official payment channel.
+              Credit card bill payment is not available through Askus Financial Services. Use your card issuer’s official payment channel.
             </p>
           </div>
         </div>

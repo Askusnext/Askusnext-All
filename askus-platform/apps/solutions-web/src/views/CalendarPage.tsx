@@ -26,11 +26,11 @@ function toKey(y: number, m: number, d: number) {
 type Entry = { tickets: any[]; daysLeft: number };
 
 function getUrgency(daysLeft: number) {
-  if (daysLeft < 0)   return { color: '#f5222d', bg: '#fff1f0', border: '#ffa39e', icon: <ExclamationCircleOutlined />, tag: 'Expired' };
-  if (daysLeft <= 7)  return { color: '#fa541c', bg: '#fff2e8', border: '#ffbb96', icon: <WarningOutlined />,           tag: `${daysLeft}d left` };
-  if (daysLeft <= 15) return { color: '#faad14', bg: '#fffbe6', border: '#ffe58f', icon: <ClockCircleOutlined />,       tag: `${daysLeft}d left` };
-  if (daysLeft <= 30) return { color: '#52c41a', bg: '#f6ffed', border: '#b7eb8f', icon: <CheckCircleOutlined />,       tag: `${daysLeft}d left` };
-  return                     { color: '#1677ff', bg: '#e6f4ff', border: '#91caff', icon: <CheckCircleOutlined />,       tag: `${daysLeft}d left` };
+  if (daysLeft < 0)   return { color: '#b91c1c', bg: '#fff1f0', border: '#ffa39e', icon: <ExclamationCircleOutlined />, tag: 'Expired' };
+  if (daysLeft <= 7)  return { color: '#9a3412', bg: '#fff2e8', border: '#ffbb96', icon: <WarningOutlined />,           tag: `${daysLeft}d left` };
+  if (daysLeft <= 15) return { color: '#854d0e', bg: '#fffbe6', border: '#ffe58f', icon: <ClockCircleOutlined />,       tag: `${daysLeft}d left` };
+  if (daysLeft <= 30) return { color: '#166534', bg: '#f6ffed', border: '#b7eb8f', icon: <CheckCircleOutlined />,       tag: `${daysLeft}d left` };
+  return                     { color: '#1e40af', bg: '#e6f4ff', border: '#91caff', icon: <CheckCircleOutlined />,       tag: `${daysLeft}d left` };
 }
 
 // ── Mini Month Calendar (left sidebar) ───────────────────────────────────────
@@ -61,7 +61,7 @@ function MiniCalendar({
         {DAYS_MINI.map((d, i) => (
           <div key={i} style={{
             textAlign: 'center', fontSize: 10, fontWeight: 600,
-            color: i === 0 || i === 6 ? '#C8102E' : '#8c8c8c',
+            color: i === 0 || i === 6 ? '#1e40af' : '#475569',
             padding: '2px 0',
           }}>{d}</div>
         ))}
@@ -86,16 +86,16 @@ function MiniCalendar({
                 width: 26, height: 26, display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto', borderRadius: '50%', fontSize: 11, cursor: 'pointer',
                 fontWeight: isToday ? 700 : 400,
-                background: isSelected ? '#C8102E' : isToday ? '#fff0f0' : 'transparent',
-                color: isSelected ? '#fff' : isToday ? '#C8102E' : '#262626',
-                border: isToday && !isSelected ? '1.5px solid #C8102E' : '1.5px solid transparent',
+                background: isSelected ? '#dbeafe' : isToday ? '#eff6ff' : 'transparent',
+                color: isSelected || isToday ? '#1e40af' : '#262626',
+                border: isToday && !isSelected ? '1.5px solid #1e40af' : '1.5px solid transparent',
                 position: 'relative',
                 transition: 'all 0.15s',
               }}
               onMouseEnter={e => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = '#f5f5f5'; }}
               onMouseLeave={e => {
                 const el = e.currentTarget as HTMLElement;
-                el.style.background = isSelected ? '#C8102E' : isToday ? '#fff0f0' : 'transparent';
+                el.style.background = isSelected ? '#dbeafe' : isToday ? '#eff6ff' : 'transparent';
               }}
             >
               {day}
@@ -154,26 +154,26 @@ function DayEventList({
     }}>
       {/* Panel header */}
       <div style={{
-        background: 'linear-gradient(135deg, #1f1f1f 0%, #434343 100%)',
+        background: '#eff6ff',
         padding: '14px 16px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
       }}>
         <div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>
+          <div style={{ fontSize: 11, color: '#334155', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>
             {DAYS_FULL[date.getDay()]}
           </div>
-          <div style={{ fontSize: 30, fontWeight: 700, color: '#fff', lineHeight: 1 }}>
+          <div style={{ fontSize: 30, fontWeight: 700, color: '#1e40af', lineHeight: 1 }}>
             {date.getDate()}
           </div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: '#334155', marginTop: 4 }}>
             {MONTHS[date.getMonth()]} {date.getFullYear()}
           </div>
         </div>
         <button
           onClick={onClose}
           style={{
-            background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: '50%',
-            width: 26, height: 26, cursor: 'pointer', color: '#fff', fontSize: 15,
+            background: '#fff', border: '1px solid #dbe5f4', borderRadius: '50%',
+            width: 26, height: 26, cursor: 'pointer', color: '#1e40af', fontSize: 15,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}
         >✕</button>
@@ -215,7 +215,7 @@ function DayEventList({
               }}>{t.policy?.insurer ?? '—'}</span>
             </div>
             <div style={{ fontSize: 12, color: '#434343', marginBottom: 2 }}>{t.vehicleName}</div>
-            <div style={{ fontSize: 11, color: '#8c8c8c' }}>👤 {t.customerName}</div>
+            <div style={{ fontSize: 11, color: '#475569' }}>👤 {t.customerName}</div>
           </div>
         ))}
       </div>
@@ -235,7 +235,7 @@ function UpcomingList({
 
   if (sorted.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '32px 0', color: '#bfbfbf' }}>
+      <div style={{ textAlign: 'center', padding: '32px 0', color: '#475569' }}>
         <CheckCircleOutlined style={{ fontSize: 32, marginBottom: 8, display: 'block' }} />
         <div style={{ fontSize: 13 }}>No upcoming expirations</div>
       </div>
@@ -271,7 +271,7 @@ function UpcomingList({
             </div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: '#262626', marginBottom: 2 }}>{u.tag}</div>
-              <div style={{ fontSize: 11, color: '#8c8c8c', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 11, color: '#475569', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {entry.tickets.length} policy{entry.tickets.length > 1 ? 's' : ''} expiring
               </div>
             </div>
@@ -363,8 +363,8 @@ export default function CalendarPage() {
       }}>
         {/* Brand */}
         <div style={{ padding: '18px 16px 12px', borderBottom: '1px solid #f0f0f0' }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#C8102E' }}>TMS Calendar</div>
-          <div style={{ fontSize: 11, color: '#8c8c8c', marginTop: 2 }}>Policy Expiry Tracker</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#1e40af' }}>TMS Calendar</div>
+          <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>Policy Expiry Tracker</div>
         </div>
 
         {/* Mini calendar */}
@@ -384,15 +384,15 @@ export default function CalendarPage() {
 
         {/* Legend */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid #f0f0f0' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
             Legend
           </div>
           {[
-            { color: '#f5222d', label: 'Expired' },
-            { color: '#fa541c', label: '≤ 7 days (Critical)' },
-            { color: '#faad14', label: '≤ 15 days (Warning)' },
-            { color: '#52c41a', label: '≤ 30 days (Upcoming)' },
-            { color: '#1677ff', label: '> 30 days (Safe)' },
+            { color: '#b91c1c', label: 'Expired' },
+            { color: '#9a3412', label: '≤ 7 days (Critical)' },
+            { color: '#854d0e', label: '≤ 15 days (Warning)' },
+            { color: '#166534', label: '≤ 30 days (Upcoming)' },
+            { color: '#1e40af', label: '> 30 days (Safe)' },
           ].map(l => (
             <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: l.color, display: 'inline-block', flexShrink: 0 }} />
@@ -403,15 +403,15 @@ export default function CalendarPage() {
 
         {/* Monthly summary */}
         <div style={{ padding: '14px 16px' }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
             {MONTHS_SHORT[month]} {year} · Summary
           </div>
           {[
-            { label: 'Expired',  count: summary.expired,  color: '#f5222d', bg: '#fff1f0' },
-            { label: 'Critical', count: summary.critical, color: '#fa541c', bg: '#fff2e8' },
-            { label: 'Warning',  count: summary.warning,  color: '#faad14', bg: '#fffbe6' },
-            { label: 'Upcoming', count: summary.upcoming, color: '#52c41a', bg: '#f6ffed' },
-            { label: 'Safe',     count: summary.safe,     color: '#1677ff', bg: '#e6f4ff' },
+            { label: 'Expired',  count: summary.expired,  color: '#b91c1c', bg: '#fff1f0' },
+            { label: 'Critical', count: summary.critical, color: '#9a3412', bg: '#fff2e8' },
+            { label: 'Warning',  count: summary.warning,  color: '#854d0e', bg: '#fffbe6' },
+            { label: 'Upcoming', count: summary.upcoming, color: '#166534', bg: '#f6ffed' },
+            { label: 'Safe',     count: summary.safe,     color: '#1e40af', bg: '#e6f4ff' },
           ].map(s => (
             <div key={s.label} style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -442,7 +442,7 @@ export default function CalendarPage() {
             <Button size="small" onClick={goToday}>Today</Button>
             <span style={{ fontSize: 17, fontWeight: 700, color: '#1f1f1f', letterSpacing: '-0.01em' }}>
               {MONTHS[month]}{' '}
-              <span style={{ color: '#8c8c8c', fontWeight: 400 }}>{year}</span>
+              <span style={{ color: '#475569', fontWeight: 400 }}>{year}</span>
             </span>
           </div>
 
@@ -459,7 +459,7 @@ export default function CalendarPage() {
                   padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 500, transition: 'all 0.15s',
                   background: view === v ? '#fff' : 'transparent',
-                  color: view === v ? '#1f1f1f' : '#8c8c8c',
+                  color: view === v ? '#1f1f1f' : '#475569',
                   boxShadow: view === v ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
                 }}
               >{v}</button>
@@ -482,7 +482,7 @@ export default function CalendarPage() {
                 <div key={d} style={{
                   textAlign: 'center', padding: '7px 0',
                   fontSize: 11, fontWeight: 700, letterSpacing: '0.05em',
-                  color: i === 0 || i === 6 ? '#f5222d' : '#8c8c8c',
+                  color: i === 0 || i === 6 ? '#b91c1c' : '#475569',
                 }}>
                   {d}
                 </div>
@@ -533,7 +533,7 @@ export default function CalendarPage() {
                       background: isSelected
                         ? '#fff9f9'
                         : isWeekend && isCurrentMonth ? '#fafafa' : '#fff',
-                      outline: isSelected ? '2px solid #C8102E' : 'none',
+                      outline: isSelected ? '2px solid #1e40af' : 'none',
                       outlineOffset: -2,
                       transition: 'background 0.12s',
                       overflow: 'hidden',
@@ -553,8 +553,8 @@ export default function CalendarPage() {
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: 12,
                           fontWeight: isToday ? 800 : isCurrentMonth ? 400 : 300,
-                          background: isToday ? '#C8102E' : 'transparent',
-                          color: isToday ? '#fff'
+                          background: isToday ? '#dbeafe' : 'transparent',
+                          color: isToday ? '#1e40af'
                             : isCurrentMonth ? (isWeekend ? '#f5222d' : '#1f1f1f')
                             : '#d9d9d9',
                         }}>
@@ -575,7 +575,7 @@ export default function CalendarPage() {
                           />
                         ))}
                         {entry.tickets.length > 2 && (
-                          <div style={{ fontSize: 10, color: '#8c8c8c', padding: '1px 5px' }}>
+                          <div style={{ fontSize: 10, color: '#475569', padding: '1px 5px' }}>
                             +{entry.tickets.length - 2} more…
                           </div>
                         )}
@@ -613,9 +613,9 @@ export default function CalendarPage() {
                 />
               </div>
             ) : selected && !selectedEntry ? (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, color: '#bfbfbf' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24, color: '#475569' }}>
                 <div style={{ fontSize: 36, marginBottom: 10 }}>📅</div>
-                <div style={{ fontSize: 13, color: '#8c8c8c', textAlign: 'center', fontWeight: 500 }}>
+                <div style={{ fontSize: 13, color: '#475569', textAlign: 'center', fontWeight: 500 }}>
                   No policies expiring<br />on this date
                 </div>
                 <Button type="link" size="small" style={{ marginTop: 8 }} onClick={() => setSelected(null)}>
@@ -625,7 +625,7 @@ export default function CalendarPage() {
             ) : (
               <>
                 <div style={{ padding: '14px 14px 8px', borderBottom: '1px solid #f0f0f0' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: '#8c8c8c', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
                     Upcoming Expirations
                   </div>
                 </div>

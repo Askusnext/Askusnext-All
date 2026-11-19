@@ -21,7 +21,7 @@ export const NAV_ITEMS: { to: string; label: string; permission?: Permission; ad
   { to: '/presence', label: 'Team Presence', adminOnly: true },
   { to: '/leads', label: 'Insurance & Loan Leads' },
   { to: '/insurance-requests', label: 'Insurance Requests', permission: 'insurance' },
-  { to: '/loans', label: 'Askus Loans', permission: 'loans' },
+  { to: '/loans', label: 'Askus Financial Services', permission: 'loans' },
   { to: '/activity', label: 'Activity' },
   { to: '/renewals', label: 'Renewals', permission: 'tickets' },
   { to: '/users', label: 'User Management', adminOnly: true },

@@ -94,12 +94,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       <div>
         <div className="p-5 border-b border-slate-800 flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">
+            <div className="w-8 h-8 shrink-0 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold">
               <Zap size={18} />
             </div>
             <div>
               <span className="text-xl font-extrabold text-white">
-                Askus <span className="text-blue-500">Fin</span>
+                Askus <span className="block text-[11px] leading-4 text-blue-500">Financial Services</span>
               </span>
               <span className="block text-[9px] uppercase font-bold text-blue-400 tracking-wider">
                 Admin Console

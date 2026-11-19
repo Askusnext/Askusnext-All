@@ -23,7 +23,7 @@ export function PriorityTag({ priority }: { priority: Priority }) {
 
 // ── Expiry tag ───────────────────────────────────────────────────────────────
 export function ExpiryTag({ date }: { date?: string | null }) {
-  if (!date || Number.isNaN(new Date(date).getTime())) return <span style={{ color: '#bbb' }}>—</span>;
+  if (!date || Number.isNaN(new Date(date).getTime())) return <span style={{ color: '#475569' }}>—</span>;
   const days = Math.ceil((new Date(date).getTime() - Date.now()) / 86400000);
   const color = days < 0 ? 'red' : days <= 10 ? 'red' : days <= 30 ? 'orange' : days <= 60 ? 'blue' : 'green';
   const label = days < 0 ? `Expired ${Math.abs(days)}d ago` : `${days}d left`;
@@ -52,7 +52,7 @@ export function PaymentStatusTag({ status }: { status: PaymentStatus }) {
 export function DocStatus({ has, label }: { has: boolean; label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '5px 0', borderBottom: '0.5px solid #f0f0f0', fontSize: 12 }}>
-      <span style={{ color: '#888' }}>{label}</span>
+      <span style={{ color: '#475569' }}>{label}</span>
       <Tag color={has ? 'green' : 'red'}>{has ? 'Attached' : 'Missing'}</Tag>
     </div>
   );
@@ -82,7 +82,7 @@ export function WorkflowSteps({ current }: { current: TicketStatus }) {
             }}>
               {i < idx && <span style={{ color: '#fff', fontSize: 10 }}>✓</span>}
             </div>
-            <span style={{ fontSize: 10, color: i === idx ? '#1677ff' : i < idx ? '#52c41a' : '#bbb', fontWeight: i === idx ? 600 : 400, whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 10, color: i === idx ? '#1e40af' : i < idx ? '#166534' : '#475569', fontWeight: i === idx ? 600 : 400, whiteSpace: 'nowrap' }}>
               {step.label}
             </span>
           </div>

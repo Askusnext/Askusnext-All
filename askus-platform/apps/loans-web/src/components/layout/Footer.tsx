@@ -40,11 +40,11 @@ export const Footer: React.FC = () => {
                 <Zap size={18} />
               </div>
               <span className="text-xl font-bold text-white tracking-tight">
-                Askus <span className="text-blue-500">Fin</span>
+                Askus <span className="block text-xs text-blue-500">Financial Services</span>
               </span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
-              Askus Fin provides lender reference links and an application workflow. Current rates, fees, requirements, and decisions come from the lender.
+              Askus Financial Services provides lender reference links and an application workflow. Current rates, fees, requirements, and decisions come from the lender.
             </p>
             <p className="text-xs text-slate-500 pt-2">For support, sign in and submit an inquiry from your dashboard.</p>
           </div>
@@ -169,7 +169,7 @@ export const Footer: React.FC = () => {
         {/* Regulatory & Compliance Disclaimers (Crucial for fintech) */}
         <div className="mt-12 pt-8 border-t border-slate-900 space-y-3 text-[11px] text-slate-500 leading-relaxed">
           <p>
-            <strong className="text-slate-400">Service Notice:</strong> Askus Fin does not lend money or accept deposits. Product terms and every credit decision are determined by the lender.
+            <strong className="text-slate-400">Service Notice:</strong> Askus Financial Services does not lend money or accept deposits. Product terms and every credit decision are determined by the lender.
           </p>
           <p>
             <strong className="text-slate-400">Cash Salary Notice:</strong> Cash salary acceptance and evidence requirements vary by lender and product. Confirm current requirements directly with the lender.
@@ -181,7 +181,7 @@ export const Footer: React.FC = () => {
 
         {/* Copyright & Bottom Bar */}
         <div className="mt-8 pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
-          <p>© {new Date().getFullYear()} Askus Fin. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Askus Next Global Solutions Private Limited. All rights reserved.</p>
           <div className="flex gap-4">
             <a href="#privacy" className="hover:text-slate-300">Privacy Policy</a>
             <a href="#terms" className="hover:text-slate-300">Terms of Service</a>

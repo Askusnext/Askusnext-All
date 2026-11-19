@@ -136,7 +136,7 @@ export default function WorkSessionPanel() {
     return (
       <div style={{ padding: 20, maxWidth: 760 }}>
         <Space align="start" size={12} style={{ marginBottom: 12 }}>
-          <SafetyCertificateOutlined style={{ fontSize: 28, color: '#1677ff', marginTop: 4 }} />
+          <SafetyCertificateOutlined style={{ fontSize: 28, color: '#1e40af', marginTop: 4 }} />
           <div>
             <Title level={4} style={{ margin: 0 }}>Before you start: how work tracking works</Title>
             <Text type="secondary">Please read this. Nothing is recorded until you accept.</Text>
@@ -199,7 +199,7 @@ export default function WorkSessionPanel() {
           </div>
           {active
             ? <Button danger size="large" icon={<PauseCircleOutlined />} loading={busy} onClick={() => void stop()}>Stop work</Button>
-            : <Button type="primary" size="large" icon={<PlayCircleOutlined />} loading={busy} onClick={() => void start()} style={{ background: '#C8102E', borderColor: '#C8102E' }}>Start work</Button>}
+            : <Button type="primary" size="large" icon={<PlayCircleOutlined />} loading={busy} onClick={() => void start()} style={{ background: '#e8efff', borderColor: '#1e40af' }}>Start work</Button>}
         </div>
         {active?.last && (
           <div style={{ marginTop: 12, fontSize: 12 }}>

@@ -146,7 +146,7 @@ export default function ActivityPage() {
                 {unassigned && unassigned.total > 0 && (
                   <Alert style={{ marginBottom: 12 }} type="warning" showIcon
                     message={`${unassigned.total} open item${unassigned.total === 1 ? '' : 's'} with nobody assigned`}
-                    description={`Loans ${unassigned.loans} · Insurance ${unassigned.insurance} · Tickets ${unassigned.tickets}. Open Askus Loans or Insurance Requests and assign them.`} />
+                    description={`Loans ${unassigned.loans} · Insurance ${unassigned.insurance} · Tickets ${unassigned.tickets}. Open Askus Financial Services or Insurance Requests and assign them.`} />
                 )}
                 <Table
                   rowKey="id" size="small" loading={teamLoading} columns={teamColumns} dataSource={team} pagination={false}

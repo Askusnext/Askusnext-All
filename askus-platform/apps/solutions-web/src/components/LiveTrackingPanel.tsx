@@ -73,11 +73,11 @@ export default function LiveTrackingPanel() {
 
   const count = (s: LiveStatus) => rows.filter((r) => r.status === s).length;
   const stats = useMemo(() => [
-    { label: 'Working', value: count('working'), color: '#52c41a' },
-    { label: 'Idle', value: count('idle'), color: '#fa8c16' },
-    { label: 'Signal lost', value: count('signal_lost'), color: '#f5222d' },
-    { label: 'Finished', value: count('ended'), color: '#1677ff' },
-    { label: 'Not started', value: count('not_started'), color: '#8c8c8c' },
+    { label: 'Working', value: count('working'), color: '#166534' },
+    { label: 'Idle', value: count('idle'), color: '#9a3412' },
+    { label: 'Signal lost', value: count('signal_lost'), color: '#b91c1c' },
+    { label: 'Finished', value: count('ended'), color: '#1e40af' },
+    { label: 'Not started', value: count('not_started'), color: '#475569' },
   ], [rows]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const columns: ColumnsType<LiveRow> = [

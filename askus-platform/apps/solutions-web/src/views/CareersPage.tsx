@@ -3,10 +3,10 @@ import SiteChrome from '../components/SiteChrome';
 
 const openings = [
 	{ title: 'Operations Manager', team: '02 Taxi', location: 'Coimbatore', type: 'Full-time' },
-	{ title: 'Claims Associate', team: 'Alphaa Insurance', location: 'Chennai', type: 'Full-time' },
-	{ title: 'Loan Officer', team: 'Alphaa Loans', location: 'Coimbatore', type: 'Full-time' },
+	{ title: 'Claims Associate', team: 'Askus Insurance', location: 'Chennai', type: 'Full-time' },
+	{ title: 'Loan Officer', team: 'Askus Financial Services', location: 'Coimbatore', type: 'Full-time' },
 	{ title: 'Customer Support Executive', team: '02 Taxi', location: 'Chennai', type: 'Full-time' },
-	{ title: 'Software Engineer, TMS Platform', team: 'AskusNext Global Solutions Private Limited', location: 'Coimbatore', type: 'Full-time' },
+	{ title: 'Software Engineer, TMS Platform', team: 'Askus Next Global Solutions Private Limited', location: 'Coimbatore', type: 'Full-time' },
 	{ title: 'Fleet Coordinator', team: '02 Taxi', location: 'Chennai', type: 'Full-time' },
 ];
 

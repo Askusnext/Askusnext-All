@@ -225,7 +225,7 @@ function LeadDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
           </Card>
           <Tabs size="small" items={[
             { key: 'trail', label: 'Audit trail', children: (
-              <Timeline items={lead.events.map((e) => ({ children: <><strong>{e.userName}</strong> {e.action.replace(/_/g, ' ')}{e.toStatus ? ` → ${STAGE_LABEL[e.toStatus as LeadStatus] ?? e.toStatus}` : ''}{e.note ? ` — ${e.note}` : ''}<div style={{ fontSize: 11, color: '#888' }}>{when(e.createdAt)}</div></> }))} />
+              <Timeline items={lead.events.map((e) => ({ children: <><strong>{e.userName}</strong> {e.action.replace(/_/g, ' ')}{e.toStatus ? ` → ${STAGE_LABEL[e.toStatus as LeadStatus] ?? e.toStatus}` : ''}{e.note ? ` — ${e.note}` : ''}<div style={{ fontSize: 11, color: '#475569' }}>{when(e.createdAt)}</div></> }))} />
             ) },
             { key: 'notif', label: `Notifications (${lead.notifications.length})`, children: (
               <Table size="small" pagination={{ pageSize: 8, hideOnSinglePage: true }} rowKey="id" dataSource={lead.notifications} columns={[
@@ -263,7 +263,7 @@ function LeadList({ scope, pollMs, canClaim, onOpen, refreshKey, onChanged }: { 
   const columns: ColumnsType<Lead> = [
     { title: 'Ticket', dataIndex: 'ticketNumber', render: (n: string, l) => <a onClick={() => onOpen(l.id)}>{n}</a> },
     { title: 'Type', dataIndex: 'vertical', render: VERTICAL_TAG },
-    { title: 'Customer', render: (_, l) => <div>{l.customerName}<div style={{ fontSize: 11, color: '#888' }}>{l.customerPhone}</div></div> },
+    { title: 'Customer', render: (_, l) => <div>{l.customerName}<div style={{ fontSize: 11, color: '#475569' }}>{l.customerPhone}</div></div> },
     { title: 'Details', render: (_, l) => (l.vertical === 'insurance' ? `${l.vehicleRegNo} · ${l.insurer} · ${l.policyType}` : `${l.loanType} · ${inr(l.loanAmount)} · ${l.lender}`) },
     { title: 'Status', dataIndex: 'status', render: (s: LeadStatus) => <Tag color={STATUS_COLOR[s]}>{STAGE_LABEL[s]}</Tag> },
     { title: 'Deadline', render: (_, l) => <SlaTag l={l} /> },
@@ -317,7 +317,7 @@ function Reports({ isSuper }: { isSuper: boolean }) {
             <Card size="small"><Typography.Text type="secondary">Collected</Typography.Text><div style={{ fontSize: 22, fontWeight: 600, color: '#389e0d' }}>{money(data.rev.totals.collected)}</div></Card>
             <Card size="small"><Typography.Text type="secondary">Pending collection</Typography.Text><div style={{ fontSize: 22, fontWeight: 600, color: '#d46b08' }}>{money(data.rev.totals.pending)}</div></Card>
             <Card size="small"><Typography.Text type="secondary">Avg. time to resolve</Typography.Text><div style={{ fontSize: 22, fontWeight: 600 }}>{data.sla.avgHoursToResolve} h</div></Card>
-            <Card size="small"><Typography.Text type="secondary">SLA breaches</Typography.Text><div style={{ fontSize: 22, fontWeight: 600, color: data.sla.breached ? '#cf1322' : undefined }}>{data.sla.breached}<span style={{ fontSize: 12, color: '#888' }}> of {data.sla.total} · {data.sla.overdueNow} overdue now · {data.sla.urgentBreached} urgent</span></div></Card>
+            <Card size="small"><Typography.Text type="secondary">SLA breaches</Typography.Text><div style={{ fontSize: 22, fontWeight: 600, color: data.sla.breached ? '#cf1322' : undefined }}>{data.sla.breached}<span style={{ fontSize: 12, color: '#475569' }}> of {data.sla.total} · {data.sla.overdueNow} overdue now · {data.sla.urgentBreached} urgent</span></div></Card>
           </Space>
           <Card size="small" title="Conversion by marketing person">
             <Table size="small" pagination={false} rowKey="userId" dataSource={data.conv} columns={[

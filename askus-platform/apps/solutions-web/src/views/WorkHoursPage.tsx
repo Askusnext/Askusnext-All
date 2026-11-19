@@ -160,8 +160,8 @@ function LiveStatus() {
       extra={<Space><Text type="secondary">Refreshes every 30 s</Text><Button icon={<ReloadOutlined />} onClick={load} /></Space>}
     >
       <Space size={32} style={{ marginBottom: 12 }}>
-        <Statistic title="Working" value={count('working')} valueStyle={{ color: '#52c41a' }} />
-        <Statistic title="Idle" value={count('idle')} valueStyle={{ color: '#fa8c16' }} />
+        <Statistic title="Working" value={count('working')} valueStyle={{ color: '#166534' }} />
+        <Statistic title="Idle" value={count('idle')} valueStyle={{ color: '#9a3412' }} />
         <Statistic title="Offline" value={count('offline')} />
       </Space>
       <Table rowKey="userId" size="small" loading={loading} columns={columns} dataSource={rows} pagination={{ pageSize: 15, hideOnSinglePage: true }} scroll={{ x: 800 }} />

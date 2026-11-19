@@ -6,8 +6,8 @@ import customerApi, { type KBArticle } from '../api/customerApi';
 
 const categoryLabels: Record<string, string> = {
 	O2Taxi: '02 Taxi',
-	AlphaaInsurance: 'Alphaa Insurance',
-	AlphaaLoans: 'Alphaa Loans',
+	AlphaaInsurance: 'Askus Insurance',
+	AlphaaLoans: 'Askus Financial Services',
 	General: 'General',
 };
 
@@ -56,7 +56,7 @@ const styles: Record<string, React.CSSProperties> = {
 	backLink: {
 		display: 'inline-block',
 		marginBottom: 24,
-		color: '#5b6b83',
+		color: '#334155',
 		fontWeight: 600,
 		fontSize: '.88rem',
 		textDecoration: 'none',
@@ -65,12 +65,12 @@ const styles: Record<string, React.CSSProperties> = {
 		background: '#FFF',
 		borderRadius: 14,
 		padding: '32px 32px',
-		border: '1px solid #E7ECF3',
+		border: '1px solid #dbe5f4',
 	},
 	category: {
 		fontSize: '.78rem',
 		fontWeight: 700,
-		color: '#C8102E',
+		color: '#1e40af',
 		letterSpacing: 0.4,
 		textTransform: 'uppercase',
 	},
@@ -78,7 +78,7 @@ const styles: Record<string, React.CSSProperties> = {
 		margin: '10px 0 0',
 		fontSize: '1.6rem',
 		fontWeight: 800,
-		color: '#0F2747',
+		color: '#172b4d',
 	},
 	body: {
 		marginTop: 20,
@@ -92,7 +92,7 @@ const styles: Record<string, React.CSSProperties> = {
 		borderRadius: 14,
 		padding: '40px 24px',
 		textAlign: 'center',
-		color: '#5b6b83',
-		border: '1px solid #E7ECF3',
+		color: '#334155',
+		border: '1px solid #dbe5f4',
 	},
 };

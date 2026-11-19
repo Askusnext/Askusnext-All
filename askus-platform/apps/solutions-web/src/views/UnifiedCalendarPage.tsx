@@ -4,7 +4,7 @@ import { ApiOutlined, LeftOutlined, PlusOutlined, ReloadOutlined, RightOutlined 
 import { useAppSelector } from '../store';
 import { hasPermission, isAdminRole } from '../access';
 import {
-  calendarApi, TEAM_NAMES,
+  calendarApi, TEAM_NAMES, teamLabel,
   type CalendarProvider, type DayCell, type Grid, type GridRow, type MeetingItem, type MyEvents, type NowState, type TeamsView,
 } from '../api/calendar';
 import CalendarPage from './CalendarPage';
@@ -47,7 +47,7 @@ function CellBlocks({ cell, compact }: { cell: DayCell | undefined; compact?: bo
       {cell.leave && (
         <div style={{
           fontSize: 11, padding: '1px 6px', borderRadius: 4,
-          background: cell.leave.state === 'approved' ? '#1677ff' : '#e6f4ff', color: cell.leave.state === 'approved' ? '#fff' : '#1677ff',
+          background: cell.leave.state === 'approved' ? '#1677ff' : '#e6f4ff', color: cell.leave.state === 'approved' ? '#fff' : '#1e40af',
           border: cell.leave.state === 'approved' ? '1px solid #1677ff' : '1px dashed #1677ff',
         }}>
           {compact ? 'Leave' : `${cell.leave.leaveType} leave${cell.leave.state === 'pending' ? ' (pending)' : ''}`}
@@ -283,7 +283,7 @@ function MyCalendar({ staff, isAdmin }: { staff: { userId: string; name: string 
           <span><Badge color="#2f54eb" /> synced meeting</span>
           <span><Badge color="#13c2c2" /> manual meeting</span>
           <span><Badge color="#1677ff" /> approved leave</span>
-          <span style={{ border: '1px dashed #1677ff', padding: '0 4px', borderRadius: 4, color: '#1677ff' }}>pending leave</span>
+          <span style={{ border: '1px dashed #1677ff', padding: '0 4px', borderRadius: 4, color: '#1e40af' }}>pending leave</span>
           <span>P present · A absent · HD half-day · L on leave · H holiday · WO week-off</span>
         </Space>
       </Card>
@@ -326,13 +326,13 @@ function GridView({ kind, staff }: { kind: 'team' | 'org'; staff: { userId: stri
       render: (_: unknown, r: GridRow) => (
         <div>
           <strong>{r.employeeName}</strong>
-          <div style={{ fontSize: 11 }}><Typography.Text type="secondary">{r.role}{r.teams.length ? ` · ${r.teams.join(', ')}` : ''}</Typography.Text></div>
+          <div style={{ fontSize: 11 }}><Typography.Text type="secondary">{r.role}{r.teams.length ? ` · ${r.teams.map(teamLabel).join(', ')}` : ''}</Typography.Text></div>
         </div>
       ),
     },
     { title: 'Right now', width: 120, render: (_: unknown, r: GridRow) => <Tag color={NOW_TAG[r.now].color}>{NOW_TAG[r.now].label}</Tag> },
     ...(grid?.days ?? []).map((d) => ({
-      title: <span style={{ color: d === today ? '#1677ff' : undefined }}>{dayLabel(d)}</span>, key: d, width: 120,
+      title: <span style={{ color: d === today ? '#1e40af' : undefined }}>{dayLabel(d)}</span>, key: d, width: 120,
       onCell: (r: GridRow) => ({ onClick: () => setDetail({ person: r.employeeName, ownerId: r.userId, date: d, cell: r.cells[d] }), style: { cursor: 'pointer', verticalAlign: 'top' as const } }),
       render: (_: unknown, r: GridRow) => <CellBlocks cell={r.cells[d]} compact />,
     })),
@@ -347,7 +347,7 @@ function GridView({ kind, staff }: { kind: 'team' | 'org'; staff: { userId: stri
           <Button icon={<RightOutlined />} onClick={() => setAnchor(addDays(anchor, 7))} />
           <Typography.Text strong>{dayLabel(from)} – {dayLabel(to)}</Typography.Text>
           <Select allowClear placeholder={kind === 'org' ? 'All teams / ventures' : 'All my teams'} style={{ minWidth: 200 }} value={team} onChange={setTeam}
-            options={teamOptions.map((t) => ({ value: t, label: t }))} />
+            options={teamOptions.map((t) => ({ value: t, label: teamLabel(t) }))} />
           <Button icon={<ReloadOutlined />} onClick={load} />
         </Space>
         {kind === 'team' && grid && grid.rows.length <= 1 && (
@@ -379,7 +379,7 @@ function TeamsTab({ isSuper }: { isSuper: boolean }) {
     <Space direction="vertical" style={{ width: '100%' }}>
       <Alert type="info" showIcon message={isSuper ? 'Choose who belongs to each venture/team. Admins see the calendars of the teams they belong to.' : 'You can manage the teams you belong to. A Super Admin adds you to a team first.'} />
       {(data?.teams ?? []).map((t) => (
-        <Card key={t.team} size="small" title={t.team}>
+        <Card key={t.team} size="small" title={teamLabel(t.team)}>
           <Space wrap style={{ marginBottom: 8 }}>
             {t.members.length === 0 && <Typography.Text type="secondary">No members yet</Typography.Text>}
             {t.members.map((m) => (

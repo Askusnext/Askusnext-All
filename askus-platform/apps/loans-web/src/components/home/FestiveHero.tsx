@@ -35,7 +35,7 @@ export const FestiveHero: React.FC = () => (
             <span aria-hidden className="mb-2 h-12 w-16 shrink-0 bg-no-repeat sm:h-14 sm:w-20" style={{ backgroundImage: `url(${assetUrl('diwali-assets.png')})`, backgroundSize: 'auto 100%', backgroundPosition: '0 50%' }} />
           </div>
           <p className="mt-3 font-[Roboto_Serif,serif] text-2xl font-semibold italic text-[#b45309] sm:text-3xl">Plan every dream, wisely</p>
-          <p className="mt-3 max-w-md text-xs text-slate-500">Festive greetings from Askus Fin. Loan terms, rates and approvals are always decided by the lender.</p>
+          <p className="mt-3 max-w-md text-xs text-slate-500">Festive greetings from Askus Financial Services. Loan terms, rates and approvals are always decided by the lender.</p>
 
           <div className="mt-8 grid max-w-lg grid-cols-2 gap-6">
             {POINTS.map((p) => (
