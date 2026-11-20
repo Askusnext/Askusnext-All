@@ -65,8 +65,7 @@ export default function BoardPage() {
             onChange={(v) => setCategory(v ?? '')} options={CATEGORIES} />
           <Select placeholder="All agents" allowClear style={{ width:160 }} onChange={(v) => setAgentFilter(v ?? '')}
             options={agents.map(a => ({ value:a, label:a }))} />
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/tickets/new')}
-            style={{ background:'#e8efff', borderColor:'#1e40af' }}>New ticket</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/tickets/new')}>New ticket</Button>
         </div>
       </div>
 
@@ -111,7 +110,7 @@ export default function BoardPage() {
                     );
                   })}
                   <Button type="dashed" size="small" block icon={<PlusOutlined />}
-                    onClick={() => navigate('/tickets/new')} style={{ fontSize:11, color:'#475569' }}>
+                    onClick={() => navigate('/tickets/new')} style={{ fontSize:11 }}>
                     Add ticket
                   </Button>
                 </div>

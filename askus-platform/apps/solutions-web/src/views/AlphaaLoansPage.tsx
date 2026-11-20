@@ -11,7 +11,7 @@ const features = [
 
 export default function AlphaaLoansPage() {
 	return (
-		<SiteChrome animated>
+		<SiteChrome>
 			<section className="sc-section">
 				<h2 className="sc-title">Askus Financial Services</h2>
 				<div className="sc-detail">

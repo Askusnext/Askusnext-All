@@ -275,11 +275,11 @@ export default function TicketDetailPage() {
                   <Input placeholder="UTR / ref number" />
                 </div>
               </div>
-              <Button type="primary" size="small" style={{ background:'#e8efff', borderColor:'#1e40af' }} onClick={handleMarkPaid}>
+              <Button type="primary" size="small" onClick={handleMarkPaid}>
                 Mark as paid
               </Button>
               {ticket.payment.amount > 0 && (
-                <Button type="primary" size="small" style={{ marginLeft:8, background:'#e6f4ea', borderColor:'#166534', color:'#166534' }} onClick={handlePayOnline}>
+                <Button type="primary" size="small" style={{ marginLeft:8 }} onClick={handlePayOnline}>
                   Pay online ₹{ticket.payment.amount.toLocaleString('en-IN')}
                 </Button>
               )}
@@ -341,8 +341,7 @@ export default function TicketDetailPage() {
           <div style={{ marginTop:14, borderTop:'1px solid #f0f0f0', paddingTop:14 }}>
             <Input.TextArea rows={3} placeholder="Add a comment or note…" value={comment}
               onChange={e => setComment(e.target.value)} style={{ marginBottom:8 }} />
-            <Button type="primary" size="small" loading={commenting} onClick={handleComment}
-              style={{ background:'#e8efff', borderColor:'#1e40af' }}>Post comment</Button>
+            <Button type="primary" size="small" loading={commenting} onClick={handleComment}>Post comment</Button>
           </div>
         </div>
       ),
@@ -507,23 +506,20 @@ export default function TicketDetailPage() {
             <>
               <Button icon={<CloseOutlined />} onClick={() => setEditMode(false)}>Cancel</Button>
               <Button type="primary" icon={<SaveOutlined />} loading={saving}
-                onClick={() => editForm.submit()}
-                style={{ background:'#1565C0', borderColor:'#1565C0' }}>
+                onClick={() => editForm.submit()}>
                 Save Changes
               </Button>
             </>
           ) : (
             <>
-              <Button icon={<EyeOutlined />} disabled style={{ color:'#1565C0', borderColor:'#1565C0' }}>View</Button>
-              <Button icon={<EditOutlined />} onClick={enterEdit}
-                style={{ background:'#1565C0', borderColor:'#1565C0', color:'#fff' }}>
+              <Button icon={<EyeOutlined />} disabled>View</Button>
+              <Button icon={<EditOutlined />} onClick={enterEdit}>
                 Edit
               </Button>
               <Select defaultValue={ticket.status} style={{ width:140 }} onChange={v => setNewStatus(v)}>
                 {STATUS_OPTS.map(o => <Select.Option key={o.value} value={o.value}>{o.label}</Select.Option>)}
               </Select>
-              <Button type="primary" loading={statusSaving} onClick={handleStatusSave}
-                style={{ background:'#e8efff', borderColor:'#1e40af' }}>Save status</Button>
+              <Button type="primary" loading={statusSaving} onClick={handleStatusSave}>Save status</Button>
             </>
           )}
         </div>

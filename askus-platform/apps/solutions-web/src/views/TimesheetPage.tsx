@@ -140,8 +140,7 @@ function DayCell({
           value={entry.hours} suffix="h"
           onChange={e => onChange({ ...entry, hours: parseFloat(e.target.value) || 0 })} />
         <Button size="small" type="primary" icon={<SaveOutlined />}
-          onClick={() => setOpen(false)}
-          style={{ background: '#e8efff', borderColor: '#1e40af' }}>
+          onClick={() => setOpen(false)}>
           Save
         </Button>
       </div>
@@ -247,7 +246,7 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, on
               </span>
               <Button size="small" icon={<span>›</span>} onClick={() => setMyWeekStart(w => w.add(1, 'week'))} disabled={isCurrentWk} />
               {!isCurrentWk && (
-                <Button size="small" onClick={() => setMyWeekStart(currentWkStart)} style={{ color: '#1e40af', borderColor: '#1e40af' }}>
+                <Button size="small" onClick={() => setMyWeekStart(currentWkStart)}>
                   Current
                 </Button>
               )}
@@ -265,9 +264,9 @@ function MyEntryTab({ userId, userName, allRows, setAllRows, isAdmin = false, on
             icon={<SaveOutlined />}
             onClick={handleSave}
             style={{
-              background: saved ? '#e6f4ea' : '#e8efff',
-              borderColor: saved ? '#52c41a' : '#1e40af',
-              color: saved ? '#166534' : '#1e40af',
+              background: saved ? '#e6f4ea' : undefined,
+              borderColor: saved ? '#52c41a' : undefined,
+              color: saved ? '#166534' : undefined,
               fontWeight: 600,
               minWidth: 130,
             }}
@@ -402,7 +401,7 @@ function AddStaffModal({ open, onClose, onAdd }: {
   const [form] = Form.useForm();
   return (
     <Modal open={open} onCancel={onClose} title="Add Staff Member"
-      okText="Add" okButtonProps={{ style: { background: '#e8efff', borderColor: '#1e40af' } }}
+      okText="Add"
       onOk={() => form.validateFields().then(v => {
         onAdd({ id: 'user-' + Date.now(), employeeName: v.name, employeeId: v.empId, role: v.role, days: {} });
         form.resetFields(); onClose();
@@ -698,7 +697,6 @@ export default function TimesheetPage() {
               </Tooltip>
               {!LIVE && (
               <Button size="small" icon={<PlusOutlined />} type="primary"
-                style={{ background: '#e8efff', borderColor: '#1e40af' }}
                 onClick={() => setShowAdd(true)}>
                 Add Staff
               </Button>
@@ -797,7 +795,7 @@ export default function TimesheetPage() {
             </span>
             <Button size="small" icon={<span>›</span>} onClick={() => setWeekStart(w => w.add(1, 'week'))} disabled={isCurrentWeek} />
             {!isCurrentWeek && (
-              <Button size="small" onClick={() => setWeekStart(currentWkStart)} style={{ color: '#1e40af', borderColor: '#1e40af' }}>
+              <Button size="small" onClick={() => setWeekStart(currentWkStart)}>
                 Current Week
               </Button>
             )}

@@ -4,11 +4,6 @@
 .scene-spark { animation: solution-spark 4s ease-in-out infinite; }
 @keyframes solution-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
 @keyframes solution-spark { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
-.lp[data-motion='paused'] .scene-float,
-.lp[data-motion='paused'] .scene-float-alt,
-.lp[data-motion='paused'] .scene-spark,
-.lp[data-motion='paused'] .lp-network-card,
-.lp[data-motion='paused'] .lp-connections path { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) {
 	.scene-float, .scene-float-alt, .scene-spark { animation: none; }
 }

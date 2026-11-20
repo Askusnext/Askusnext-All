@@ -42,9 +42,11 @@ export default function HelpCenterPage() {
 				<div style={styles.pillRow}>
 					{categories.map((c) => (
 						<button
+							className="action-button"
+							aria-pressed={category === c.value}
 							key={c.value}
 							type="button"
-							style={{ ...styles.pill, ...(category === c.value ? styles.pillActive : {}) }}
+							style={styles.pill}
 							onClick={() => setCategory(c.value)}
 						>
 							{c.label}
@@ -110,17 +112,9 @@ const styles: Record<string, React.CSSProperties> = {
 	pill: {
 		padding: '8px 16px',
 		borderRadius: 999,
-		border: '1px solid #dbe5f4',
-		background: '#FFF',
-		color: '#334155',
-		fontWeight: 700,
+		fontWeight: 500,
 		fontSize: '.82rem',
 		cursor: 'pointer',
-	},
-	pillActive: {
-		background: '#eff6ff',
-		borderColor: '#bfdbfe',
-		color: '#1e40af',
 	},
 	empty: {
 		background: '#FFF',

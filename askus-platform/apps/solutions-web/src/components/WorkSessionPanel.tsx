@@ -199,7 +199,7 @@ export default function WorkSessionPanel() {
           </div>
           {active
             ? <Button danger size="large" icon={<PauseCircleOutlined />} loading={busy} onClick={() => void stop()}>Stop work</Button>
-            : <Button type="primary" size="large" icon={<PlayCircleOutlined />} loading={busy} onClick={() => void start()} style={{ background: '#e8efff', borderColor: '#1e40af' }}>Start work</Button>}
+            : <Button type="primary" size="large" icon={<PlayCircleOutlined />} loading={busy} onClick={() => void start()}>Start work</Button>}
         </div>
         {active?.last && (
           <div style={{ marginTop: 12, fontSize: 12 }}>

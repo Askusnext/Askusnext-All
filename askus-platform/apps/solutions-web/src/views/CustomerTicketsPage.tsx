@@ -28,7 +28,7 @@ export default function CustomerTicketsPage() {
 		<CustomerPortalLayout>
 			<div style={styles.headerRow}>
 				<h1 style={styles.title}>My Tickets</h1>
-				<Link to="/customer/tickets/new" style={styles.newBtn}>+ New Ticket</Link>
+				<Link to="/customer/tickets/new" className="action-button" style={styles.newBtn}>+ New Ticket</Link>
 			</div>
 
 			{loading ? (
@@ -68,13 +68,11 @@ const styles: Record<string, React.CSSProperties> = {
 		margin: 0,
 		fontSize: '1.5rem',
 		fontWeight: 800,
-		color: '#172b4d',
+		color: 'var(--ink)',
 	},
 	newBtn: {
-		background: '#e8efff',
-		color: '#1e40af',
 		textDecoration: 'none',
-		fontWeight: 700,
+		fontWeight: 500,
 		fontSize: '.88rem',
 		padding: '10px 18px',
 		borderRadius: 8,
@@ -105,7 +103,7 @@ const styles: Record<string, React.CSSProperties> = {
 	},
 	rowTitle: {
 		fontWeight: 700,
-		color: '#172b4d',
+		color: 'var(--ink)',
 		fontSize: '.95rem',
 	},
 	rowMeta: {

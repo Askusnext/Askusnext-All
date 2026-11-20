@@ -299,7 +299,7 @@ export default function TicketFormPage() {
     minHeight: '100%',
     background: '#ffffff',
     padding: '8px 0 32px',
-    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    fontFamily: 'var(--font-family)',
   };
 
   const card: React.CSSProperties = {
@@ -314,7 +314,7 @@ export default function TicketFormPage() {
   const cardTitle: React.CSSProperties = {
     fontSize: 13,
     fontWeight: 700,
-    color: '#1e40af',
+    color: 'var(--ink)',
     letterSpacing: 0.3,
     marginBottom: 16,
     paddingBottom: 10,
@@ -331,14 +331,12 @@ export default function TicketFormPage() {
   const fl: React.CSSProperties = { fontSize: 11, color: '#666' };
 
   const primaryBtn: React.CSSProperties = {
-    padding: '9px 28px', color: '#1e40af', border: '1px solid #adc6f5',
+    padding: '9px 28px',
     borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
-    background: '#e8efff',
   };
   const ghostBtn: React.CSSProperties = {
-    padding: '8px 20px', color: '#555', border: '1px solid #d0d0d0',
+    padding: '8px 20px',
     borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer',
-    background: '#fff',
   };
 
   return (
@@ -357,9 +355,9 @@ export default function TicketFormPage() {
         boxShadow: '0 2px 10px rgba(21,101,192,0.07)',
       }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button style={ghostBtn} onClick={() => navigate(isEdit ? `/tickets/${id}` : '/tickets')}>← Back</button>
+          <button className="action-button" style={ghostBtn} onClick={() => navigate(isEdit ? `/tickets/${id}` : '/tickets')}>← Back</button>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: '#1e40af', margin: 0 }}>
+            <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
               {isEdit ? 'Edit Ticket' : 'New Ticket'}
             </div>
             <div style={{ fontSize: 12, color: '#475569', margin: 0 }}>
@@ -368,17 +366,15 @@ export default function TicketFormPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          {!isEdit && <button style={ghostBtn} onClick={() => form.resetFields()}>Clear form</button>}
+          {!isEdit && <button className="action-button" style={ghostBtn} onClick={() => form.resetFields()}>Clear form</button>}
           <button
+            className="action-button"
             type="button"
             style={{
               ...ghostBtn,
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              color: '#25D366',
-              borderColor: '#B7F0C2',
-              background: '#f4fff8',
             }}
             onClick={sendWhatsApp}
           >
@@ -386,6 +382,7 @@ export default function TicketFormPage() {
             Send via WhatsApp
           </button>
           <button
+            className="action-button"
             style={{ ...primaryBtn, opacity: loading ? 0.8 : 1 }}
             onClick={() => form.submit()}
             disabled={loading}

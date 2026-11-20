@@ -41,7 +41,7 @@ const solutions = [
 
 export default function LandingPage() {
 	return (
-		<SiteChrome animated>
+		<SiteChrome>
 				<section className="lp-hero lp-container" aria-labelledby="home-title">
 					<div className="lp-hero-copy">
 						<div className="lp-eyebrow"><span className="lp-status-dot" /> Connected intelligence. Real possibilities.</div>

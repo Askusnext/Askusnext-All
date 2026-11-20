@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import SiteChrome from '../components/SiteChrome';
 
 const openings = [
@@ -13,54 +14,53 @@ const openings = [
 const CAREERS_EMAIL = 'careers@askussolutions.in';
 
 export default function CareersPage() {
-	const [showSuccess, setShowSuccess] = useState(false);
-	const [submitting, setSubmitting] = useState(false);
+	const [searchParams, setSearchParams] = useSearchParams();
+	const position = searchParams.get('position') ?? '';
+	const applicationHeading = useRef<HTMLHeadingElement>(null);
+	const isApplying = position === 'Open Application' || openings.some((job) => job.title === position);
 
-	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		const form = e.currentTarget;
-		setSubmitting(true);
-		try {
-			await fetch(`https://formsubmit.co/${CAREERS_EMAIL}`, {
-				method: 'POST',
-				body: new FormData(form),
-				mode: 'no-cors',
-			});
-			form.reset();
-			setShowSuccess(true);
-		} finally {
-			setSubmitting(false);
-		}
-	};
+	useEffect(() => {
+		window.scrollTo(0, 0);
+		if (isApplying) applicationHeading.current?.focus({ preventScroll: true });
+	}, [isApplying]);
 
 	return (
 		<SiteChrome>
 			<section className="sc-section">
+				{!isApplying && <>
 				<h2 className="sc-title">Build with us.</h2>
+				{position && <p role="alert" className="sc-form-note">This position is not available. Please select an opening below.</p>}
 				<p className="sc-sub">
 					Help us build the mobility, insurance, and lending experience millions of people rely on. Here's what's
-					currently open.
+					currently open. Select a position to apply.
 				</p>
 				<div className="sc-grid">
 					{openings.map((job) => (
-						<div key={job.title} className="sc-card">
+						<Link key={job.title} className="sc-card sc-job"
+							aria-label={`Apply for ${job.title}`} to={`/careers?${new URLSearchParams({ position: job.title })}`}>
 							<span className="sc-tag">{job.team}</span>
-							<h4>{job.title}</h4>
-							<p>
+							<span className="sc-job-title">{job.title}</span>
+							<span className="sc-job-meta">
 								{job.location} &middot; {job.type}
-							</p>
-						</div>
+							</span>
+							<span className="sc-job-action">Apply now &rarr;</span>
+						</Link>
 					))}
 				</div>
+				<Link className="sc-back" to={`/careers?${new URLSearchParams({ position: 'Open Application' })}`}>
+					No matching position? Send an open application
+				</Link>
+				</>}
 
-				<div className="sc-apply">
-					<h3>Apply now</h3>
+				{isApplying && <>
+				<Link to="/careers" className="sc-back sc-careers-back">&larr; Back to open positions</Link>
+				<div className="sc-apply sc-careers-application" id="career-application">
+					<h1 ref={applicationHeading} tabIndex={-1}>Apply now</h1>
 					<p className="sc-apply-lead">
 						Send us your details and resume — our team reviews every application and will reach out if there's a fit.
 					</p>
-					<form className="sc-apply-form" onSubmit={handleSubmit}>
+					<form className="sc-apply-form" action={`https://formsubmit.co/${CAREERS_EMAIL}`} method="POST" encType="multipart/form-data">
 						<input type="hidden" name="_subject" value="New career application" />
-						<input type="hidden" name="_captcha" value="false" />
 						<input type="hidden" name="_template" value="table" />
 
 						<div className="sc-field-row">
@@ -83,7 +83,7 @@ export default function CareersPage() {
 								<label className="sc-flabel" htmlFor="email">
 									Email
 								</label>
-								<input id="email" name="Email" type="email" placeholder="you@example.com" required />
+								<input id="email" name="email" type="email" placeholder="you@example.com" required />
 							</div>
 							<div className="sc-field">
 								<label className="sc-flabel" htmlFor="mobile">
@@ -97,10 +97,7 @@ export default function CareersPage() {
 							<label className="sc-flabel" htmlFor="position">
 								Position
 							</label>
-							<select id="position" name="Position" required defaultValue="">
-								<option value="" disabled>
-									Select a role
-								</option>
+							<select id="position" name="Position" required value={position} onChange={(event) => setSearchParams({ position: event.target.value })}>
 								{openings.map((job) => (
 									<option key={job.title} value={job.title}>
 										{job.title} — {job.location}
@@ -116,11 +113,19 @@ export default function CareersPage() {
 							</label>
 							<input
 								id="resume"
-								name="Resume"
+								name="attachment"
 								type="file"
 								accept=".pdf,.doc,.docx"
+								aria-describedby="resume-note"
+								onChange={(event) => {
+									const input = event.currentTarget;
+									const file = input.files?.[0];
+									input.setCustomValidity(file && file.size > 10_000_000 ? 'Please choose a resume no larger than 10 MB.' : '');
+									if (!input.validity.valid) input.reportValidity();
+								}}
 								required
 							/>
+							<p id="resume-note" className="sc-form-note">PDF, DOC, or DOCX. Maximum 10 MB.</p>
 						</div>
 
 						<div className="sc-field">
@@ -130,29 +135,18 @@ export default function CareersPage() {
 							<textarea id="message" name="Message" placeholder="Tell us a bit about yourself" />
 						</div>
 
-						<button type="submit" disabled={submitting}>
-							{submitting ? 'Submitting…' : 'Submit Application'}
-						</button>
+						<p className="sc-form-note">
+							Your details and resume will be processed by FormSubmit and emailed to {CAREERS_EMAIL}.
+							After submitting, you will leave this page to complete verification and view the submission result.
+						</p>
+						<button type="submit">Submit Application</button>
 					</form>
+					<p className="sc-form-note">
+						Having trouble submitting? Email your details and resume to <a href={`mailto:${CAREERS_EMAIL}`}>{CAREERS_EMAIL}</a>.
+					</p>
 				</div>
+				</>}
 			</section>
-
-			{showSuccess && (
-				<div className="sc-success-overlay" onClick={() => setShowSuccess(false)}>
-					<div className="sc-success-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
-						<div className="sc-success-tick">
-							<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-								<path d="M20 6 9 17l-5-5" />
-							</svg>
-						</div>
-						<h3>Application Submitted!</h3>
-						<p>Thanks for applying. Our team has received your details and resume, and will reach out if there's a fit.</p>
-						<button type="button" className="sc-success-close" onClick={() => setShowSuccess(false)}>
-							Close
-						</button>
-					</div>
-				</div>
-			)}
 		</SiteChrome>
 	);
 }

@@ -31,7 +31,7 @@ const products = [
 
 export default function ProductsPage() {
 	return (
-		<SiteChrome animated>
+		<SiteChrome>
 			<section className="sc-section">
 				<h2 className="sc-title">Four platforms. One intelligence layer.</h2>
 				<p className="sc-sub">

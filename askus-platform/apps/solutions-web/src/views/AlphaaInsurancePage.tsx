@@ -11,7 +11,7 @@ const features = [
 
 export default function AlphaaInsurancePage() {
 	return (
-		<SiteChrome animated>
+		<SiteChrome>
 			<section className="sc-section">
 				<h2 className="sc-title">Askus Insurance</h2>
 				<div className="sc-detail">
