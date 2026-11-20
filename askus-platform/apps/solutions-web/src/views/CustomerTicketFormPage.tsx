@@ -46,9 +46,11 @@ export default function CustomerTicketFormPage() {
 				<div style={styles.pillRow}>
 					{ticketTypes.map((t) => (
 						<button
+							className="action-button"
+							aria-pressed={ticketType === t.value}
 							key={t.value}
 							type="button"
-							style={{ ...styles.pill, ...(ticketType === t.value ? styles.pillActive : {}) }}
+							style={styles.pill}
 							onClick={() => setTicketType(t.value)}
 						>
 							{t.label}
@@ -63,9 +65,11 @@ export default function CustomerTicketFormPage() {
 				<div style={styles.pillRow}>
 					{priorities.map((p) => (
 						<button
+							className="action-button"
+							aria-pressed={priority === p}
 							key={p}
 							type="button"
-							style={{ ...styles.pill, ...(priority === p ? styles.pillActive : {}) }}
+							style={styles.pill}
 							onClick={() => setPriority(p)}
 						>
 							{p}
@@ -82,7 +86,7 @@ export default function CustomerTicketFormPage() {
 					placeholder="Tell us more about what happened"
 				/>
 
-				<button type="button" style={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
+				<button type="button" className="action-button" style={styles.submitBtn} onClick={handleSubmit} disabled={loading}>
 					{loading ? 'Submitting…' : 'Submit Ticket'}
 				</button>
 			</div>
@@ -95,7 +99,7 @@ const styles: Record<string, React.CSSProperties> = {
 		margin: '0 0 20px',
 		fontSize: '1.5rem',
 		fontWeight: 800,
-		color: '#172b4d',
+		color: 'var(--ink)',
 	},
 	card: {
 		background: '#FFF',
@@ -110,7 +114,7 @@ const styles: Record<string, React.CSSProperties> = {
 		marginBottom: 8,
 		fontSize: '.82rem',
 		fontWeight: 700,
-		color: '#172b4d',
+		color: 'var(--ink)',
 	},
 	pillRow: {
 		display: 'flex',
@@ -120,17 +124,9 @@ const styles: Record<string, React.CSSProperties> = {
 	pill: {
 		padding: '8px 16px',
 		borderRadius: 999,
-		border: '1px solid #dbe5f4',
-		background: '#ffffff',
-		color: '#334155',
-		fontWeight: 700,
+		fontWeight: 500,
 		fontSize: '.82rem',
 		cursor: 'pointer',
-	},
-	pillActive: {
-		background: '#eff6ff',
-		borderColor: '#bfdbfe',
-		color: '#1e40af',
 	},
 	input: {
 		width: '100%',
@@ -155,9 +151,7 @@ const styles: Record<string, React.CSSProperties> = {
 		padding: '13px 26px',
 		borderRadius: 8,
 		border: 0,
-		background: '#e8efff',
-		color: '#1e40af',
-		fontWeight: 700,
+		fontWeight: 500,
 		fontSize: '.95rem',
 		cursor: 'pointer',
 	},

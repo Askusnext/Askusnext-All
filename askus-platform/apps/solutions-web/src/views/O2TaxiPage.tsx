@@ -11,7 +11,7 @@ const features = [
 
 export default function O2TaxiPage() {
 	return (
-		<SiteChrome animated>
+		<SiteChrome>
 			<section className="sc-section">
 				<h2 className="sc-title">O2 Taxi</h2>
 				<div className="sc-detail">

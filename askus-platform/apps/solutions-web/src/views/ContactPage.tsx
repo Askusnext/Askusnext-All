@@ -3,7 +3,11 @@ import SiteChrome from '../components/SiteChrome';
 
 const CONTACT_EMAIL = 'contact@askussolutions.in';
 
-const QUERIES: Record<string, string[]> = {
+const OTHER = 'Other';
+
+const PLATFORMS = ['O2 Taxi', 'Askus Insurance', 'Askus Financial Services', 'AskUs AI Agents', OTHER];
+
+const TAXI_QUERIES: Record<string, string[]> = {
 	Rider: [
 		'Driver Behaviour',
 		'Account Activation/Deactivation Request',
@@ -13,7 +17,7 @@ const QUERIES: Record<string, string[]> = {
 		'Unable to Login',
 		'Unable to Request a Ride',
 		'Collaboration',
-		'Other',
+		OTHER,
 	],
 	Driver: [
 		'How to Join as a Driver',
@@ -23,7 +27,39 @@ const QUERIES: Record<string, string[]> = {
 		'Mobile Number Change Request',
 		'Unable to Login to Driver Account',
 		'Help to Register as a Driver',
-		'Other',
+		OTHER,
+	],
+};
+
+const PLATFORM_QUERIES: Record<string, string[]> = {
+	'Askus Insurance': [
+		'New Policy Enquiry',
+		'Policy Renewal',
+		'Claim Support',
+		'Policy Document / Correction',
+		'Payment / Refund',
+		'Unable to Login',
+		'Collaboration',
+		OTHER,
+	],
+	'Askus Financial Services': [
+		'Loan Enquiry',
+		'Loan Application Status',
+		'EMI / Repayment',
+		'Documents / KYC',
+		'Payment / Refund',
+		'Unable to Login',
+		'Collaboration',
+		OTHER,
+	],
+	'AskUs AI Agents': [
+		'Product Demo Request',
+		'Pricing & Plans',
+		'Integration Support',
+		'Account / Login Issue',
+		'Billing',
+		'Collaboration',
+		OTHER,
 	],
 };
 
@@ -31,14 +67,31 @@ export default function ContactPage() {
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
 	const [mobile, setMobile] = useState('');
+	const [platform, setPlatform] = useState('');
 	const [role, setRole] = useState('');
 	const [query, setQuery] = useState('');
+	const [customQuery, setCustomQuery] = useState('');
 	const [message, setMessage] = useState('');
 	const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+	const isTaxi = platform === 'O2 Taxi';
+	const isOtherPlatform = platform === OTHER;
+	const queries = isTaxi ? TAXI_QUERIES[role] || [] : PLATFORM_QUERIES[platform] || [];
+	const showQuerySelect = !!platform && !isOtherPlatform;
+	const showCustomQuery = isOtherPlatform || query === OTHER;
+	const issue = showCustomQuery ? customQuery.trim() : query;
+
+	const handlePlatformChange = (value: string) => {
+		setPlatform(value);
+		setRole('');
+		setQuery('');
+		setCustomQuery('');
+	};
 
 	const handleRoleChange = (value: string) => {
 		setRole(value);
 		setQuery('');
+		setCustomQuery('');
 	};
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -52,10 +105,11 @@ export default function ContactPage() {
 					name,
 					email,
 					mobile,
-					role,
-					query,
+					platform,
+					...(isTaxi ? { role } : {}),
+					query: issue,
 					message,
-					_subject: `[${role}] ${query}`,
+					_subject: `[${[platform, isTaxi ? role : ''].filter(Boolean).join(' · ')}] ${issue}`,
 				}),
 			});
 			if (!res.ok) throw new Error('Request failed');
@@ -63,8 +117,10 @@ export default function ContactPage() {
 			setName('');
 			setEmail('');
 			setMobile('');
+			setPlatform('');
 			setRole('');
 			setQuery('');
+			setCustomQuery('');
 			setMessage('');
 		} catch {
 			setStatus('error');
@@ -127,31 +183,63 @@ export default function ContactPage() {
 						<select
 							className="sc-select"
 							required
-							value={role}
-							onChange={(e) => handleRoleChange(e.target.value)}
+							value={platform}
+							onChange={(e) => handlePlatformChange(e.target.value)}
 						>
 							<option value="" disabled>
-								You are a…
+								Which platform is this about?
 							</option>
-							<option value="Driver">Driver</option>
-							<option value="Rider">Rider</option>
-						</select>
-						<select
-							className="sc-select"
-							required
-							value={query}
-							onChange={(e) => setQuery(e.target.value)}
-							disabled={!role}
-						>
-							<option value="" disabled>
-								{role ? 'Select your query' : 'Select a role first'}
-							</option>
-							{(QUERIES[role] || []).map((q) => (
-								<option key={q} value={q}>
-									{q}
+							{PLATFORMS.map((p) => (
+								<option key={p} value={p}>
+									{p}
 								</option>
 							))}
 						</select>
+						{isTaxi && (
+							<select
+								className="sc-select"
+								required
+								value={role}
+								onChange={(e) => handleRoleChange(e.target.value)}
+							>
+								<option value="" disabled>
+									You are a…
+								</option>
+								<option value="Driver">Driver</option>
+								<option value="Rider">Rider</option>
+							</select>
+						)}
+						{showQuerySelect && (
+							<select
+								className="sc-select"
+								required
+								value={query}
+								onChange={(e) => {
+									setQuery(e.target.value);
+									setCustomQuery('');
+								}}
+								disabled={isTaxi && !role}
+							>
+								<option value="" disabled>
+									{isTaxi && !role ? 'Select a role first' : 'Select your query'}
+								</option>
+								{queries.map((q) => (
+									<option key={q} value={q}>
+										{q}
+									</option>
+								))}
+							</select>
+						)}
+						{showCustomQuery && (
+							<input
+								type="text"
+								placeholder="Type your issue"
+								required
+								maxLength={120}
+								value={customQuery}
+								onChange={(e) => setCustomQuery(e.target.value)}
+							/>
+						)}
 						<textarea
 							placeholder="Your message"
 							required

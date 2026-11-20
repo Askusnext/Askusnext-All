@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { ArrowRightOutlined, CloseOutlined, MenuOutlined, PauseOutlined, CaretRightOutlined } from '@ant-design/icons';
+import { ArrowRightOutlined, CloseOutlined, MenuOutlined } from '@ant-design/icons';
 import Brand from './Brand';
 import StaffLoginModal from './StaffLoginModal';
 import '../styles/site.css';
@@ -10,7 +10,6 @@ const navLinks = [
 	{ to: '/home', label: 'Home' },
 	{ to: '/about', label: 'About Us' },
 	{ to: '/products', label: 'Solutions' },
-	{ to: '/services', label: 'Our Service' },
 	{ to: '/careers', label: 'Careers' },
 	{ to: '/contact', label: 'Contact' },
 ];
@@ -22,15 +21,14 @@ const products = [
 	{ to: '/products/alphaa-loans', label: 'Askus Financial Services' },
 ];
 
-export default function SiteChrome({ children, animated = false }: { children: ReactNode; animated?: boolean }) {
+export default function SiteChrome({ children }: { children: ReactNode }) {
 	const [showLogin, setShowLogin] = useState(false);
 	const [menuOpen, setMenuOpen] = useState(false);
-	const [motionPaused, setMotionPaused] = useState(false);
 	const menuButton = useRef<HTMLButtonElement>(null);
 	const closeLogin = () => setShowLogin(false);
 
 	return (
-		<div className="lp" id="home" data-motion={motionPaused ? 'paused' : 'playing'}>
+		<div className="lp" id="home">
 			<a className="lp-skip" href="#main-content">Skip to content</a>
 			<header className="lp-header">
 				<div className="lp-container lp-topbar" onKeyDown={(event) => {
@@ -55,14 +53,6 @@ export default function SiteChrome({ children, animated = false }: { children: R
 			</header>
 
 			<main className="lp-main" id="main-content" tabIndex={-1}>
-				{animated && (
-					<div className="lp-container lp-motion-toolbar">
-						<button type="button" className="lp-motion-toggle" aria-pressed={motionPaused} onClick={() => setMotionPaused(!motionPaused)}>
-							{motionPaused ? <CaretRightOutlined aria-hidden /> : <PauseOutlined aria-hidden />}
-							{motionPaused ? 'Play animations' : 'Pause animations'}
-						</button>
-					</div>
-				)}
 				{children}
 			</main>
 
@@ -75,7 +65,7 @@ export default function SiteChrome({ children, animated = false }: { children: R
 						</div>
 						<div>
 							<h2>Company</h2>
-							<ul>{navLinks.filter((link) => link.to !== '/products' && link.to !== '/services').map((link) => <li key={link.to}><Link to={link.to}>{link.label}</Link></li>)}</ul>
+							<ul>{navLinks.filter((link) => link.to !== '/products').map((link) => <li key={link.to}><Link to={link.to}>{link.label}</Link></li>)}</ul>
 						</div>
 						<div>
 							<h2>Our solutions</h2>
@@ -83,7 +73,7 @@ export default function SiteChrome({ children, animated = false }: { children: R
 						</div>
 						<div>
 							<h2>Get in touch</h2>
-							<ul><li><Link to="/services">Our Service</Link></li><li><Link to="/contact">Contact our team <ArrowRightOutlined aria-hidden /></Link></li><li><button type="button" onClick={() => setShowLogin(true)}>Staff login <ArrowRightOutlined aria-hidden /></button></li></ul>
+							<ul><li><Link to="/contact">Contact our team <ArrowRightOutlined aria-hidden /></Link></li><li><button type="button" onClick={() => setShowLogin(true)}>Staff login <ArrowRightOutlined aria-hidden /></button></li></ul>
 						</div>
 					</div>
 					<div className="lp-footer-bottom"><span>&copy; {new Date().getFullYear()} Askus Next Global Solutions Private Limited. All rights reserved.</span><a href="#home">Back to top <span aria-hidden="true">&uarr;</span></a></div>

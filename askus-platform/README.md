@@ -18,9 +18,17 @@ Calendar team labels translate those identifiers for display without changing
 membership or access rules.
 
 ## Solutions design
-All Solutions pages share a white-and-blue design with dark, high-contrast text.
+All Solutions pages use self-hosted Poppins typography with dark headings and
+body text. Public, login, staff/admin, and customer action buttons share a bright
+blue (`#0066ff`) background and white labels, with darker hover/pressed states.
+Disabled controls and semantic success, warning, and destructive states remain
+distinct. The shared CSS tokens and Ant Design theme define these styles;
+native action controls use the `action-button` class instead of inline colours.
+Poppins font files are reused from the Financial Services app and distributed
+under the [SIL Open Font License](apps/solutions-web/public/fonts/OFL.txt).
 [SiteChrome](apps/solutions-web/src/components/SiteChrome.tsx) provides public
-navigation, footer, and staff login; its
+navigation, footer, and staff login. The public header stays fixed at the top
+(72px desktop, 64px mobile), with content and anchor offsets to prevent overlap; its
 [site stylesheet](apps/solutions-web/src/styles/site.css) also styles the home
 page. [Public page styles](apps/solutions-web/src/styles/public-pages.css) cover
 marketing pages, product details, and forms.
@@ -48,6 +56,26 @@ Run layout and login interaction tests with
 `npm run test --workspace @askus/solutions-web -- test/LandingPage.test.tsx test/Layouts.test.tsx test/LoginPages.test.tsx`.
 On Node 25, prefix this command with `NODE_OPTIONS=--no-experimental-webstorage`
 so jsdom supplies browser storage instead of Node's experimental implementation.
+
+## Careers applications
+Selecting a position navigates to `/careers?position=...`, replacing the job
+list with the application form at the top of the page. The selected role survives
+a refresh or shared URL. A back link returns to the openings, and an open
+application is also available. Changing the form's position selector preserves
+entered details and the resume; refreshing does not preserve personal fields.
+The Solutions `/careers` form posts applicant details and a resume directly to
+FormSubmit using `multipart/form-data`, addressed to `careers@askussolutions.in`.
+The applicant email is used as Reply-To and the resume as an attachment.
+PDF, DOC, and DOCX resumes are accepted, up to 10 MB (10,000,000 bytes).
+FormSubmit handles CAPTCHA and the submission result on its own page; the app
+does not claim email delivery from an opaque `no-cors` response.
+
+Before using this in production, submit from the deployed site and activate the
+form using the confirmation email sent to the careers inbox (check spam too).
+Then send a test application and verify its details, Reply-To, and resume arrive.
+Local tests do not send email or prove inbox delivery. If submission fails,
+applicants can email the same address directly.
+See [FormSubmit documentation](https://formsubmit.co/documentation).
 
 ## Financial services home page
 The financial services `/` page uses

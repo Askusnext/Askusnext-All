@@ -11,7 +11,7 @@ const features = [
 
 export default function AIAgentsPage() {
 	return (
-		<SiteChrome animated>
+		<SiteChrome>
 			<section className="sc-section">
 				<h2 className="sc-title">AskUs AI Agents</h2>
 				<div className="sc-detail">

@@ -24,8 +24,7 @@ export default function TicketsPage() {
         </div>
         <div style={{ display:'flex', gap:8 }}>
           <Button>Export CSV</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/tickets/new')}
-            style={{ background:'#e8efff', borderColor:'#1e40af' }}>New ticket</Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/tickets/new')}>New ticket</Button>
         </div>
       </div>
 
@@ -103,7 +102,7 @@ export default function TicketsPage() {
                   <td style={{ padding:'10px 14px' }} onClick={e => e.stopPropagation()}>
                     <div style={{ display:'flex', gap:5 }}>
                       <Button size="small" onClick={() => navigate(`/tickets/${t.id}`)}>View</Button>
-                      <Button size="small" type="primary" style={{ background:'#e8efff', borderColor:'#1e40af' }}
+                      <Button size="small" type="primary"
                         onClick={() => navigate(`/tickets/${t.id}`)}>Edit</Button>
                     </div>
                   </td>

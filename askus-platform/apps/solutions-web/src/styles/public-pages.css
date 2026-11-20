@@ -4,20 +4,29 @@
 .sc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 22px; margin-top: 40px; }
 .sc-card { min-width: 0; background: #ffffff; border: 1px solid #dbe5f4; border-radius: 18px; padding: 28px; transition: border-color .2s, transform .2s; }
 a.sc-card:hover { border-color: #1d4ed8; transform: translateY(-3px); }
-.sc-card h4 { margin: 12px 0; font-size: 20px; font-weight: 600; color: #1e40af; }
+.sc-job { text-align: left; color: #172b4d; }
+.sc-job:hover { border-color: #1d4ed8; background: #eff6ff; }
+.sc-job-title { display: block; margin: 12px 0; font-size: 20px; font-weight: 600; color: var(--ink); }
+.sc-job-meta { display: block; color: #334155; font-size: 14px; line-height: 1.8; }
+.sc-job-action { display: inline-block; margin-top: 20px; padding: 8px 14px; border-radius: 8px; background: var(--brand); color: #fff; font-size: 13px; font-weight: 500; }
+.sc-job:hover .sc-job-action { background: var(--brand-hover); }
+.lp .sc-careers-back { margin-top: 0; }
+.sc-apply.sc-careers-application { margin-top: 24px; }
+.lp .sc-careers-application h1 { margin-bottom: 12px; font-size: 30px; }
+.sc-card h4 { margin: 12px 0; font-size: 20px; font-weight: 600; color: var(--ink); }
 .lp .sc-card p { color: #334155; font-size: 14px; line-height: 1.8; }
-.sc-tag { display: inline-block; border-radius: 20px; padding: 5px 12px; background: #e8efff; color: #1e40af; font-size: 11px; font-weight: 600; }
+.sc-tag { display: inline-block; border-radius: 20px; padding: 5px 12px; background: #e8efff; color: var(--ink); font-size: 11px; font-weight: 600; }
 .sc-detail { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 40px; margin-top: 40px; }
 .solution-visual.sc-detail-visual { width: 440px; max-width: 100%; flex-shrink: 0; padding: 16px; border-radius: 20px; background: #fff; border: 1px solid #dbe5f4; box-shadow: 0 18px 40px #172b4d10; }
 .sc-detail-lead { flex: 1 1 260px; min-width: 0; color: #334155; font-size: 17px; line-height: 1.85; }
 .sc-prose { margin-top: 32px; }
 .lp .sc-prose p { margin-bottom: 20px; color: #334155; line-height: 1.85; }
-.lp .sc-back { display: inline-flex; margin-top: 28px; padding: 12px 20px; border: 1px solid #dbe5f4; border-radius: 10px; color: #1e40af; font-size: 13px; font-weight: 600; }
-.sc-back:hover { background: #eff6ff; }
+.lp .sc-back { display: inline-flex; margin-top: 28px; padding: 12px 20px; border: 1px solid var(--brand); border-radius: 10px; background: var(--brand); color: #fff; font-size: 13px; font-weight: 500; }
+.sc-back:hover { background: var(--brand-hover); }
 .sc-contact-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; margin-top: 40px; }
 .sc-crow { display: flex; gap: 14px; margin-bottom: 26px; }
 .sc-dot2 { width: 8px; height: 8px; margin-top: 8px; background: #1d4ed8; border-radius: 50%; flex-shrink: 0; }
-.sc-clabel, .sc-flabel { font-size: 12px; font-weight: 600; color: #1e40af; }
+.sc-clabel, .sc-flabel { font-size: 12px; font-weight: 600; color: var(--ink); }
 .sc-cval { margin-top: 6px; overflow-wrap: anywhere; }
 .sc-contact-form, .sc-apply-form { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .sc-contact-form input, .sc-contact-form textarea, .sc-select,
@@ -26,9 +35,9 @@ a.sc-card:hover { border-color: #1d4ed8; transform: translateY(-3px); }
 }
 .sc-contact-form textarea, .sc-apply-form textarea { min-height: 125px; resize: vertical; }
 .sc-contact-form button, .sc-apply-form button, .sc-success-close {
-	align-self: flex-start; padding: 13px 24px; border: 1px solid #adc6f5; border-radius: 10px; background: #e8efff; color: #1e40af; font-weight: 600;
+	align-self: flex-start; padding: 13px 24px; border: 1px solid var(--brand); border-radius: 10px; background: var(--brand); color: #fff; font-weight: 500;
 }
-.sc-contact-form button:hover, .sc-apply-form button:hover, .sc-success-close:hover { background: #dbeafe; }
+.sc-contact-form button:hover:not(:disabled), .sc-apply-form button:hover:not(:disabled), .sc-success-close:hover { background: var(--brand-hover); }
 .sc-contact-form button:disabled, .sc-apply-form button:disabled { opacity: .6; cursor: wait; }
 .lp .sc-form-note { font-size: 13px; color: #334155; }
 .sc-apply { margin-top: 44px; max-width: 800px; border: 1px solid #dbe5f4; border-radius: 20px; background: #ffffff; padding: clamp(20px, 4vw, 36px); }
@@ -36,7 +45,7 @@ a.sc-card:hover { border-color: #1d4ed8; transform: translateY(-3px); }
 .lp .sc-apply-lead { margin-bottom: 26px; color: #334155; font-size: 14px; }
 .sc-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .sc-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-.sc-apply-form input[type=file]::file-selector-button { padding: 8px 12px; margin-right: 10px; background: #e8efff; color: #1e40af; border: none; border-radius: 6px; cursor: pointer; }
+.sc-apply-form input[type=file]::file-selector-button { font: inherit; padding: 8px 12px; margin-right: 10px; background: var(--brand); color: #fff; border: none; border-radius: 6px; cursor: pointer; }
 .sc-success-overlay { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: #172b4d80; }
 .sc-success-modal { width: 100%; max-width: 430px; background: #fff; padding: 36px; border-radius: 20px; text-align: center; box-shadow: 0 24px 70px #172b4d30; }
 .sc-success-tick { width: 72px; height: 72px; margin: 0 auto 20px; display: grid; place-items: center; border-radius: 50%; background: #e8efff; color: #1e40af; }

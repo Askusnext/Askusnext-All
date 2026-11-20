@@ -130,10 +130,11 @@ export default function PresenceGate({ role, dark = true }: { role?: string; dar
     <>
       <Popover trigger="click" open={reviewOpen} onOpenChange={setReviewOpen} content={review} title="Browser presence" placement="topLeft">
         <button
+          className="action-button"
           type="button"
           data-testid="presence-indicator"
           aria-label={`Browser presence: ${label}`}
-          style={{ all: 'unset', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: dark ? 'rgba(255,255,255,0.85)' : undefined, marginBottom: 10 }}
+          style={{ cursor: 'pointer', display: 'flex', flexWrap: 'wrap', alignItems: 'center', padding: '6px 8px', gap: 8, fontSize: 12, color: dark ? '#fff' : undefined, marginBottom: 10 }}
         >
           <Tag color={STATE_COLOR[shownState]} style={{ margin: 0 }}>{label}</Tag>
           <span style={{ textDecoration: 'underline' }}>Presence</span>

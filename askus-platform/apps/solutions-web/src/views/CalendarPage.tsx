@@ -49,11 +49,11 @@ function MiniCalendar({
     <div style={{ padding: '12px 14px', userSelect: 'none' }}>
       {/* Mini header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <Button type="text" size="small" icon={<LeftOutlined />} onClick={onPrev} style={{ color: '#595959' }} />
+        <Button type="text" size="small" icon={<LeftOutlined />} onClick={onPrev} />
         <span style={{ fontWeight: 600, fontSize: 13, color: '#262626' }}>
           {MONTHS_SHORT[month]} {year}
         </span>
-        <Button type="text" size="small" icon={<RightOutlined />} onClick={onNext} style={{ color: '#595959' }} />
+        <Button type="text" size="small" icon={<RightOutlined />} onClick={onNext} />
       </div>
 
       {/* Mini day headers */}
@@ -170,10 +170,11 @@ function DayEventList({
           </div>
         </div>
         <button
+          className="action-button"
           onClick={onClose}
           style={{
-            background: '#fff', border: '1px solid #dbe5f4', borderRadius: '50%',
-            width: 26, height: 26, cursor: 'pointer', color: '#1e40af', fontSize: 15,
+            borderRadius: '50%', padding: 0,
+            width: 26, height: 26, cursor: 'pointer', fontSize: 15,
             display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
           }}
         >✕</button>
@@ -347,7 +348,7 @@ export default function CalendarPage() {
       display: 'flex',
       height: 'calc(100vh - 64px)',
       background: '#f5f5f5',
-      fontFamily: '"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif',
+      fontFamily: 'var(--font-family)',
       overflow: 'hidden',
     }}>
 
@@ -453,14 +454,13 @@ export default function CalendarPage() {
           }}>
             {(['Day', 'Week', 'Month', 'Year'] as ViewMode[]).map(v => (
               <button
+                className="action-button"
+                aria-pressed={view === v}
                 key={v}
                 onClick={() => setView(v)}
                 style={{
                   padding: '4px 14px', borderRadius: 6, border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 500, transition: 'all 0.15s',
-                  background: view === v ? '#fff' : 'transparent',
-                  color: view === v ? '#1f1f1f' : '#475569',
-                  boxShadow: view === v ? '0 1px 4px rgba(0,0,0,0.12)' : 'none',
                 }}
               >{v}</button>
             ))}

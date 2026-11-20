@@ -198,11 +198,10 @@ export default function PolicyAmountChecker({
                   </Form.Item>
 
                   <Button
+                    type="primary"
                     htmlType="submit"
                     block
                     style={{
-                      background: '#FF6B5B',
-                      color: '#fff',
                       border: 'none',
                       height: 44,
                       fontSize: 15,
@@ -345,7 +344,7 @@ export default function PolicyAmountChecker({
                   block
                   size="large"
                   type="primary"
-                  style={{ background: '#e8efff', borderRadius: 8, fontWeight: 600 }}
+                  style={{ borderRadius: 8, fontWeight: 600 }}
                   onClick={handleClose}
                 >
                   Done

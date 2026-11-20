@@ -1,13 +1,12 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, type ThemeConfig } from 'antd';
 import { store } from './store';
 import AppLayout from './components/AppLayout';
 import LoginPage from './views/LoginPage';
 import LandingPage from './views/LandingPage';
 import AboutPage from './views/AboutPage';
-import ServicesPage from './views/ServicesPage';
 import ContactPage from './views/ContactPage';
 import CareersPage from './views/CareersPage';
 import ProductsPage from './views/ProductsPage';
@@ -86,40 +85,59 @@ function CustomerProtectedRoute({ children }: { children: React.ReactNode }) {
   return token ? <>{children}</> : <Navigate to="/customer/login" replace />;
 }
 
-export default function App() {
-  return (
-    <Provider store={store}>
-      <ConfigProvider
-        theme={{
+const solutionsTheme: ThemeConfig = {
           token: {
-            colorPrimary: '#1e40af',
-            colorLink: '#1e40af',
-            colorText: '#172b4d',
-            colorTextSecondary: '#334155',
-            colorTextDescription: '#334155',
+            colorPrimary: '#0066ff',
+            colorLink: '#0052cc',
+            colorText: '#202124',
+            colorTextSecondary: '#414141',
+            colorTextDescription: '#414141',
             colorTextPlaceholder: '#475569',
             colorTextDisabled: '#475569',
-            colorTextHeading: '#1e40af',
+            colorTextHeading: '#202124',
             colorBgLayout: '#ffffff',
             colorBorder: '#dbe5f4',
             colorBorderSecondary: '#dbe5f4',
             borderRadius: 12,
             controlHeight: 40,
-            fontFamily: "'Segoe UI', Roboto, Arial, sans-serif",
+            fontFamily: "'Poppins', system-ui, -apple-system, sans-serif",
           },
           components: {
             Button: {
-              colorPrimary: '#e8efff',
-              colorPrimaryHover: '#dbeafe',
-              colorPrimaryActive: '#c4d9fa',
-              primaryColor: '#1e40af',
+              colorPrimary: '#0066ff',
+              colorPrimaryHover: '#0052cc',
+              colorPrimaryActive: '#0043a8',
+              primaryColor: '#ffffff',
+              defaultBg: '#0066ff',
+              defaultColor: '#ffffff',
+              defaultBorderColor: '#0066ff',
+              defaultHoverBg: '#0052cc',
+              defaultHoverColor: '#ffffff',
+              defaultHoverBorderColor: '#0052cc',
+              defaultActiveBg: '#0043a8',
+              defaultActiveColor: '#ffffff',
+              defaultActiveBorderColor: '#0043a8',
+              colorLink: '#ffffff',
+              colorLinkHover: '#ffffff',
+              colorLinkActive: '#ffffff',
+              colorText: '#ffffff',
+              textHoverBg: '#0052cc',
+              fontWeight: 500,
               primaryShadow: 'none',
             },
             Table: { headerBg: '#ffffff', rowHoverBg: '#eff6ff' },
             Tabs: { itemSelectedColor: '#1e40af', inkBarColor: '#1e40af' },
           },
-        }}
-      >
+};
+
+ConfigProvider.config({
+  holderRender: (children) => <ConfigProvider theme={solutionsTheme}>{children}</ConfigProvider>,
+});
+
+export default function App() {
+  return (
+    <Provider store={store}>
+      <ConfigProvider theme={solutionsTheme}>
         <BrowserRouter>
           <Routes>
             <Route path="/login"           element={<LoginPage />} />
@@ -128,7 +146,6 @@ export default function App() {
 
             <Route path="/home"                          element={<LandingPage />} />
             <Route path="/about"                         element={<AboutPage />} />
-            <Route path="/services"                      element={<ServicesPage />} />
             <Route path="/contact"                       element={<ContactPage />} />
             <Route path="/careers"                       element={<CareersPage />} />
             <Route path="/products"                      element={<ProductsPage />} />

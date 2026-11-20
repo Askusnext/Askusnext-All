@@ -95,8 +95,8 @@ export default function DashboardPage() {
       title: '',
       key: 'action',
       render: (_: unknown, r: Ticket) => (
-        <Button size="small" type="primary" ghost
-          style={{ borderColor: '#1e40af', color: '#1e40af', fontSize: 11 }}
+        <Button size="small" type="primary"
+          style={{ fontSize: 11 }}
           onClick={() => navigate(`/tickets/${r.id}`)}>
           View
         </Button>
@@ -178,7 +178,7 @@ export default function DashboardPage() {
           }}>
             <PriorityTag priority={r.priority} />
             <Button size="small" type="primary"
-              style={{ background: '#e8efff', borderColor: '#1e40af', fontSize: 11 }}
+              style={{ fontSize: 11 }}
               onClick={e => { e.stopPropagation(); navigate(`/tickets/${r.id}`); }}>
               View →
             </Button>
@@ -330,11 +330,11 @@ export default function DashboardPage() {
             }}>
               <Tooltip title="List view">
                 <button
+                  className="action-button"
+                  aria-pressed={viewMode === 'list'}
                   onClick={() => setViewMode('list')}
                   style={{
                     padding: '4px 10px', border: 'none', cursor: 'pointer',
-                    background: viewMode === 'list' ? '#e8efff' : '#fff',
-                    color: viewMode === 'list' ? '#1e40af' : '#475569',
                     transition: 'all 0.2s',
                     display: 'flex', alignItems: 'center',
                   }}
@@ -344,11 +344,11 @@ export default function DashboardPage() {
               </Tooltip>
               <Tooltip title="Card view">
                 <button
+                  className="action-button"
+                  aria-pressed={viewMode === 'card'}
                   onClick={() => setViewMode('card')}
                   style={{
                     padding: '4px 10px', border: 'none', cursor: 'pointer',
-                    background: viewMode === 'card' ? '#e8efff' : '#fff',
-                    color: viewMode === 'card' ? '#1e40af' : '#475569',
                     transition: 'all 0.2s',
                     display: 'flex', alignItems: 'center',
                   }}
@@ -357,7 +357,7 @@ export default function DashboardPage() {
                 </button>
               </Tooltip>
             </div>
-            <Button type="link" style={{ color: '#1e40af' }} onClick={() => navigate('/renewals')}>
+            <Button type="link" onClick={() => navigate('/renewals')}>
               View all →
             </Button>
           </div>

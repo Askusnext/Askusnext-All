@@ -80,7 +80,7 @@ export default function CustomerTicketDetailPage() {
 					rows={3}
 					placeholder="Write a reply…"
 				/>
-				<button type="button" style={styles.replyBtn} onClick={handleReply} disabled={sending}>
+				<button type="button" className="action-button" style={styles.replyBtn} onClick={handleReply} disabled={sending}>
 					{sending ? 'Sending…' : 'Send Reply'}
 				</button>
 			</div>
@@ -113,7 +113,7 @@ const styles: Record<string, React.CSSProperties> = {
 		margin: '6px 0 0',
 		fontSize: '1.3rem',
 		fontWeight: 800,
-		color: '#172b4d',
+		color: 'var(--ink)',
 	},
 	badgeRow: {
 		marginTop: 12,
@@ -147,7 +147,7 @@ const styles: Record<string, React.CSSProperties> = {
 		marginBottom: 12,
 		fontSize: '1.05rem',
 		fontWeight: 800,
-		color: '#172b4d',
+		color: 'var(--ink)',
 	},
 	timeline: {
 		display: 'flex',
@@ -191,9 +191,7 @@ const styles: Record<string, React.CSSProperties> = {
 		padding: '11px 24px',
 		borderRadius: 8,
 		border: 0,
-		background: '#eff6ff',
-		color: '#1e40af',
-		fontWeight: 700,
+		fontWeight: 500,
 		fontSize: '.9rem',
 		cursor: 'pointer',
 	},
