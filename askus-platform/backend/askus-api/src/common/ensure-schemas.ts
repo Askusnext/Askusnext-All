@@ -1,6 +1,6 @@
 import { Client } from 'pg';
 
-export const DB_SCHEMAS = ['identity', 'admin', 'taxi', 'insurance', 'loans', 'organic', 'reporting', 'solutions'];
+export const DB_SCHEMAS = ['identity', 'admin', 'taxi', 'insurance', 'loans', 'organic', 'reporting', 'solutions', 'business'];
 
 // TypeORM synchronize does not create schemas, and hosted Postgres (Supabase/Neon) starts empty.
 export async function ensureSchemas(url: string, ssl: boolean) {

@@ -8,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ActivityModule } from './activity/activity.module';
 import { AdminModule } from './admin/admin.module';
 import { AuditModule } from './audit/audit.module';
+import { BusinessModule } from './business/business.module';
 import { CustomerModule } from './customer/customer.module';
 import { IdentityModule } from './identity/identity.module';
 import { InsuranceModule } from './insurance/insurance.module';
@@ -62,6 +63,7 @@ class HealthController {
     OrganicModule,
     ReportingModule,
     SolutionsModule,
+    BusinessModule,
   ],
   controllers: [HealthController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

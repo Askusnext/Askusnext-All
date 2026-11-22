@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Row, Col, Statistic, Table, Button, Alert, Skeleton, Tag, Tooltip } from 'antd';
+import { Card, Row, Col, Table, Button, Alert, Skeleton, Tag, Tooltip } from 'antd';
 import {
   ArrowUpOutlined,
   WarningOutlined,
@@ -10,6 +10,9 @@ import {
   CalendarOutlined,
   UserOutlined,
   SafetyOutlined,
+  CustomerServiceOutlined,
+  InboxOutlined,
+  ClockCircleOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useKPIs, useExpiryAlerts, useMonthlyData } from '../hooks';
@@ -17,7 +20,36 @@ import { ExpiryTag, StatusBadge, PriorityTag, AvatarInitials } from '../componen
 import CountersPanel from '../components/CountersPanel';
 import type { Ticket } from '../types';
 
-const BAR_COLORS = ['#1e40af', '#E8A0A8', '#A0BBD8', '#9DCCA8'];
+const INK = '#1f1f1d';
+const FAINT = '#8a8984';
+const CARD = { borderRadius: 12 };
+const BAR_COLORS = ['linear-gradient(180deg, #fb923c, #f97316)', 'linear-gradient(180deg, #818cf8, #6366f1)', 'linear-gradient(180deg, #34d399, #059669)', 'linear-gradient(180deg, #f472b6, #db2777)', 'linear-gradient(180deg, #fbbf24, #d97706)'];
+
+function KpiCard({ label, value, tone, icon, delta, up, loading, to }: {
+  label: string; value?: number; tone: string; icon: React.ReactNode; delta: string; up?: boolean; loading?: boolean; to?: string;
+}) {
+  const navigate = useNavigate();
+  const open = () => { if (to) navigate(to); };
+  return (
+    <div
+      className={`dash-kpi dash-kpi--${tone}${to ? ' is-link' : ''}`}
+      role={to ? 'link' : undefined}
+      tabIndex={to ? 0 : undefined}
+      aria-label={to ? `${label}: ${value ?? 0}. Open` : undefined}
+      onClick={open}
+      onKeyDown={(e) => { if (to && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); open(); } }}
+    >
+      <span className="dash-kpi-icon" aria-hidden>{icon}</span>
+      {loading ? <Skeleton active paragraph={false} title={{ width: '60%' }} /> : (
+        <>
+          <div className="dash-kpi-value">{value ?? 0}</div>
+          <div className="dash-kpi-label">{label}</div>
+          <div className="dash-kpi-sub">{up && <ArrowUpOutlined style={{ marginRight: 3 }} />}{delta}</div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { data: kpis, loading: kloading } = useKPIs();
@@ -119,21 +151,21 @@ export default function DashboardPage() {
           style={{
             background: '#fff',
             borderRadius: 12,
-            border: '1px solid #f0f0f0',
+            border: '1px solid #ecebe6',
             padding: '16px',
             cursor: 'pointer',
             transition: 'all 0.2s',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+            boxShadow: 'none',
           }}
-          onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(200,16,46,0.12)')}
-          onMouseLeave={e => (e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.06)')}
+          onMouseEnter={e => (e.currentTarget.style.background = '#fafaf8')}
+          onMouseLeave={e => (e.currentTarget.style.background = '#fff')}
         >
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{
                 width: 36, height: 36, borderRadius: 8,
-                background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: '#f3f2ee', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <CarOutlined style={{ color: '#1e40af', fontSize: 16 }} />
               </div>
@@ -173,7 +205,7 @@ export default function DashboardPage() {
           {/* Footer */}
           <div style={{
             marginTop: 12, paddingTop: 10,
-            borderTop: '1px solid #f5f5f5',
+            borderTop: '1px solid #ecebe6',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
             <PriorityTag priority={r.priority} />
@@ -189,93 +221,56 @@ export default function DashboardPage() {
   );
 
   return (
-    <div>
+    <div className="dash">
       {/* Header */}
       <CountersPanel />
       {/* KPI cards */}
-      <Row gutter={12} style={{ marginBottom: 20 }}>
+      <Row gutter={[14, 14]} style={{ marginBottom: 14 }}>
         {[
-          { label: 'Insurance tickets', value: kpis?.insuranceTickets, color: '#1565C0', delta: 'Insurance queue' },
-          { label: 'O2 taxi tickets', value: kpis?.o2TaxiTickets, color: '#2e7d32', delta: 'Taxi query queue' },
-          { label: 'General tickets', value: kpis?.generalTickets, color: '#d46b08', delta: 'General operations' },
-          { label: 'Daily activity tickets', value: kpis?.dailyActivityTickets, color: '#9c27b0', delta: 'Team tracking' },
+          { label: 'Insurance tickets', value: kpis?.insuranceTickets, tone: 'blue', icon: <SafetyOutlined />, delta: 'Insurance queue', to: '/tickets?type=Insurance' },
+          { label: 'O2 taxi tickets', value: kpis?.o2TaxiTickets, tone: 'green', icon: <CarOutlined />, delta: 'Taxi query queue', to: '/tickets?type=O2Taxi' },
+          { label: 'General tickets', value: kpis?.generalTickets, tone: 'orange', icon: <AppstoreOutlined />, delta: 'General operations', to: '/tickets?type=General' },
+          { label: 'Daily activity tickets', value: kpis?.dailyActivityTickets, tone: 'purple', icon: <CalendarOutlined />, delta: 'Team tracking', to: '/tickets?type=DailyActivity' },
         ].map(k => (
-          <Col span={6} key={k.label}>
-            <Card style={{ borderRadius: 10 }} styles={{ body: { padding: '16px 20px' } }}>
-              {kloading ? <Skeleton active paragraph={false} /> : (
-                <>
-                  <Statistic
-                    title={<span style={{ fontSize: 12 }}>{k.label}</span>}
-                    value={k.value ?? 0}
-                    valueStyle={{ color: k.color, fontWeight: 600, fontSize: 28 }}
-                  />
-                  <div style={{ fontSize: 11, marginTop: 4, color: '#475569' }}>
-                    {k.delta}
-                  </div>
-                </>
-              )}
-            </Card>
+          <Col xs={12} lg={6} key={k.label}>
+            <KpiCard {...k} loading={kloading} />
           </Col>
         ))}
       </Row>
-      <Row gutter={12} style={{ marginBottom: 20 }}>
-        <Col span={6}>
-          <Card style={{ borderRadius: 10 }} styles={{ body: { padding: '16px 20px' } }}>
-            {kloading ? <Skeleton active paragraph={false} /> : (
-              <>
-                <Statistic
-                  title={<span style={{ fontSize: 12 }}>Support tickets</span>}
-                  value={kpis?.supportTickets ?? 0}
-                  valueStyle={{ color: '#5c6bc0', fontWeight: 600, fontSize: 28 }}
-                />
-                <div style={{ fontSize: 11, marginTop: 4, color: '#475569' }}>Support and issue tracking</div>
-              </>
-            )}
-          </Card>
+      <Row gutter={[14, 14]} style={{ marginBottom: 14 }}>
+        <Col xs={12} lg={6}>
+          <KpiCard label="Support tickets" value={kpis?.supportTickets} tone="indigo" icon={<CustomerServiceOutlined />} delta="Support and issue tracking" loading={kloading} to="/tickets?type=Support" />
         </Col>
       </Row>
-      <Row gutter={12} style={{ marginBottom: 20 }}>
+      <Row gutter={[14, 14]} style={{ marginBottom: 22 }}>
         {[
-          { label: 'Total tickets', value: kpis?.totalTickets, color: undefined, delta: '↑ 12 this week', up: true },
-          { label: 'Open', value: kpis?.openTickets, color: '#1e40af', delta: 'Awaiting action' },
-          { label: 'Expiring ≤ 30 days', value: kpis?.expiringIn30Days, color: '#d46b08', delta: '⚠ Renewal needed', warn: true },
-          { label: 'Expired policies', value: kpis?.expiredPolicies, color: '#cf1322', delta: 'Immediate action', danger: true },
+          { label: 'Total tickets', value: kpis?.totalTickets, tone: 'teal', icon: <UnorderedListOutlined />, delta: '↑ 12 this week', up: true, to: '/tickets' },
+          { label: 'Open', value: kpis?.openTickets, tone: 'sky', icon: <InboxOutlined />, delta: 'Awaiting action', to: '/tickets?status=Open' },
+          { label: 'Expiring ≤ 30 days', value: kpis?.expiringIn30Days, tone: 'amber', icon: <ClockCircleOutlined />, delta: '⚠ Renewal needed', to: '/renewals' },
+          { label: 'Expired policies', value: kpis?.expiredPolicies, tone: 'rose', icon: <WarningOutlined />, delta: 'Immediate action', to: '/renewals' },
         ].map(k => (
-          <Col span={6} key={k.label}>
-            <Card style={{ borderRadius: 10 }} styles={{ body: { padding: '16px 20px' } }}>
-              {kloading ? <Skeleton active paragraph={false} /> : (
-                <>
-                  <Statistic
-                    title={<span style={{ fontSize: 12 }}>{k.label}</span>}
-                    value={k.value ?? 0}
-                    valueStyle={{ color: k.color, fontWeight: 600, fontSize: 28 }}
-                  />
-                  <div style={{ fontSize: 11, marginTop: 4, color: k.danger ? '#cf1322' : k.warn ? '#d46b08' : k.up ? '#389e0d' : '#475569' }}>
-                    {k.up && <ArrowUpOutlined style={{ marginRight: 3 }} />}{k.delta}
-                  </div>
-                </>
-              )}
-            </Card>
+          <Col xs={12} lg={6} key={k.label}>
+            <KpiCard {...k} loading={kloading} />
           </Col>
         ))}
       </Row>
 
-      <Row gutter={14} style={{ marginBottom: 16 }}>
+      <Row gutter={[14, 14]} style={{ marginBottom: 16 }}>
         {/* Monthly chart */}
-        <Col span={10}>
-          <Card title="Monthly ticket volume" style={{ borderRadius: 10 }} styles={{ body: { padding: '12px 16px' } }}>
+        <Col xs={24} lg={10}>
+          <Card title="Monthly ticket volume" style={CARD} styles={{ body: { padding: '12px 16px' } }}>
             {monthly ? (
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 110, paddingTop: 8 }}>
                 {monthly.map((m, i) => (
                   <div key={m.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                    <div style={{ fontSize: 10, color: '#475569', fontWeight: 500 }}>{m.tickets}</div>
+                    <div style={{ fontSize: 11, color: FAINT, fontWeight: 500 }}>{m.tickets}</div>
                     <div style={{
                       width: '100%', borderRadius: '4px 4px 0 0',
-                      background: i === monthly.length - 1 ? '#1e40af' : BAR_COLORS[i] ?? '#B5D4F4',
+                      background: i === monthly.length - 1 ? 'linear-gradient(180deg, #60a5fa, #2563eb)' : BAR_COLORS[i % BAR_COLORS.length],
                       height: `${Math.round((m.tickets / maxTickets) * 80)}px`,
                       minHeight: 8, transition: 'height .4s',
                     }} />
-                    <div style={{ fontSize: 11, color: i === monthly.length - 1 ? '#1e40af' : '#475569', fontWeight: i === monthly.length - 1 ? 600 : 400 }}>
+                    <div style={{ fontSize: 11, color: i === monthly.length - 1 ? INK : FAINT, fontWeight: i === monthly.length - 1 ? 600 : 400 }}>
                       {m.month}
                     </div>
                   </div>
@@ -286,28 +281,28 @@ export default function DashboardPage() {
         </Col>
 
         {/* Payment overview */}
-        <Col span={14}>
-          <Card title="Payment overview" style={{ borderRadius: 10 }} styles={{ body: { padding: '12px 16px' } }}>
-            <Row gutter={12}>
-              <Col span={12}>
-                <div style={{ background: '#f6ffed', borderRadius: 8, padding: '12px 16px', border: '1px solid #b7eb8f' }}>
-                  <div style={{ fontSize: 11, color: '#389e0d', marginBottom: 4 }}>Collected this month</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#237804' }}>
+        <Col xs={24} lg={14}>
+          <Card title="Payment overview" style={CARD} styles={{ body: { padding: '12px 16px' } }}>
+            <Row gutter={[12, 12]}>
+              <Col xs={24} sm={12}>
+                <div className="dash-tile dash-tile--green is-link" role="link" tabIndex={0} aria-label="Collected this month. Open receipts" onClick={() => navigate('/accounts/receipts')} onKeyDown={(e) => { if (e.key === 'Enter') navigate('/accounts/receipts'); }}>
+                  <div className="dash-tile-label">Collected this month</div>
+                  <div style={{ fontSize: 24, fontWeight: 600, color: '#059669' }}>
                     ₹{((kpis?.premiumCollected ?? 0) / 100000).toFixed(1)}L
                   </div>
-                  <div style={{ background: '#d9f7be', borderRadius: 4, height: 6, marginTop: 8, overflow: 'hidden' }}>
-                    <div style={{ width: '78%', height: '100%', background: '#52c41a', borderRadius: 4 }} />
+                  <div style={{ background: '#d1fae5', borderRadius: 4, height: 6, marginTop: 10, overflow: 'hidden' }}>
+                    <div style={{ width: '78%', height: '100%', background: 'linear-gradient(90deg, #34d399, #059669)', borderRadius: 4 }} />
                   </div>
-                  <div style={{ fontSize: 10, color: '#389e0d', marginTop: 3 }}>78% collection rate</div>
+                  <div style={{ fontSize: 11, color: '#059669', marginTop: 5 }}>78% collection rate</div>
                 </div>
               </Col>
-              <Col span={12}>
-                <div style={{ background: '#fff7e6', borderRadius: 8, padding: '12px 16px', border: '1px solid #ffd591' }}>
-                  <div style={{ fontSize: 11, color: '#d46b08', marginBottom: 4 }}>Pending collection</div>
-                  <div style={{ fontSize: 22, fontWeight: 700, color: '#873800' }}>
+              <Col xs={24} sm={12}>
+                <div className="dash-tile dash-tile--red is-link" role="link" tabIndex={0} aria-label="Pending collection. Open renewals" onClick={() => navigate('/renewals')} onKeyDown={(e) => { if (e.key === 'Enter') navigate('/renewals'); }}>
+                  <div className="dash-tile-label">Pending collection</div>
+                  <div style={{ fontSize: 24, fontWeight: 600, color: '#e11d48' }}>
                     ₹{((kpis?.pendingPayments ?? 0) / 100000).toFixed(1)}L
                   </div>
-                  <Button size="small" style={{ marginTop: 12, fontSize: 11 }} onClick={() => navigate('/renewals')}>
+                  <Button size="small" style={{ marginTop: 12, fontSize: 11 }} onClick={(e) => { e.stopPropagation(); navigate('/renewals'); }}>
                     View pending →
                   </Button>
                 </div>
@@ -320,12 +315,12 @@ export default function DashboardPage() {
       {/* Tickets section with view toggle */}
       <Card
         title="Upcoming insurance expiries"
-        style={{ borderRadius: 10 }}
+        style={CARD}
         extra={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {/* View toggle buttons */}
             <div style={{
-              display: 'flex', border: '1px solid #e0e0e0',
+              display: 'flex', border: '1px solid #ecebe6',
               borderRadius: 6, overflow: 'hidden',
             }}>
               <Tooltip title="List view">

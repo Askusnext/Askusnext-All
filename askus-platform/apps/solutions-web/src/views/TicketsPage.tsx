@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { Card, Select, Button, Input, Tag, Spin, Tabs } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTickets } from '../hooks';
 import { StatusBadge, PriorityTag, ExpiryTag, STATUS_OPTIONS } from '../components/shared';
 import type { TicketStatus, Priority } from '../types';
 
 export default function TicketsPage() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<string>('all');
-  const [filters, setFilters] = useState({ search:'', status:'', priority:'', insurer:'', ticketType:'', page:1, pageSize:20 });
+  // Dashboard tiles link here with ?type= and ?status= to open a pre-filtered list.
+  const [params] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<string>(params.get('type') || 'all');
+  const [filters, setFilters] = useState({ search:'', status: params.get('status') || '', priority:'', insurer:'', ticketType:'', page:1, pageSize:20 });
   const { data, loading } = useTickets(filters);
   const set = (k: string, v: string) => setFilters(f => ({ ...f, [k]: v, page:1 }));
   
@@ -48,7 +50,7 @@ export default function TicketsPage() {
         <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
           <Input.Search placeholder="Search reg. no., owner, ticket…" style={{ flex:1, minWidth:200 }} allowClear
             onSearch={v => set('search', v)} />
-          <Select placeholder="Status" allowClear style={{ width:130 }} onChange={v => set('status', v ?? '')}>
+          <Select placeholder="Status" allowClear style={{ width:130 }} value={filters.status || undefined} onChange={v => set('status', v ?? '')}>
             {STATUS_OPTIONS.map(s => <Select.Option key={s.value} value={s.value}>{s.label}</Select.Option>)}
           </Select>
           <Select placeholder="Priority" allowClear style={{ width:110 }} onChange={v => set('priority', v ?? '')}>
