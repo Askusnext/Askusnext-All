@@ -29,7 +29,7 @@ export function CstDashboard() {
   const closed = renewals.filter((r) => ['Renewed', 'Lost'].includes(r.status)).length;
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Customers" title="Customers Dashboard" subtitle="Policies coming up for renewal, how many customers you keep each year, and complaints still open." />
+      <PageHeader eyebrow="CST" title="CST Dashboard" subtitle="Policies coming up for renewal, how many customers you keep each year, and complaints still open." />
       <StatGrid stats={[
         { label: 'Policyholders', value: customers.length, hint: `${customers.filter((c) => c.health !== 'Healthy').length} need attention`, tone: 'pink', icon: <CustomerServiceOutlined />, to: '/cst/customers' },
         { label: 'Renewals due (30 days)', value: due30.length, hint: inr(due30.reduce((s, r) => s + Number(r.premium || 0), 0)), tone: 'amber', icon: <SyncOutlined />, to: '/cst/renewals' },
@@ -60,7 +60,7 @@ export function CstDashboard() {
 }
 
 export const CstCustomers = page({
-  collection: 'cst_customers', title: 'Customers', crumbs: 'Customers › Customers', addLabel: 'Add Policyholder', statusField: 'health', statusTabs: ['Healthy', 'Needs Attention', 'At Risk'],
+  collection: 'cst_customers', title: 'Customers', crumbs: 'CST › Customers', addLabel: 'Add Policyholder', statusField: 'health', statusTabs: ['Healthy', 'Needs Attention', 'At Risk'],
   statusColors: { Healthy: 'green', 'Needs Attention': 'orange', 'At Risk': 'red' },
   subtitle: 'Customers who hold policies with you, who looks after each one, and whether they are happy.',
   fields: [
@@ -73,8 +73,8 @@ export const CstCustomers = page({
 });
 
 export const CstRenewals = page({
-  collection: 'cst_renewals', title: 'Renewals', crumbs: 'Customers › Renewals', addLabel: 'Add Policy to Renew', statusField: 'status', statusTabs: ['Due', 'Contacted', 'Quote Sent', 'Renewed', 'Lost'], dateField: 'expiryDate',
-  subtitle: 'Policies about to expire, closest first. Click Renewed when the customer pays – the premium is added to Money › Money In.',
+  collection: 'cst_renewals', title: 'Renewals', crumbs: 'CST › Renewals', addLabel: 'Add Policy to Renew', statusField: 'status', statusTabs: ['Due', 'Contacted', 'Quote Sent', 'Renewed', 'Lost'], dateField: 'expiryDate',
+  subtitle: 'Policies about to expire, closest first. Click Renewed when the customer pays – the premium is added to Accounts › Money In.',
   sortBy: 'expiryDate',
   stats: (rows) => [
     { label: 'Already expired', value: rows.filter((r) => !['Renewed', 'Lost'].includes(r.status) && daysTo(r.expiryDate) < 0).length, tone: 'red' },
@@ -99,9 +99,9 @@ export const CstRenewals = page({
 });
 
 export const CstAllocation = CrmCstAllocation;
-export const CstDayClosing = page({ ...cstClosingConfig, crumbs: 'Customers › Daily Report' });
+export const CstDayClosing = page({ ...cstClosingConfig, crumbs: 'CST › Daily Report' });
 export const CstCalls = page({
-  collection: 'crm_call_updates', title: 'Calls', crumbs: 'Customers › Calls', addLabel: 'Log a Call', dateField: 'date',
+  collection: 'crm_call_updates', title: 'Calls', crumbs: 'CST › Calls', addLabel: 'Log a Call', dateField: 'date',
   subtitle: 'Renewal reminders and service calls made to policyholders, and what happened on each call.',
   fields: [
     { name: 'company', label: 'Customer', type: 'select', options: { from: 'cst_customers' }, required: true }, { name: 'date', label: 'Date', type: 'date', default: todayISO },
@@ -110,7 +110,7 @@ export const CstCalls = page({
   ],
 });
 export const CstFeedback = page({
-  collection: 'cst_feedback', title: 'Feedback', crumbs: 'Customers › Feedback', addLabel: 'Add Feedback', dateField: 'date',
+  collection: 'cst_feedback', title: 'Feedback', crumbs: 'CST › Feedback', addLabel: 'Add Feedback', dateField: 'date',
   subtitle: 'What customers said about your service. Anyone rating 3 stars or less should get a call back.',
   stats: (rows) => [
     { label: 'Responses', value: rows.length, tone: 'blue' },
@@ -126,7 +126,7 @@ export const CstFeedback = page({
   validate: (v) => (Number(v.rating) < 1 || Number(v.rating) > 5 ? 'Rating must be between 1 and 5.' : null),
 });
 export const CstEscalations = page({
-  collection: 'cst_escalations', title: 'Complaints', crumbs: 'Customers › Complaints', addLabel: 'Log a Complaint', subtitle: 'Customer problems that need fixing – claim delays, wrong details, missing documents – and who owns each one.', statusField: 'status', statusTabs: ['Open', 'In Progress', 'Resolved'], dateField: 'raisedOn',
+  collection: 'cst_escalations', title: 'Complaints', crumbs: 'CST › Complaints', addLabel: 'Log a Complaint', subtitle: 'Customer problems that need fixing – claim delays, wrong details, missing documents – and who owns each one.', statusField: 'status', statusTabs: ['Open', 'In Progress', 'Resolved'], dateField: 'raisedOn',
   fields: [
     { name: 'ticketNo', label: 'Ref #', required: true, default: () => `ESC-${300 + Math.floor(Math.random() * 700)}` }, { name: 'customer', label: 'Customer', type: 'select', options: { from: 'cst_customers' }, required: true },
     { name: 'issue', label: 'Issue', required: true }, { name: 'severity', label: 'Severity', type: 'select', options: ['High', 'Medium', 'Low'], default: 'Medium', render: (v) => statusTag(v, { High: 'red', Medium: 'orange', Low: 'blue' }) },
@@ -144,7 +144,7 @@ export function ProductionDashboard() {
   const week = logs.filter((l) => daysTo(l.date) >= -7);
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Policies" title="Policies Dashboard" subtitle="Policies being issued, changes customers asked for, and how busy the team is." />
+      <PageHeader eyebrow="Production" title="Production Dashboard" subtitle="Policies being issued, changes customers asked for, and how busy the team is." />
       <StatGrid stats={[
         { label: 'Active projects', value: projects.filter((p) => p.status !== 'Completed').length, hint: `${projects.length} total`, tone: 'amber', icon: <ProjectOutlined />, to: '/production/projects' },
         { label: 'Open tasks', value: tasks.filter((t) => t.status !== 'Done').length, hint: `${tasks.filter((t) => t.status !== 'Done' && t.dueDate < todayISO()).length} overdue`, tone: 'red', icon: <ClockCircleOutlined />, to: '/production/tasks' },
@@ -167,7 +167,7 @@ export function ProductionDashboard() {
   );
 }
 export const Projects = page({
-  collection: 'prod_projects', title: 'Projects', crumbs: 'Policies › Projects', addLabel: 'Start a Project', subtitle: 'Bigger pieces of work such as a group health scheme or fleet renewal, with owner, deadline and progress.', statusField: 'status', statusTabs: ['Planned', 'In Progress', 'On Hold', 'Completed'], dateField: 'dueDate',
+  collection: 'prod_projects', title: 'Projects', crumbs: 'Production › Projects', addLabel: 'Start a Project', subtitle: 'Bigger pieces of work such as a group health scheme or fleet renewal, with owner, deadline and progress.', statusField: 'status', statusTabs: ['Planned', 'In Progress', 'On Hold', 'Completed'], dateField: 'dueDate',
   statusColors: { Planned: 'default', 'On Hold': 'gold' },
   fields: [
     { name: 'name', label: 'Project', required: true }, { name: 'client', label: 'Client' }, { name: 'owner', label: 'Owner', type: 'select', options: activeStaff },
@@ -177,7 +177,7 @@ export const Projects = page({
   ],
 });
 export const ProdTasks = page({
-  collection: 'prod_tasks', title: 'Tasks', crumbs: 'Policies › Tasks', addLabel: 'Add Task', subtitle: 'Each job moves To Do → In Progress → Review → Done. Use the arrow button to move it along.', statusField: 'status', statusTabs: ['To Do', 'In Progress', 'Review', 'Done'], dateField: 'dueDate',
+  collection: 'prod_tasks', title: 'Tasks', crumbs: 'Production › Tasks', addLabel: 'Add Task', subtitle: 'Each job moves To Do → In Progress → Review → Done. Use the arrow button to move it along.', statusField: 'status', statusTabs: ['To Do', 'In Progress', 'Review', 'Done'], dateField: 'dueDate',
   statusColors: { Review: 'purple' },
   rowActions: (r, api) => {
     const next: Record<string, string> = { 'To Do': 'In Progress', 'In Progress': 'Review', Review: 'Done' };
@@ -191,7 +191,7 @@ export const ProdTasks = page({
   ],
 });
 export const TimeTracking = page({
-  collection: 'prod_timelogs', title: 'Work Hours', crumbs: 'Policies › Work Hours', addLabel: 'Log Hours', subtitle: 'Hours each person spent on each project, and whether the time can be billed.', dateField: 'date',
+  collection: 'prod_timelogs', title: 'Work Hours', crumbs: 'Production › Work Hours', addLabel: 'Log Hours', subtitle: 'Hours each person spent on each project, and whether the time can be billed.', dateField: 'date',
   stats: (rows) => [
     { label: 'Hours logged', value: rows.reduce((s, r) => s + Number(r.hours || 0), 0), tone: 'blue' },
     { label: 'Billable hours', value: rows.filter((r) => r.billable === 'Yes').reduce((s, r) => s + Number(r.hours || 0), 0), tone: 'green' },
@@ -205,7 +205,7 @@ export const TimeTracking = page({
   ],
 });
 export const Issuance = page({
-  collection: 'prod_issuance', title: 'New Policies', crumbs: 'Policies › New Policies', addLabel: 'Add Proposal', statusField: 'stage', statusTabs: ['Proposal', 'Documents', 'Payment', 'Issued'], dateField: 'date',
+  collection: 'prod_issuance', title: 'New Policies', crumbs: 'Production › New Policies', addLabel: 'Add Proposal', statusField: 'stage', statusTabs: ['Proposal', 'Documents', 'Payment', 'Issued'], dateField: 'date',
   statusColors: { Proposal: 'blue', Documents: 'orange', Payment: 'purple', Issued: 'green' },
   subtitle: 'Every sold proposal moves from documents to payment to an issued policy. Add the policy number once the insurer issues it.',
   rowActions: (r, api) => {
@@ -221,7 +221,7 @@ export const Issuance = page({
   ],
 });
 export const Endorsements = page({
-  collection: 'prod_endorsements', title: 'Changes', crumbs: 'Policies › Changes', addLabel: 'Request a Change', subtitle: 'Changes to an existing policy – new family member, nominee, address or vehicle.', statusField: 'status', statusTabs: ['Submitted', 'Pending Docs', 'Completed'], dateField: 'requestedOn',
+  collection: 'prod_endorsements', title: 'Changes', crumbs: 'Production › Changes', addLabel: 'Request a Change', subtitle: 'Changes to an existing policy – new family member, nominee, address or vehicle.', statusField: 'status', statusTabs: ['Submitted', 'Pending Docs', 'Completed'], dateField: 'requestedOn',
   statusColors: { Submitted: 'blue', 'Pending Docs': 'orange' },
   fields: [
     { name: 'policyNo', label: 'Policy #', required: true }, { name: 'customer', label: 'Customer', required: true },
@@ -245,7 +245,7 @@ export function AccountsDashboard() {
   const modes = [...new Set(receipts.map((r) => r.mode as string))];
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Money" title="Money Dashboard" subtitle={`Money in, money out and what is still owed – ${dayjs().format('MMMM YYYY')}.`} />
+      <PageHeader eyebrow="Accounts" title="Accounts Dashboard" subtitle={`Money in, money out and what is still owed – ${dayjs().format('MMMM YYYY')}.`} />
       <StatGrid stats={[
         { label: 'Money in this month', value: inr(sum(mr)), hint: `${mr.length} receipts`, tone: 'green', icon: <DollarOutlined />, to: '/accounts/receipts' },
         { label: 'Money out this month', value: inr(sum(mp)), hint: `${mp.length} vouchers`, tone: 'red', icon: <BankOutlined />, to: '/accounts/payments' },
@@ -264,7 +264,7 @@ export function AccountsDashboard() {
   );
 }
 export const Receipts = page({
-  collection: 'acc_receipts', title: 'Money In', crumbs: 'Money › Money In', addLabel: 'Record Payment Received', dateField: 'date',
+  collection: 'acc_receipts', title: 'Money In', crumbs: 'Accounts › Money In', addLabel: 'Record Payment Received', dateField: 'date',
   subtitle: 'Every payment received – premiums, fees and commission – with how it was paid.',
   stats: (rows) => [{ label: 'Payments received', value: rows.length, tone: 'blue' }, { label: 'Total received', value: inr(rows.reduce((s, r) => s + Number(r.amount || 0), 0)), tone: 'green' }],
   fields: [
@@ -275,7 +275,7 @@ export const Receipts = page({
   ],
 });
 export const Payments = page({
-  collection: 'acc_payments', title: 'Money Out', crumbs: 'Money › Money Out', addLabel: 'Record a Payment', dateField: 'date',
+  collection: 'acc_payments', title: 'Money Out', crumbs: 'Accounts › Money Out', addLabel: 'Record a Payment', dateField: 'date',
   subtitle: 'Premiums passed on to insurers, rent, bills and other payments from the bank.',
   stats: (rows) => [{ label: 'Payments made', value: rows.length, tone: 'blue' }, { label: 'Total paid', value: inr(rows.reduce((s, r) => s + Number(r.amount || 0), 0)), tone: 'red' }],
   fields: [
@@ -287,7 +287,7 @@ export const Payments = page({
 });
 const invoiceDue = (r: Row) => Number(r.amount || 0) + Number(r.gst || 0) - Number(r.paid || 0);
 const invoiceConfig: RecordPageConfig = {
-  collection: 'acc_invoices', title: 'Bills', crumbs: 'Money › Bills', addLabel: 'Raise an Invoice', statusField: 'status', statusTabs: ['Unpaid', 'Partially Paid', 'Overdue', 'Paid'], dateField: 'date',
+  collection: 'acc_invoices', title: 'Bills', crumbs: 'Accounts › Bills', addLabel: 'Raise an Invoice', statusField: 'status', statusTabs: ['Unpaid', 'Partially Paid', 'Overdue', 'Paid'], dateField: 'date',
   subtitle: 'Bills for your service fees. Premiums themselves are paid straight to the insurer.',
   rowActions: (r, api) => (r.status !== 'Paid' ? <Button size="small" onClick={() => {
     api.update(r.id, { status: 'Paid', paid: Number(r.amount) + Number(r.gst) });
@@ -303,7 +303,7 @@ const invoiceConfig: RecordPageConfig = {
 };
 export const Invoices = page(invoiceConfig);
 export const Outstanding = page({
-  ...invoiceConfig, title: 'Pending', crumbs: 'Money › Pending', canAdd: false, statusTabs: ['Unpaid', 'Partially Paid', 'Overdue'],
+  ...invoiceConfig, title: 'Pending', crumbs: 'Accounts › Pending', canAdd: false, statusTabs: ['Unpaid', 'Partially Paid', 'Overdue'],
   subtitle: 'Invoices customers have not fully paid, oldest first.', rowFilter: (r) => r.status !== 'Paid', sortBy: 'dueDate',
   stats: (rows) => [
     { label: 'Still to collect', value: inr(rows.reduce((s, r) => s + invoiceDue(r), 0)), tone: 'amber' },
@@ -312,7 +312,7 @@ export const Outstanding = page({
   ],
 });
 export const Commissions = page({
-  collection: 'acc_commissions', title: 'Commission', crumbs: 'Money › Commission', addLabel: 'Add Commission', statusField: 'status', statusTabs: ['Receivable', 'Received'], dateField: 'dueDate',
+  collection: 'acc_commissions', title: 'Commission', crumbs: 'Accounts › Commission', addLabel: 'Add Commission', statusField: 'status', statusTabs: ['Receivable', 'Received'], dateField: 'dueDate',
   subtitle: 'Commission you earned on policies sold, and whether the insurer has paid it yet.',
   rowActions: (r, api) => (r.status === 'Receivable' ? <Button size="small" onClick={() => {
     api.update(r.id, { status: 'Received' });
@@ -332,7 +332,7 @@ export const Commissions = page({
   onSaved: (row) => collectionApi('acc_commissions').update(row.id, { amount: Math.round((Number(row.premium) * Number(row.rate)) / 100) }),
 });
 export const BankAccounts = page({
-  collection: 'acc_bank_accounts', title: 'Bank', crumbs: 'Money › Bank', addLabel: 'Add Bank Account',
+  collection: 'acc_bank_accounts', title: 'Bank', crumbs: 'Accounts › Bank', addLabel: 'Add Bank Account',
   subtitle: 'Company bank accounts. For safety, store only the last four digits of each account number.',
   fields: [
     { name: 'name', label: 'Account name', required: true }, { name: 'bank', label: 'Bank', required: true }, { name: 'accountNo', label: 'Account (last 4)', required: true },
@@ -351,5 +351,5 @@ export function DayBook() {
     ...payments.map((p) => ({ id: `p-${p.id}`, date: p.date, category: 'Payment', voucher: p.voucherNo, party: p.payee, narration: p.purpose, debit: Number(p.amount) || 0, credit: 0, ledger: 'Bank', editable: false })),
     ...(petty as unknown as LedgerEntry[]).map((e) => ({ ...e, id: `c-${e.id}`, editable: false })),
   ];
-  return <LedgerView eyebrow="Money" title="All Entries" subtitle="Every rupee in and out – bank and office cash – in date order with a running balance. Add entries from Money In, Money Out or the Cash page." entries={entries} ledgers={['Bank', 'Office Cash', 'Office Upkeep']} />;
+  return <LedgerView eyebrow="Accounts" title="All Entries" subtitle="Every rupee in and out – bank and office cash – in date order with a running balance. Add entries from Money In, Money Out or the Cash page." entries={entries} ledgers={['Bank', 'Office Cash', 'Office Upkeep']} />;
 }

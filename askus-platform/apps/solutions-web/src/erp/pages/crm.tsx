@@ -57,21 +57,21 @@ const leadBase: Omit<RecordPageConfig, 'title'> = {
   onSaved: (row, isNew) => { if (isNew && !row.leadNo) collectionApi('crm_leads').update(row.id, { leadNo: nextLeadNo() }); },
 };
 
-export const AllLeads = page({ ...leadBase, title: 'Enquiries', crumbs: 'Sales › Enquiries', subtitle: 'Every person or business who asked about a policy – who owns it, what they want and how close it is to closing.' });
+export const AllLeads = page({ ...leadBase, title: 'Enquiries', crumbs: 'CRM › Enquiries', subtitle: 'Every person or business who asked about a policy – who owns it, what they want and how close it is to closing.' });
 export const PreSales = page({
-  ...leadBase, title: 'Checking', crumbs: 'Sales › Enquiries', subtitle: 'New enquiries still being checked – is the customer genuine and ready? Move them to the sales team when they are.',
+  ...leadBase, title: 'Checking', crumbs: 'CRM › Enquiries', subtitle: 'New enquiries still being checked – is the customer genuine and ready? Move them to the sales team when they are.',
   rowFilter: (r) => r.stage === 'Pre Sales',
   rowActions: (r, api) => <Button size="small" onClick={() => { api.update(r.id, { stage: 'Sales' }); message.success('Sent to the sales team'); }}>Ready for sales</Button>,
 });
 export const DuplicateLeads = page({
-  ...leadBase, title: 'Duplicates', crumbs: 'Sales › Enquiries', canAdd: false, stats: undefined,
+  ...leadBase, title: 'Duplicates', crumbs: 'CRM › Enquiries', canAdd: false, stats: undefined,
   subtitle: 'The same customer phone number entered more than once. Keep the best record and remove the rest.',
   rowFilter: (r, all) => all.filter((x) => x.mobile === r.mobile).length > 1,
   emptyText: 'No repeat enquiries – every phone number is unique.',
 });
 
 export const LeadProducts = page({
-  collection: 'crm_lead_products', title: 'Products', crumbs: 'Sales › Enquiries', addLabel: 'Quote a Product',
+  collection: 'crm_lead_products', title: 'Products', crumbs: 'CRM › Enquiries', addLabel: 'Quote a Product',
   subtitle: 'Which policy, insurer and premium has been offered to each customer.',
   statusField: 'status', statusTabs: ['Proposed', 'Issued'],
   fields: [
@@ -117,7 +117,7 @@ export function AddLead() {
 
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Sales" title="New Enquiry" crumbs="Sales › Enquiries" subtitle="Record a customer who asked about insurance. Required fields are marked." actions={<><Button type="primary" icon={<CheckOutlined />} onClick={submit}>Save Enquiry</Button><Button className="erp-ghost" onClick={() => navigate(-1)}>Back</Button></>} />
+      <PageHeader eyebrow="CRM" title="New Enquiry" crumbs="CRM › Enquiries" subtitle="Record a customer who asked about insurance. Required fields are marked." actions={<><Button type="primary" icon={<CheckOutlined />} onClick={submit}>Save Enquiry</Button><Button className="erp-ghost" onClick={() => navigate(-1)}>Back</Button></>} />
       <Form form={form} layout="vertical" initialValues={{ leadDate: dayjs(), stage: 'Sales' }}>
         <div className="erp-grid-2">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -183,7 +183,7 @@ const TASK_FIELDS: FieldDef[] = [
   { name: 'status', label: 'Status', type: 'select', options: ['Open', 'In Progress', 'Done'], default: 'Open' },
 ];
 const taskBase: RecordPageConfig = {
-  collection: 'crm_tasks', title: 'To-do', crumbs: 'Sales › Follow-ups', fields: TASK_FIELDS, statusField: 'status', statusTabs: ['Open', 'In Progress', 'Done'], dateField: 'dueDate', addLabel: 'Add To-do',
+  collection: 'crm_tasks', title: 'To-do', crumbs: 'CRM › Follow-ups', fields: TASK_FIELDS, statusField: 'status', statusTabs: ['Open', 'In Progress', 'Done'], dateField: 'dueDate', addLabel: 'Add To-do',
   stats: (rows) => [
     { label: 'Open', value: rows.filter((r) => r.status !== 'Done').length, tone: 'blue' },
     { label: 'Due today', value: rows.filter((r) => r.status !== 'Done' && r.dueDate === todayISO()).length, tone: 'amber' },
@@ -193,10 +193,10 @@ const taskBase: RecordPageConfig = {
   rowActions: (r, api) => r.status !== 'Done' ? <Button size="small" onClick={() => api.update(r.id, { status: 'Done' })}>Mark done</Button> : null,
 };
 export const Tasks = page({ ...taskBase, subtitle: 'Everything the sales team has promised to do, with due dates. Overdue items are shown in red.' });
-export const FollowUps = page({ ...taskBase, title: 'Call Back', crumbs: 'Sales › Follow-ups', subtitle: 'Customers you promised to call back, and when.', rowFilter: (r) => r.type === 'Follow-up', addLabel: 'Schedule Call-back', fields: TASK_FIELDS.map((f) => (f.name === 'type' ? { ...f, default: 'Follow-up' } : f)) });
+export const FollowUps = page({ ...taskBase, title: 'Call Back', crumbs: 'CRM › Follow-ups', subtitle: 'Customers you promised to call back, and when.', rowFilter: (r) => r.type === 'Follow-up', addLabel: 'Schedule Call-back', fields: TASK_FIELDS.map((f) => (f.name === 'type' ? { ...f, default: 'Follow-up' } : f)) });
 
 export const CallUpdates = page({
-  collection: 'crm_call_updates', title: 'Calls', crumbs: 'Sales › Follow-ups', addLabel: 'Log a Call', dateField: 'date',
+  collection: 'crm_call_updates', title: 'Calls', crumbs: 'CRM › Follow-ups', addLabel: 'Log a Call', dateField: 'date',
   subtitle: 'A record of every sales call and what happened. Logging a call removes the enquiry from Not called yet.',
   fields: [
     { name: 'company', label: 'Lead', type: 'select', options: { from: 'crm_leads', field: 'company' }, required: true },
@@ -214,7 +214,7 @@ export const CallUpdates = page({
 
 // ───────────────────────── Quotations, closing, price requests ─────────────────────────
 export const Quotations = page({
-  collection: 'crm_quotations', title: 'Quotes', crumbs: 'Sales › Quotes', addLabel: 'New Quote', statusField: 'status', statusTabs: ['Draft', 'Sent', 'Accepted', 'Rejected'], dateField: 'date',
+  collection: 'crm_quotations', title: 'Quotes', crumbs: 'CRM › Quotes', addLabel: 'New Quote', statusField: 'status', statusTabs: ['Draft', 'Sent', 'Accepted', 'Rejected'], dateField: 'date',
   subtitle: 'Premium quotes sent to customers, including GST and how long each quote is valid.',
   fields: [
     { name: 'quoteNo', label: 'Quote #', required: true, default: () => `QT-${2400 + getCollection('crm_quotations').length}` },
@@ -236,7 +236,7 @@ export const Quotations = page({
 });
 
 export const DayClosing = page({
-  collection: 'crm_day_closing', title: 'Daily Report', crumbs: 'Sales › Daily Report', addLabel: 'Submit Today’s Report', dateField: 'date',
+  collection: 'crm_day_closing', title: 'Daily Report', crumbs: 'CRM › Daily Report', addLabel: 'Submit Today’s Report', dateField: 'date',
   subtitle: 'Each salesperson’s end-of-day numbers – calls, meetings, closures and money collected. Managers sign them off.',
   approval: { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' },
   fields: [
@@ -262,7 +262,7 @@ export const DayClosing = page({
 });
 
 export const PriceRequests = page({
-  collection: 'crm_price_requests', title: 'Discounts', crumbs: 'Sales › Discounts', addLabel: 'Ask for a Discount', dateField: 'date',
+  collection: 'crm_price_requests', title: 'Discounts', crumbs: 'CRM › Discounts', addLabel: 'Ask for a Discount', dateField: 'date',
   subtitle: 'Sales staff ask before offering a lower price. Approving one updates the enquiry’s premium automatically.',
   approval: {
     pending: 'Pending', approved: 'Approved', rejected: 'Rejected',
@@ -296,12 +296,12 @@ const allocationFields: FieldDef[] = [
   { name: 'status', label: 'Status', type: 'select', options: ['Allocated', 'Accepted', 'Transferred'], default: 'Allocated' },
 ];
 export const CstAllocation = page({
-  collection: 'crm_cst_allocation', title: 'Send to Service', crumbs: 'Sales › Send to Service', addLabel: 'Hand over a Customer', dateField: 'allocatedOn',
+  collection: 'crm_cst_allocation', title: 'Send to Service', crumbs: 'CRM › Send to Service', addLabel: 'Hand over a Customer', dateField: 'allocatedOn',
   subtitle: 'Once a policy is sold, assign the customer to a Customer Care owner who will look after renewals and service.', fields: allocationFields,
 });
 
 export const cstClosingConfig: RecordPageConfig = {
-  collection: 'crm_cst_day_closing', title: 'Daily Report', crumbs: 'Customers › Daily Report', addLabel: 'Submit Today’s Report', dateField: 'date',
+  collection: 'crm_cst_day_closing', title: 'Daily Report', crumbs: 'CST › Daily Report', addLabel: 'Submit Today’s Report', dateField: 'date',
   subtitle: 'Each service person’s day – renewal calls made, policies renewed, claims helped and complaints handled.',
   approval: { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' },
   fields: [
@@ -356,7 +356,7 @@ export function CrmDashboard() {
 
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Sales" title="Sales Dashboard" subtitle="How many enquiries came in, where they came from, and which branches and people are closing them." actions={<Link to="/crm/leads/new"><Button type="primary">New Enquiry</Button></Link>} />
+      <PageHeader eyebrow="CRM" title="CRM Dashboard" subtitle="How many enquiries came in, where they came from, and which branches and people are closing them." actions={<Link to="/crm/leads/new"><Button type="primary">New Enquiry</Button></Link>} />
       <StatGrid stats={[
         { label: 'All enquiries', value: leads.length, hint: 'Since you started', tone: 'amber', icon: <ContactsOutlined />, to: '/crm/leads' },
         { label: 'Premium in play', value: inr(open.reduce((s, l) => s + Number(l.dealValue || 0), 0)), hint: `${open.length} still open`, tone: 'purple', icon: <RiseOutlined />, to: '/crm/leads?status=Interested' },
@@ -432,7 +432,7 @@ const REPORTS = [
 export function CrmReports() {
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Sales" title="Reports" subtitle="Ready-made reports worked out from your latest sales and finance numbers. Open one to see the detail." />
+      <PageHeader eyebrow="CRM" title="Reports" subtitle="Ready-made reports worked out from your latest sales and finance numbers. Open one to see the detail." />
       <HubGrid cards={REPORTS.map((r) => ({ ...r, to: `/crm/reports/${r.id}`, badge: 'Live', cta: 'View report' }))} />
     </div>
   );
@@ -527,7 +527,7 @@ export function CrmReportView() {
   if (!report) return <Empty>Report not found. <Link to="/crm/reports">Back to reports</Link></Empty>;
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Report" title={report.title} subtitle={report.description} crumbs="Sales › Reports" actions={<Link to="/crm/reports"><Button className="erp-ghost">All reports</Button></Link>} />
+      <PageHeader eyebrow="Report" title={report.title} subtitle={report.description} crumbs="CRM › Reports" actions={<Link to="/crm/reports"><Button className="erp-ghost">All reports</Button></Link>} />
       <section className="erp-panel">
         <Table rowKey={(r: any) => `${r.k}-${r.type ?? ''}`} columns={columns as any} dataSource={data} pagination={false} scroll={{ x: 'max-content' }} locale={{ emptyText: 'No data for this report yet.' }} />
       </section>

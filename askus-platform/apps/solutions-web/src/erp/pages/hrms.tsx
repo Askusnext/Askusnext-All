@@ -62,7 +62,7 @@ export function HrmsDashboard() {
 
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Staff" title="Staff Dashboard" subtitle="Who is in today, what is waiting for approval, and birthdays and work anniversaries coming up." />
+      <PageHeader eyebrow="HRMS" title="HRMS Dashboard" subtitle="Who is in today, what is waiting for approval, and birthdays and work anniversaries coming up." />
       {pendingOutside > 0 && (
         <div className="erp-banner">
           <div><strong><EnvironmentOutlined /> {pendingOutside} field check-in(s) to approve</strong><span>Staff working away from the office have asked you to confirm their attendance.</span></div>
@@ -119,7 +119,7 @@ export const FacilityTitles = master('hr_facility_titles', 'Repair Types', [{ na
 export const AssetCategories = master('hr_asset_categories', 'Asset Types', [{ name: 'name', label: 'Category', required: true }]);
 export const ExpenseCategories = master('hr_expense_categories', 'Expense Types', [{ name: 'name', label: 'Category', required: true }, { name: 'monthlyLimit', label: 'Monthly limit per employee', type: 'money' }]);
 export const CleaningCategories = master('hr_cleaning_categories', 'Cleaning Jobs', [{ name: 'name', label: 'Task', required: true }, { name: 'frequency', label: 'Frequency', type: 'select', options: ['Daily', 'Weekly', 'Monthly'], default: 'Daily' }]);
-export const Holidays = page({ collection: 'hr_holidays', title: 'Holidays', crumbs: 'Staff › Leave', addLabel: 'Add Holiday', dateField: 'date', fields: [{ name: 'name', label: 'Holiday', required: true }, { name: 'date', label: 'Date', type: 'date', required: true }, { name: 'type', label: 'Type', type: 'select', options: ['Public', 'Optional', 'Branch'], default: 'Public' }], subtitle: 'Office holidays for the year. They are not counted as leave days or pay cuts.' });
+export const Holidays = page({ collection: 'hr_holidays', title: 'Holidays', crumbs: 'HRMS › Leave', addLabel: 'Add Holiday', dateField: 'date', fields: [{ name: 'name', label: 'Holiday', required: true }, { name: 'date', label: 'Date', type: 'date', required: true }, { name: 'type', label: 'Type', type: 'select', options: ['Public', 'Optional', 'Branch'], default: 'Public' }], subtitle: 'Office holidays for the year. They are not counted as leave days or pay cuts.' });
 
 function SettingsForm({ collection, title, subtitle, fields }: { collection: string; title: string; subtitle: string; fields: { name: string; label: string; help?: string; type?: 'number' | 'time' | 'select'; options?: string[]; step?: number }[] }) {
   const { rows, update, add } = useCollection(collection);
@@ -134,7 +134,7 @@ function SettingsForm({ collection, title, subtitle, fields }: { collection: str
   };
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Settings" title={title} subtitle={subtitle} crumbs="Settings › Staff" actions={<Button type="primary" onClick={save}>Save changes</Button>} />
+      <PageHeader eyebrow="Settings" title={title} subtitle={subtitle} crumbs="Settings › HRMS" actions={<Button type="primary" onClick={save}>Save changes</Button>} />
       <Panel title="Rules">
         <Form form={form} layout="vertical" className="erp-form-grid" style={{ maxWidth: 760 }}>
           {fields.map((f) => (
@@ -183,7 +183,7 @@ const PERSON_FIELDS: FieldDef[] = [
   { name: 'status', label: 'Status', type: 'select', options: ['Active', 'Resigned'], default: 'Active' },
 ];
 export const Employees = page({
-  collection: 'hr_employees', title: 'Staff List', crumbs: 'Staff › Staff List', addLabel: 'Add Staff Member', statusField: 'status', statusTabs: ['Active', 'Resigned'],
+  collection: 'hr_employees', title: 'Staff List', crumbs: 'HRMS › Staff List', addLabel: 'Add Staff Member', statusField: 'status', statusTabs: ['Active', 'Resigned'],
   subtitle: 'Everyone on the payroll – their role, branch, salary and contact details.', fields: PERSON_FIELDS, rowFilter: (r) => r.type !== 'Intern',
   stats: (rows) => [
     { label: 'Current staff', value: rows.filter((r) => r.status === 'Active').length, tone: 'blue' },
@@ -194,7 +194,7 @@ export const Employees = page({
   validate: (v, all, editing) => (all.some((r) => r.code === v.code && r.id !== editing?.id) ? 'This staff ID is already used.' : null),
 });
 export const Interns = page({
-  collection: 'hr_employees', title: 'Interns', crumbs: 'Staff › Interns', addLabel: 'Add Trainee', statusField: 'status', statusTabs: ['Active', 'Resigned'],
+  collection: 'hr_employees', title: 'Interns', crumbs: 'HRMS › Interns', addLabel: 'Add Trainee', statusField: 'status', statusTabs: ['Active', 'Resigned'],
   subtitle: 'Interns and trainees – their college, monthly stipend and when the internship ends.', rowFilter: (r) => r.type === 'Intern',
   fields: [
     ...PERSON_FIELDS.filter((f) => !['salary', 'type'].includes(f.name)),
@@ -206,7 +206,7 @@ export const Interns = page({
 });
 
 export const Jobs = page({
-  collection: 'hr_jobs', title: 'Jobs', crumbs: 'Staff › Hiring', addLabel: 'Add Position', statusField: 'status', statusTabs: ['Open', 'On Hold', 'Closed'],
+  collection: 'hr_jobs', title: 'Jobs', crumbs: 'HRMS › Hiring', addLabel: 'Add Position', statusField: 'status', statusTabs: ['Open', 'On Hold', 'Closed'],
   fields: [
     { name: 'title', label: 'Position', required: true }, { name: 'department', label: 'Department', type: 'select', options: { from: 'hr_departments' } },
     { name: 'branch', label: 'Branch', type: 'select', options: { from: 'branches' } }, { name: 'openings', label: 'Openings', type: 'number', default: 1 },
@@ -215,7 +215,7 @@ export const Jobs = page({
   ],
 });
 export const Candidates = page({
-  collection: 'hr_candidates', title: 'Applicants', crumbs: 'Staff › Hiring', addLabel: 'Add Applicant', statusField: 'stage', statusTabs: ['Screening', 'Interview', 'Offered', 'Joined', 'Rejected'], dateField: 'appliedOn',
+  collection: 'hr_candidates', title: 'Applicants', crumbs: 'HRMS › Hiring', addLabel: 'Add Applicant', statusField: 'stage', statusTabs: ['Screening', 'Interview', 'Offered', 'Joined', 'Rejected'], dateField: 'appliedOn',
   statusColors: { Screening: 'blue', Interview: 'orange', Offered: 'purple', Joined: 'green', Rejected: 'red' },
   fields: [
     { name: 'name', label: 'Candidate', required: true }, { name: 'position', label: 'Position', type: 'select', options: { from: 'hr_jobs', field: 'title' }, required: true },
@@ -225,7 +225,7 @@ export const Candidates = page({
   ],
 });
 export const Interviews = page({
-  collection: 'hr_interviews', title: 'Interviews', crumbs: 'Staff › Hiring', addLabel: 'Schedule Interview', statusField: 'status', statusTabs: ['Scheduled', 'Selected', 'Rejected', 'No Show'], dateField: 'date',
+  collection: 'hr_interviews', title: 'Interviews', crumbs: 'HRMS › Hiring', addLabel: 'Schedule Interview', statusField: 'status', statusTabs: ['Scheduled', 'Selected', 'Rejected', 'No Show'], dateField: 'date',
   fields: [
     { name: 'candidate', label: 'Candidate', type: 'select', options: { from: 'hr_candidates' }, required: true }, { name: 'position', label: 'Position', type: 'select', options: { from: 'hr_jobs', field: 'title' } },
     { name: 'date', label: 'Date', type: 'date', default: todayISO, required: true }, { name: 'time', label: 'Time', type: 'time' },
@@ -281,7 +281,7 @@ export function HrAttendance() {
   const present = rows.filter((r) => ['Present', 'Half Day'].includes(r.status)).length;
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Staff" title="Attendance" crumbs="Staff › Attendance" subtitle={holiday ? `${fmtDate(d)} is a holiday: ${holiday.name}` : 'Who came in on the chosen day. Anyone not marked and not on approved leave is shown as absent.'}
+      <PageHeader eyebrow="HRMS" title="Attendance" crumbs="HRMS › Attendance" subtitle={holiday ? `${fmtDate(d)} is a holiday: ${holiday.name}` : 'Who came in on the chosen day. Anyone not marked and not on approved leave is shown as absent.'}
         actions={<><DatePicker value={date} onChange={(v) => v && setDate(v)} allowClear={false} format="DD MMM YYYY" aria-label="Attendance date" /><Button type="primary" icon={<LoginOutlined />} onClick={markAllPresent}>Mark everyone else present</Button><Link to="/hrms/leave"><Button className="erp-ghost">Time off</Button></Link></>} />
       <StatGrid stats={[
         { label: 'Team size', value: rows.length, hint: `${rows.filter((r) => r.type === 'Employee').length} staff · ${rows.filter((r) => r.type === 'Intern').length} trainees`, tone: 'blue', icon: <TeamOutlined /> },
@@ -319,7 +319,7 @@ export function HrAttendance() {
 }
 
 export const OutsideOffice = page({
-  collection: 'hr_outside_requests', title: 'Field Visits', crumbs: 'Staff › Field Visits', addLabel: 'Request Check-in', dateField: 'date',
+  collection: 'hr_outside_requests', title: 'Field Visits', crumbs: 'HRMS › Field Visits', addLabel: 'Request Check-in', dateField: 'date',
   subtitle: 'Staff visiting customers or working away from the office ask you to confirm their start or finish time. Approving adds it to Attendance.',
   approval: {
     pending: 'Pending', approved: 'Approved', rejected: 'Rejected',
@@ -363,7 +363,7 @@ export function TimesheetLop() {
   const rows = useMemo(() => emps.filter((e) => e.status === 'Active').map((e) => ({ id: e.id, employee: e.name, code: e.code, ...lopFor(e.name, m, { ...data, until: todayISO() }) })), [emps, m, data]);
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Staff" title="Salary Cuts (LOP)" crumbs="Staff › Salary Cuts" subtitle="Days of pay cut for each person this month: absences, half of each half-day, unpaid leave, paid leave above the monthly allowance, repeated late arrivals and extra permissions."
+      <PageHeader eyebrow="HRMS" title="Salary Cuts (LOP)" crumbs="HRMS › Salary Cuts" subtitle="Days of pay cut for each person this month: absences, half of each half-day, unpaid leave, paid leave above the monthly allowance, repeated late arrivals and extra permissions."
         actions={<MonthBar month={month} setMonth={setMonth} extra={<Button className="erp-ghost" onClick={() => downloadCsv(`lop-${m}.csv`, ['Employee', 'Working', 'Present', 'Half', 'Absent', 'Paid leave', 'Unpaid leave', 'Late marks', 'Excess perm. hrs', 'LOP days', 'Payable days'], rows.map((r) => [r.employee, r.workingDays, r.present, r.halfDays, r.absent, r.paidLeave, r.unpaidLeave, r.lateMarks, r.excessPermissionHours, r.lopDays, r.payableDays]))}>Export</Button>} />} />
       <StatGrid stats={[
         { label: 'Working days so far', value: rows[0]?.workingDays ?? 0, tone: 'blue' },
@@ -414,7 +414,7 @@ export function Payroll() {
 
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Staff" title="Salary" crumbs="Staff › Salary" subtitle={<>Take-home pay = monthly salary − pay cut (salary ÷ {daysInMonth} days × days cut) − PF − ESI − professional tax. The PF/ESI/PT rates are examples; confirm them with your accountant.</>}
+      <PageHeader eyebrow="HRMS" title="Salary" crumbs="HRMS › Salary" subtitle={<>Take-home pay = monthly salary − pay cut (salary ÷ {daysInMonth} days × days cut) − PF − ESI − professional tax. The PF/ESI/PT rates are examples; confirm them with your accountant.</>}
         actions={<MonthBar month={month} setMonth={setMonth} extra={<>
           <Button type="primary" onClick={generate}>{saved.length ? 'Recalculate salaries' : 'Calculate salaries'}</Button>
           {saved.length > 0 && saved.some((r) => r.status !== 'Paid') && <Button onClick={markPaid}>Mark all as paid</Button>}
@@ -468,7 +468,7 @@ export function LeaveRequests() {
   const weekOff: string = data.leaveSettings.weekOff;
   return (
     <RecordPage
-      collection="hr_leave_requests" title="Leave Requests" crumbs="Staff › Leave" addLabel="Ask for Leave" dateField="fromDate"
+      collection="hr_leave_requests" title="Leave Requests" crumbs="HRMS › Leave" addLabel="Ask for Leave" dateField="fromDate"
       subtitle="Ask for and approve time off. Week-offs and holidays are not counted, paid leave cannot go beyond the yearly allowance, and approved days show as On Leave in attendance."
       approval={{
         pending: 'Pending', approved: 'Approved', rejected: 'Rejected',
@@ -516,7 +516,7 @@ export function LeaveBalance() {
   }));
   return (
     <div className="erp-page">
-      <PageHeader eyebrow="Staff" title="Leave Balance" crumbs="Staff › Leave" subtitle="Paid leave left for each person this year (allowed − taken − waiting for approval)." actions={<DatePicker picker="year" value={year} onChange={(v) => v && setYear(v)} allowClear={false} aria-label="Year" />} />
+      <PageHeader eyebrow="HRMS" title="Leave Balance" crumbs="HRMS › Leave" subtitle="Paid leave left for each person this year (allowed − taken − waiting for approval)." actions={<DatePicker picker="year" value={year} onChange={(v) => v && setYear(v)} allowClear={false} aria-label="Year" />} />
       <section className="erp-panel">
         <Table rowKey="id" dataSource={rows} pagination={false} scroll={{ x: 'max-content' }} columns={[
           { title: 'Employee', dataIndex: 'employee', render: (v, r: any) => <span><strong>{v}</strong><br /><small className="erp-muted">{r.code}</small></span> },
@@ -531,7 +531,7 @@ export function LeaveBalance() {
 }
 
 export const PermissionRequests = page({
-  collection: 'hr_permission_requests', title: 'Permission', crumbs: 'Staff › Leave', addLabel: 'Ask for Permission', dateField: 'date',
+  collection: 'hr_permission_requests', title: 'Permission', crumbs: 'HRMS › Leave', addLabel: 'Ask for Permission', dateField: 'date',
   subtitle: 'A few hours off for coming in late or leaving early. Each person gets a free allowance per month (Settings › Permission Rules).',
   approval: { pending: 'Pending', approved: 'Approved', rejected: 'Rejected' },
   validate: (v) => {
@@ -555,7 +555,7 @@ export const PermissionRequests = page({
 // ───────────────────────── Expenses, petty cash, misc ─────────────────────────
 const STAGES = ['', 'Team lead', 'Manager', 'Director'];
 export const Expenses = page({
-  collection: 'hr_expenses', title: 'Expenses', eyebrow: 'Staff', crumbs: 'Staff › Expenses', addLabel: 'Claim an Expense', dateField: 'date',
+  collection: 'hr_expenses', title: 'Expenses', eyebrow: 'HRMS', crumbs: 'HRMS › Expenses', addLabel: 'Claim an Expense', dateField: 'date',
   subtitle: 'Staff claim back money they spent for work. Each claim is approved in three steps – team lead, manager, then director – and the final approval pays it from the Cash page.',
   approval: {
     pending: 'Pending', approved: 'Approved', rejected: 'Rejected',
@@ -590,7 +590,7 @@ export function PettyCash() {
   const { rows: cats } = useCollection('hr_expense_categories');
   return (
     <LedgerView
-      eyebrow="Money" title="Cash"
+      eyebrow="Accounts" title="Cash"
       subtitle="Cash kept at the office: what came in, what was spent, and the balance after every entry."
       collection="hr_petty_cash" entries={rows as unknown as LedgerEntry[]} ledgers={['Office Cash', 'Office Upkeep']}
       categories={[...cats.map((c) => c.name as string), 'Housekeeping', 'Top-up', 'Opening']}
@@ -599,7 +599,7 @@ export function PettyCash() {
 }
 
 export const Announcements = page({
-  collection: 'hr_announcements', title: 'Notices', crumbs: 'Staff › Notices', addLabel: 'Post a Notice', statusField: 'status', statusTabs: ['Published', 'Draft'], dateField: 'publishOn',
+  collection: 'hr_announcements', title: 'Notices', crumbs: 'HRMS › Notices', addLabel: 'Post a Notice', statusField: 'status', statusTabs: ['Published', 'Draft'], dateField: 'publishOn',
   subtitle: 'Post news and reminders for all staff or a single branch.',
   fields: [
     { name: 'title', label: 'Title', required: true }, { name: 'message', label: 'Message', type: 'textarea', required: true },
@@ -609,7 +609,7 @@ export const Announcements = page({
 });
 
 export const Visitors = page({
-  collection: 'hr_visitors', title: 'Visitors', crumbs: 'Staff › Visitors', addLabel: 'Sign In a Visitor', statusField: 'status', statusTabs: ['Checked In', 'Checked Out'], dateField: 'date',
+  collection: 'hr_visitors', title: 'Visitors', crumbs: 'HRMS › Visitors', addLabel: 'Sign In a Visitor', statusField: 'status', statusTabs: ['Checked In', 'Checked Out'], dateField: 'date',
   subtitle: 'Who visited the office, whom they met, and when they arrived and left.',
   rowActions: (r, api) => (r.status === 'Checked In' ? <Button size="small" icon={<LogoutOutlined />} onClick={() => api.update(r.id, { status: 'Checked Out', outTime: dayjs().format('HH:mm') })}>Sign out</Button> : null),
   fields: [
@@ -622,7 +622,7 @@ export const Visitors = page({
 });
 
 export const CleaningSheet = page({
-  collection: 'hr_cleaning_sheet', title: 'Cleaning', crumbs: 'Staff › Office', addLabel: 'Add Cleaning Job', statusField: 'status', statusTabs: ['Done', 'Pending'], dateField: 'date',
+  collection: 'hr_cleaning_sheet', title: 'Cleaning', crumbs: 'HRMS › Office', addLabel: 'Add Cleaning Job', statusField: 'status', statusTabs: ['Done', 'Pending'], dateField: 'date',
   subtitle: 'Daily cleaning jobs by area, and whether each was done.',
   rowActions: (r, api) => (r.status !== 'Done' ? <Button size="small" onClick={() => api.update(r.id, { status: 'Done', time: dayjs().format('HH:mm') })}>Mark done</Button> : null),
   fields: [
@@ -632,7 +632,7 @@ export const CleaningSheet = page({
   ],
 });
 export const Facility = page({
-  collection: 'hr_facility', title: 'Repairs', crumbs: 'Staff › Office', addLabel: 'Log a Repair', subtitle: 'AC servicing, generator checks, internet issues and other office maintenance.', statusField: 'status', statusTabs: ['Pending', 'Scheduled', 'Completed'], dateField: 'dueDate',
+  collection: 'hr_facility', title: 'Repairs', crumbs: 'HRMS › Office', addLabel: 'Log a Repair', subtitle: 'AC servicing, generator checks, internet issues and other office maintenance.', statusField: 'status', statusTabs: ['Pending', 'Scheduled', 'Completed'], dateField: 'dueDate',
   fields: [
     { name: 'title', label: 'Facility', type: 'select', options: { from: 'hr_facility_titles' }, required: true }, { name: 'description', label: 'Work', required: true },
     { name: 'vendor', label: 'Vendor' }, { name: 'cost', label: 'Cost', type: 'money' }, { name: 'dueDate', label: 'Due date', type: 'date' },
@@ -640,7 +640,7 @@ export const Facility = page({
   ],
 });
 export const Assets = page({
-  collection: 'hr_assets', title: 'Assets', crumbs: 'Staff › Office', addLabel: 'Add Asset', subtitle: 'Laptops, phones, furniture and other company property – who has it and what condition it is in.', statusField: 'status', statusTabs: ['In Use', 'In Stock', 'Repair', 'Disposed'],
+  collection: 'hr_assets', title: 'Assets', crumbs: 'HRMS › Office', addLabel: 'Add Asset', subtitle: 'Laptops, phones, furniture and other company property – who has it and what condition it is in.', statusField: 'status', statusTabs: ['In Use', 'In Stock', 'Repair', 'Disposed'],
   statusColors: { 'In Use': 'green', 'In Stock': 'blue', Repair: 'orange', Disposed: 'default' },
   stats: (rows) => [{ label: 'Assets', value: rows.length, tone: 'blue' }, { label: 'Asset value', value: inr(rows.reduce((s, r) => s + Number(r.value || 0), 0)), tone: 'purple' }, { label: 'Under repair', value: rows.filter((r) => r.status === 'Repair').length, tone: 'amber' }],
   fields: [
