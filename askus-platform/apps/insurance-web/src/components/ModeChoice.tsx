@@ -5,12 +5,11 @@ import { OFFLINE_CASHBACK, type OfflineType } from '../lib/offline'
 import type { Product } from '../lib/products'
 import '../ui/ui.css' // shared resets and the Inter font for .app-root
 import MoneyBanner from './MoneyBanner'
-const cardCar = '/img/acko/card-car.webp'
-const cardBike = '/img/acko/card-bike.webp'
+import { productPhoto } from '../lib/photos'
 
-const PHOTO: Record<string, { img: string; tint: string }> = {
-  car: { img: cardCar, tint: '#e3ebfb' },
-  bike: { img: cardBike, tint: '#e2f2e9' },
+const PHOTO: Record<string, { tint: string }> = {
+  car: { tint: '#e3ebfb' },
+  bike: { tint: '#e2f2e9' },
 }
 
 /** "How would you like to buy?" Online (partner journey) or Offline (we collect details and process it). */
@@ -57,7 +56,7 @@ export default function ModeChoice({
           <div className="flex shrink-0 items-start gap-2">
             {photo && (
               <span className="hidden h-24 w-36 place-items-end overflow-hidden rounded-2xl sm:grid" style={{ background: photo.tint }}>
-                <img src={photo.img} alt="" className="h-full w-full object-contain object-bottom p-2" />
+                <img src={productPhoto(product.id, 288, 192)?.src} alt="" className="h-full w-full object-cover" loading="lazy" />
               </span>
             )}
             <button type="button" aria-label="Close" onClick={onClose} className="grid size-10 shrink-0 place-items-center rounded-full bg-white text-zinc-500 shadow-[0_1px_2px_rgba(16,24,40,.1)] ring-1 ring-zinc-200 hover:text-zinc-900"><X size={18} /></button>
