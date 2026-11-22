@@ -37,6 +37,7 @@ import PresencePage from './views/PresencePage';
 import LoansPage from './views/LoansPage';
 import InsuranceRequestsPage from './views/InsuranceRequestsPage';
 import ActivityPage from './views/ActivityPage';
+import { erpRoutes } from './erp/routes';
 import type { Permission } from './types';
 import { hasPermission, homePath, isAdminRole } from './access';
 
@@ -253,6 +254,7 @@ export default function App() {
                   <RenewalsPage />
                 </RoleRoute></ProtectedRoute>
               } />
+              {erpRoutes()}
               <Route path="users" element={
                 <ProtectedRoute><RoleRoute adminOnly>
                   <UserManagementPage />

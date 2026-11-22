@@ -304,27 +304,30 @@ export default function TicketFormPage() {
 
   const card: React.CSSProperties = {
     background: '#fff',
-    borderRadius: 14,
-    boxShadow: '0 4px 20px rgba(16,43,54,0.04)',
-    border: '1px solid #dbe5f4',
-    padding: '20px clamp(16px, 3vw, 24px) 8px',
-    marginBottom: 16,
+    borderRadius: 20,
+    boxShadow: '0 1px 2px rgba(15,23,42,.04), 0 12px 30px -20px rgba(15,23,42,.25)',
+    border: '1px solid #e9edf3',
+    padding: '22px clamp(16px, 3vw, 26px) 10px',
+    marginBottom: 18,
   };
 
   const cardTitle: React.CSSProperties = {
-    fontSize: 13,
-    fontWeight: 700,
-    color: 'var(--ink)',
-    letterSpacing: 0.3,
-    marginBottom: 16,
-    paddingBottom: 10,
-    borderBottom: '1px solid #eff6ff',
+    fontSize: 15.5,
+    fontWeight: 800,
+    color: '#0f172a',
+    letterSpacing: '-0.01em',
+    marginBottom: 18,
+    paddingBottom: 12,
+    borderBottom: '1px dashed #e2e8f0',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
   };
 
-  const lbl: React.CSSProperties = { fontSize: 11, color: '#666', marginBottom: 4, marginTop: 2, display: 'block' };
+  const lbl: React.CSSProperties = { fontSize: 12.5, fontWeight: 600, color: '#334155', marginBottom: 6, marginTop: 2, display: 'block' };
   const inp: React.CSSProperties = {
-    padding: '8px 12px', borderRadius: 7, border: '1px solid #e0e0e0',
-    background: '#fff', fontSize: 12, color: '#111', width: '100%',
+    padding: '10px 14px', borderRadius: 12, border: '1px solid #dfe5ee',
+    background: '#fbfcfe', fontSize: 14, color: '#0f172a', width: '100%',
     boxSizing: 'border-box', outline: 'none',
   };
   const fw = { width: '100%' };
@@ -351,24 +354,26 @@ export default function TicketFormPage() {
       <div style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         marginBottom: 22,
-        background: '#fff', borderRadius: 12, padding: '14px 20px',
-        boxShadow: '0 2px 10px rgba(21,101,192,0.07)',
+        background: '#fff', borderRadius: 20, padding: '18px 22px',
+        border: '1px solid #e9edf3', borderTop: '4px solid #4f46e5',
+        boxShadow: '0 1px 2px rgba(15,23,42,.04), 0 12px 30px -20px rgba(15,23,42,.25)',
+        flexWrap: 'wrap', gap: 12,
       }}>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button className="action-button" style={ghostBtn} onClick={() => navigate(isEdit ? `/tickets/${id}` : '/tickets')}>← Back</button>
+          <button className="action-button tf-ghost" style={ghostBtn} onClick={() => navigate(isEdit ? `/tickets/${id}` : '/tickets')}>← Back</button>
           <div>
-            <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--ink)', margin: 0 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em', color: '#0f172a', margin: 0 }}>
               {isEdit ? 'Edit Ticket' : 'New Ticket'}
             </div>
-            <div style={{ fontSize: 12, color: '#475569', margin: 0 }}>
+            <div style={{ fontSize: 13, color: '#64748b', margin: 0 }}>
               {isEdit ? 'Update vehicle & insurance details' : 'Fill in vehicle & insurance details'}
             </div>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          {!isEdit && <button className="action-button" style={ghostBtn} onClick={() => form.resetFields()}>Clear form</button>}
+          {!isEdit && <button className="action-button tf-ghost" style={ghostBtn} onClick={() => form.resetFields()}>Clear form</button>}
           <button
-            className="action-button"
+            className="action-button tf-ghost"
             type="button"
             style={{
               ...ghostBtn,
@@ -382,7 +387,7 @@ export default function TicketFormPage() {
             Send via WhatsApp
           </button>
           <button
-            className="action-button"
+            className="action-button tf-primary"
             style={{ ...primaryBtn, opacity: loading ? 0.8 : 1 }}
             onClick={() => form.submit()}
             disabled={loading}
