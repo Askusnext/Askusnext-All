@@ -25,18 +25,18 @@ function usePending() {
   const salesReports = useCollection('crm_day_closing').rows.filter((r) => r.status === 'Pending');
   const careReports = useCollection('crm_cst_day_closing').rows.filter((r) => r.status === 'Pending');
   const items = [
-    ...leave.map((r) => ({ id: `l-${r.id}`, area: 'Staff', kind: 'Leave request', who: r.employee, detail: `${r.leaveType}: ${fmtDate(r.fromDate)} – ${fmtDate(r.toDate)}`, date: r.appliedOn ?? r.fromDate, amount: null, to: '/hrms/leave?status=Pending' })),
-    ...perms.map((r) => ({ id: `p-${r.id}`, area: 'Staff', kind: 'Short permission', who: r.employee, detail: `${r.hours} hour(s) – ${r.reason}`, date: r.date, amount: null, to: '/hrms/leave/permissions?status=Pending' })),
-    ...field.map((r) => ({ id: `f-${r.id}`, area: 'Staff', kind: 'Field check-in', who: r.employee, detail: `${r.type} at ${r.location}`, date: r.date, amount: null, to: '/hrms/outside-office?status=Pending' })),
-    ...expenses.map((r) => ({ id: `e-${r.id}`, area: 'Staff', kind: 'Expense claim', who: r.applicant, detail: `${r.category} – step ${r.stage} of 3`, date: r.date, amount: r.amount, to: '/hrms/expenses?status=Pending' })),
-    ...discounts.map((r) => ({ id: `d-${r.id}`, area: 'Sales', kind: 'Discount', who: r.requestedBy, detail: `${r.company} – ${inr(r.originalPrice)} → ${inr(r.requestedPrice)}`, date: r.date, amount: Number(r.originalPrice) - Number(r.requestedPrice), to: '/crm/price-requests?status=Pending' })),
-    ...salesReports.map((r) => ({ id: `s-${r.id}`, area: 'Sales', kind: 'Daily sales report', who: r.employee, detail: `${r.calls} calls, ${r.converted} closed`, date: r.date, amount: r.collection, to: '/crm/day-closing?status=Pending' })),
-    ...careReports.map((r) => ({ id: `c-${r.id}`, area: 'Customers', kind: 'Daily care report', who: r.employee, detail: `${r.renewed} renewed`, date: r.date, amount: r.collection, to: '/cst/day-closing?status=Pending' })),
+    ...leave.map((r) => ({ id: `l-${r.id}`, area: 'HRMS', kind: 'Leave request', who: r.employee, detail: `${r.leaveType}: ${fmtDate(r.fromDate)} – ${fmtDate(r.toDate)}`, date: r.appliedOn ?? r.fromDate, amount: null, to: '/hrms/leave?status=Pending' })),
+    ...perms.map((r) => ({ id: `p-${r.id}`, area: 'HRMS', kind: 'Short permission', who: r.employee, detail: `${r.hours} hour(s) – ${r.reason}`, date: r.date, amount: null, to: '/hrms/leave/permissions?status=Pending' })),
+    ...field.map((r) => ({ id: `f-${r.id}`, area: 'HRMS', kind: 'Field check-in', who: r.employee, detail: `${r.type} at ${r.location}`, date: r.date, amount: null, to: '/hrms/outside-office?status=Pending' })),
+    ...expenses.map((r) => ({ id: `e-${r.id}`, area: 'HRMS', kind: 'Expense claim', who: r.applicant, detail: `${r.category} – step ${r.stage} of 3`, date: r.date, amount: r.amount, to: '/hrms/expenses?status=Pending' })),
+    ...discounts.map((r) => ({ id: `d-${r.id}`, area: 'CRM', kind: 'Discount', who: r.requestedBy, detail: `${r.company} – ${inr(r.originalPrice)} → ${inr(r.requestedPrice)}`, date: r.date, amount: Number(r.originalPrice) - Number(r.requestedPrice), to: '/crm/price-requests?status=Pending' })),
+    ...salesReports.map((r) => ({ id: `s-${r.id}`, area: 'CRM', kind: 'Daily sales report', who: r.employee, detail: `${r.calls} calls, ${r.converted} closed`, date: r.date, amount: r.collection, to: '/crm/day-closing?status=Pending' })),
+    ...careReports.map((r) => ({ id: `c-${r.id}`, area: 'CST', kind: 'Daily care report', who: r.employee, detail: `${r.renewed} renewed`, date: r.date, amount: r.collection, to: '/cst/day-closing?status=Pending' })),
   ].sort((a, b) => String(a.date).localeCompare(String(b.date)));
   return items;
 }
 
-const AREA_TONE: Record<string, string> = { Staff: 'purple', Sales: 'cyan', Customers: 'magenta' };
+const AREA_TONE: Record<string, string> = { HRMS: 'purple', CRM: 'cyan', CST: 'magenta' };
 
 export function BusinessSnapshot() {
   const leads = useCollection('crm_leads').rows;
@@ -124,7 +124,7 @@ export function ApprovalsInbox() {
   return (
     <div className="erp-page">
       <PageHeader eyebrow="Owner" title="Approvals" subtitle="Everything waiting for your yes or no. Click Review to approve or reject." />
-      <StatGrid stats={areas.map((a) => ({ label: a, value: items.filter((i) => i.area === a).length, hint: 'waiting', tone: (a === 'Staff' ? 'purple' : a === 'Sales' ? 'teal' : 'pink') as never }))} />
+      <StatGrid stats={areas.map((a) => ({ label: a, value: items.filter((i) => i.area === a).length, hint: 'waiting', tone: (a === 'HRMS' ? 'purple' : a === 'CRM' ? 'teal' : 'pink') as never }))} />
       <section className="erp-panel">
         <Table rowKey="id" dataSource={items} pagination={{ pageSize: 15 }} scroll={{ x: 'max-content' }} locale={{ emptyText: 'Nothing is waiting for approval. 🎉' }}
           onRow={(r) => ({ style: { cursor: 'pointer' }, onClick: () => navigate(r.to) })}
@@ -157,13 +157,13 @@ export function SetupHome() {
         { title: 'Departments', description: 'Teams such as Sales, Operations and Accounts.', to: '/setup/departments', icon: <ApartmentOutlined />, tone: 'teal', cta: 'Edit departments' },
         { title: 'Job Titles', description: 'Titles shown on staff profiles and payslips.', to: '/setup/designations', icon: <IdcardOutlined />, tone: 'purple', cta: 'Edit job titles' },
       ])}
-      {group('Sales', 'Choices your sales team picks from when recording an enquiry.', [
+      {group('CRM', 'Choices your sales team picks from when recording an enquiry.', [
         { title: 'Products', description: 'What you sell, with starting premium and commission rate.', to: '/setup/products', icon: <TagsOutlined />, tone: 'teal', cta: 'Edit products' },
         { title: 'Sources', description: 'Where customers find you – referral, website, events.', to: '/setup/sources', icon: <ShopOutlined />, tone: 'amber', cta: 'Edit sources' },
         { title: 'Stages', description: 'The steps an enquiry moves through until it is won or lost.', to: '/setup/stages', icon: <FlagOutlined />, tone: 'red', cta: 'Edit stages' },
         { title: 'Call Results', description: 'Standard results to pick after every customer call.', to: '/setup/call-outcomes', icon: <PhoneOutlined />, tone: 'pink', cta: 'Edit outcomes' },
       ])}
-      {group('Staff', 'How time off, permissions and late arrivals affect salary.', [
+      {group('HRMS', 'How time off, permissions and late arrivals affect salary.', [
         { title: 'Leave Types', description: 'Kinds of leave, days allowed per year and whether they are paid.', to: '/setup/leave-types', icon: <CalendarOutlined />, tone: 'green', cta: 'Edit leave types' },
         { title: 'Leave Rules', description: 'Paid leave allowed per month and the weekly off day.', to: '/setup/leave-rules', icon: <SettingOutlined />, tone: 'purple', cta: 'Edit leave rules' },
         { title: 'Permission Rules', description: 'Short permissions allowed per month before pay is cut.', to: '/setup/permission-rules', icon: <ClockCircleOutlined />, tone: 'blue', cta: 'Edit permission rules' },

@@ -50,7 +50,7 @@ export const ERP_MODULES: ErpModule[] = [
     ],
   },
   {
-    id: 'crm', label: 'Sales', description: 'Enquiries, quotes and follow-ups.', tone: 'teal', icon: <RocketOutlined />,
+    id: 'crm', label: 'CRM', description: 'Sales: enquiries, quotes and follow-ups.', tone: 'teal', icon: <RocketOutlined />,
     purpose: 'Add customer enquiries, follow up, send quotes and see who is selling.',
     audience: 'Sales team',
     nav: [
@@ -81,7 +81,7 @@ export const ERP_MODULES: ErpModule[] = [
     ],
   },
   {
-    id: 'cst', label: 'Customers', description: 'Customers, renewals and complaints.', tone: 'pink', icon: <CustomerServiceOutlined />,
+    id: 'cst', label: 'CST', description: 'Customer service: renewals, calls and complaints.', tone: 'pink', icon: <CustomerServiceOutlined />,
     purpose: 'Look after customers after the sale – renewals, calls and complaints.',
     audience: 'Service team',
     nav: [
@@ -98,7 +98,7 @@ export const ERP_MODULES: ErpModule[] = [
     ],
   },
   {
-    id: 'production', label: 'Policies', description: 'New policies, changes and tasks.', tone: 'amber', icon: <ProjectOutlined />,
+    id: 'production', label: 'Production', description: 'Policy issuance, changes and tasks.', tone: 'amber', icon: <ProjectOutlined />,
     purpose: 'Get sold policies issued, handle policy changes and track work.',
     audience: 'Office team',
     nav: [
@@ -112,7 +112,7 @@ export const ERP_MODULES: ErpModule[] = [
     ],
   },
   {
-    id: 'hrms', label: 'Staff', description: 'Attendance, leave and salary.', tone: 'purple', icon: <TeamOutlined />,
+    id: 'hrms', label: 'HRMS', description: 'Staff: attendance, leave and salary.', tone: 'purple', icon: <TeamOutlined />,
     purpose: 'Staff details, attendance, leave, expenses and monthly salary.',
     audience: 'HR and all staff',
     nav: [
@@ -152,7 +152,7 @@ export const ERP_MODULES: ErpModule[] = [
     ],
   },
   {
-    id: 'accounts', label: 'Money', description: 'Money in, money out and bills.', tone: 'green', icon: <BankOutlined />, permission: 'payments',
+    id: 'accounts', label: 'Accounts', description: 'Money in, money out and bills.', tone: 'green', icon: <BankOutlined />, permission: 'payments',
     purpose: 'All money received, paid and still pending.',
     audience: 'Accounts team',
     nav: [
@@ -182,7 +182,7 @@ export const ERP_MODULES: ErpModule[] = [
         ],
       },
       {
-        path: '/setup/sales', label: 'Sales', icon: <RocketOutlined />, children: [
+        path: '/setup/sales', label: 'CRM', icon: <RocketOutlined />, children: [
           { path: '/setup/products', label: 'Products' },
           { path: '/setup/sources', label: 'Sources' },
           { path: '/setup/stages', label: 'Stages' },
@@ -190,7 +190,7 @@ export const ERP_MODULES: ErpModule[] = [
         ],
       },
       {
-        path: '/setup/people', label: 'Staff', icon: <TeamOutlined />, children: [
+        path: '/setup/people', label: 'HRMS', icon: <TeamOutlined />, children: [
           { path: '/setup/leave-types', label: 'Leave Types' },
           { path: '/setup/leave-rules', label: 'Leave Rules' },
           { path: '/setup/permission-rules', label: 'Permission Rules' },
