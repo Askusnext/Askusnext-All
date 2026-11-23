@@ -1,7 +1,7 @@
 Home page photos are served from Unsplash (https://unsplash.com/license: free to use, including
 commercially; no attribution required). Image IDs are listed in src/lib/photos.ts.
 
-Car         images.unsplash.com/photo-1786405454372-3fe75969c6b9  (white SUV)
+Car         images.unsplash.com/photo-1767949374180-e5895daa1990  (white SUV, front view)
 Bike        images.unsplash.com/photo-1648204798633-c51d248d637a  (rider on a scooter)
 Auto        images.unsplash.com/photo-1517330357046-3ab5a5dd42a1  (yellow auto-rickshaw)
 Commercial  images.unsplash.com/photo-1627019866926-b6030ff785fe  (white goods carrier)

@@ -73,22 +73,22 @@ export function ProductTiles() {
         </div>
         <div className="product-cards">
           {PRODUCTS.filter((p) => productPhoto(p.id)).map((p) => {
-            const photo = productPhoto(p.id)!
+            const photo = productPhoto(p.id, 300, 240)!
             const accent = ACCENT[p.id] ?? '#2f6bff'
             const cashback = p.id === 'car' || p.id === 'bike'
             return (
-              <button key={p.id} type="button" data-product={p.id} className="product-card" style={{ ['--accent' as string]: accent }}>
-                <span className="product-art">
-                  {cashback && <span className="product-badge">Up to {inr(OFFLINE_CASHBACK[p.id as 'car' | 'bike'])} cashback</span>}
-                  <img src={photo.src} srcSet={photo.srcSet} alt={photo.alt} loading="lazy" decoding="async" style={{ objectPosition: photo.position }} />
-                </span>
+              <button key={p.id} type="button" data-product={p.id} className="product-card corner" style={{ ['--accent' as string]: accent }}>
                 <span className="product-body">
                   <span className="product-name">{p.name}</span>
                   <span className="product-tag">{p.tag}</span>
-                  <span className="product-foot">
-                    <span>{p.startingAt ? <>From <b>{inr(p.startingAt)}*</b></> : 'Compare plans'}</span>
-                    <span className="product-go" aria-hidden="true"><ArrowRight size={16} /></span>
+                  <span className="product-chips">
+                    <span className="product-chip">{p.startingAt ? <>From <b>{inr(p.startingAt)}*</b></> : 'Compare plans'}</span>
+                    {cashback && <span className="product-chip cashback">Up to {inr(OFFLINE_CASHBACK[p.id as 'car' | 'bike'])} cashback</span>}
                   </span>
+                  <span className="product-go" aria-hidden="true"><ArrowRight size={16} /></span>
+                </span>
+                <span className="product-thumb" aria-hidden="true">
+                  <img src={photo.src} srcSet={photo.srcSet} alt="" loading="lazy" decoding="async" style={{ objectPosition: photo.position }} />
                 </span>
               </button>
             )
