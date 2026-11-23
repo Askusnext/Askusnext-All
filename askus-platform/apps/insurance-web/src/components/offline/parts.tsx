@@ -8,15 +8,16 @@ import { ACCEPT } from '../../lib/uploadFiles'
 export const STEPS = ['Vehicle', 'Details', 'IDV & owner'] as const
 
 /** Shared control look: 44px tall for easy touch, hairline border, indigo focus ring. */
-export const ctl = 'block w-full h-11 rounded-lg border border-zinc-300 bg-white px-3.5 text-base text-zinc-900 placeholder:text-zinc-400 hover:border-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 disabled:bg-zinc-50 disabled:text-zinc-500 sm:text-[15px]'
-export const ctlArea = ctl.replace('h-11', 'min-h-24 py-2.5')
+export const ctl = 'block w-full h-12 rounded-lg border border-[#c3cfe2] bg-white px-3.5 text-base text-[#253858] placeholder:text-zinc-400 hover:border-[#9db0cc] focus:border-indigo-600 focus:outline-none focus:ring-4 focus:ring-indigo-500/15 disabled:bg-zinc-50 disabled:text-zinc-500 sm:text-[15px]'
+export const ctlArea = ctl.replace('h-12', 'min-h-24 py-3')
 
 export function Group({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
     <fieldset className="min-w-0 border-0 p-0">
-      <legend className="p-0 text-[15px] font-semibold text-zinc-900">{title}</legend>
-      {hint && <p className="mt-0.5 text-sm text-zinc-500">{hint}</p>}
-      <div className="mt-4 space-y-4">{children}</div>
+      <legend className="p-0 text-[17px] font-semibold text-[color:var(--heading-ink,#253858)]">{title}</legend>
+      <span aria-hidden className="mt-1.5 block h-[3px] w-9 rounded-full bg-[color:var(--accent,#0065ff)]" />
+      {hint && <p className="mt-2 text-sm text-[color:var(--hint-ink,#71717a)]">{hint}</p>}
+      <div className="mt-5 space-y-5">{children}</div>
     </fieldset>
   )
 }
@@ -24,9 +25,14 @@ export function Group({ title, hint, children }: { title: string; hint?: string;
 export function Row({ label, hint, optional, badge, children }: { label: string; hint?: string; optional?: boolean; badge?: ReactNode; children: ReactNode }) {
   return (
     <label className="block min-w-0">
-      <span className="mb-1.5 flex items-center justify-between gap-2 text-sm font-medium text-zinc-800"><span className="flex items-center gap-2">{label}{badge}</span>{optional && <span className="text-xs font-normal text-zinc-400">Optional</span>}</span>
-      {children}
-      {hint && <span className="mt-1.5 block text-xs text-zinc-500">{hint}</span>}
+      <span className="relative block">
+        <span className="pointer-events-none absolute -top-2.5 left-3 z-[1] flex max-w-[calc(100%-1.5rem)] items-center gap-1.5 bg-[color:var(--field-bg,#fff)] px-1.5 text-xs font-medium text-[color:var(--label-ink,#5b6b85)]">
+          <span className="truncate">{label}</span>{optional && <span className="shrink-0 font-normal text-zinc-400">· optional</span>}
+        </span>
+        {children}
+        {badge && <span className="absolute -top-2.5 right-3 z-[1] bg-[color:var(--field-bg,#fff)] px-1 empty:hidden">{badge}</span>}
+      </span>
+      {hint && <span className="mt-1.5 block text-xs text-[color:var(--hint-ink,#71717a)]">{hint}</span>}
     </label>
   )
 }
@@ -34,7 +40,7 @@ export function Row({ label, hint, optional, badge, children }: { label: string;
 export const Two = ({ children }: { children: ReactNode }) => <div className="grid gap-4 sm:grid-cols-2">{children}</div>
 
 export function Question({ label, badge, children }: { label: string; badge?: ReactNode; children: ReactNode }) {
-  return <div><p className="mb-2 flex items-center gap-2 text-sm font-medium text-zinc-800">{label}{badge}</p>{children}</div>
+  return <div><p className="mb-2.5 flex items-center gap-2 text-sm font-medium text-[#5b6b85]">{label}{badge}</p>{children}</div>
 }
 
 /** Small "filled from your RC / policy" marker next to a field. */
@@ -49,11 +55,17 @@ export function AutoTag({ from }: { from?: 'rc' | 'policy' | 'lookup' }) {
 
 export function Segmented<T extends string>({ label, value, options, onChange }: { label: string; value: T | ''; options: readonly T[]; onChange: (v: T) => void }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex w-full rounded-lg bg-zinc-100 p-0.5 sm:inline-flex sm:w-auto">
-      {options.map((o) => (
-        <button key={o} type="button" role="radio" aria-checked={value === o} onClick={() => onChange(o)}
-          className={cn('min-h-10 min-w-0 flex-1 rounded-md px-5 py-1.5 text-sm font-medium leading-tight transition-all max-sm:px-2 sm:flex-none sm:whitespace-nowrap', value === o ? 'bg-white text-zinc-900 shadow-[0_1px_2px_rgba(16,24,40,.12)]' : 'text-zinc-600 hover:text-zinc-900')}>{o}</button>
-      ))}
+    <div role="radiogroup" aria-label={label} className="flex w-full flex-wrap gap-2.5 sm:w-auto">
+      {options.map((o) => {
+        const on = value === o
+        return (
+          <button key={o} type="button" role="radio" aria-checked={on} onClick={() => onChange(o)}
+            className={cn('inline-flex h-10 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-lg border px-4 text-sm font-medium leading-tight transition-colors max-sm:px-2 sm:flex-none',
+              on ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-[0_1px_2px_rgba(0,101,255,.18)]' : 'border-[#c3cfe2] bg-white text-[#253858] hover:border-[#9db0cc]')}>
+            {on && <Check size={15} strokeWidth={2.5} className="shrink-0" />}<span className="truncate">{o}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -63,7 +75,7 @@ export function Chips({ label, value, options, onChange }: { label: string; valu
     <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
       {options.map((o) => (
         <button key={o} type="button" role="radio" aria-checked={value === o} onClick={() => onChange(o)}
-          className={cn('h-10 min-w-14 rounded-lg border px-3.5 text-sm font-medium transition-colors', value === o ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-zinc-300 bg-white text-zinc-700 hover:border-zinc-400')}>{o}</button>
+          className={cn('inline-flex h-10 min-w-14 items-center justify-center gap-1.5 rounded-lg border px-3.5 text-sm font-medium transition-colors', value === o ? 'border-indigo-600 bg-indigo-50 text-indigo-700 shadow-[0_1px_2px_rgba(0,101,255,.18)]' : 'border-[#c3cfe2] bg-white text-[#253858] hover:border-[#9db0cc]')}>{value === o && <Check size={15} strokeWidth={2.5} />}{o}</button>
       ))}
     </div>
   )

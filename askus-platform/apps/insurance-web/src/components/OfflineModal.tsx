@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, Headphones, HeartPulse, IdCard, ScrollText, ShieldCheck, Sparkles, X } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, Headphones, HeartPulse, IdCard, ScrollText, ShieldCheck, Sparkles, UserRound, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { HELPLINE, inr } from '../lib/products'
 import {
@@ -13,6 +13,7 @@ import { describeReg, formatReg, lookupVehicle } from '../lib/vehicle'
 import { Button, cn } from '../ui'
 import IdvCalculator from './offline/IdvCalculator'
 import OfferBar from './offline/OfferBar'
+import Stepper from './offline/Stepper'
 import UploadCard, { type ScannedFile } from './offline/UploadCard'
 import { AutoTag, Chips, Group, Option, PlateInput, Progress, Question, Row, Segmented, Two, ctl, ctlArea, STEPS } from './offline/parts'
 
@@ -24,10 +25,9 @@ let seq = 0
 const nextId = () => `f${++seq}`
 
 const Heading = ({ step, title, sub }: { step: number; title: string; sub: string }) => (
-  <header className="mb-7">
-    <p className="text-xs font-semibold uppercase tracking-[.08em] text-indigo-600 max-lg:hidden">Step {step + 1} of {STEPS.length} · {STEPS[step]}</p>
-    <h1 tabIndex={-1} className="mt-2 text-[26px] font-semibold leading-tight tracking-tight text-zinc-900 outline-none sm:text-3xl">{title}</h1>
-    <p className="mt-2 max-w-xl text-[15px] leading-relaxed text-zinc-500">{sub}</p>
+  <header className="mb-8" data-step={step + 1 + '/' + STEPS.length}>
+    <h1 tabIndex={-1} className="text-[22px] font-semibold leading-tight tracking-tight text-[#253858] outline-none sm:text-2xl">{title}</h1>
+    <p className="mt-1.5 max-w-xl text-[15px] leading-relaxed text-zinc-500">{sub}</p>
   </header>
 )
 
@@ -237,10 +237,10 @@ export default function OfflineModal({ type, onClose }: { type: OfflineType; onC
 
   const footer = screen !== 'done' && (
     <div className="sticky bottom-0 z-10 border-t border-zinc-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto max-w-[760px] px-4 pb-[max(.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-6">
+      <div className="mx-auto max-w-[1080px] px-4 pb-[max(.75rem,env(safe-area-inset-bottom))] pt-3 sm:px-6 lg:pl-[calc(1.5rem+347px)]">
         {error && <p role="alert" className="mb-3 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-800"><X size={16} className="mt-0.5 shrink-0" />{error}</p>}
         <div className="flex gap-3">
-          {screen !== 'entry' && <Button size="sm" className="h-12 px-5 text-[15px]" icon={ArrowLeft} disabled={busy} onClick={() => go(ORDER[step - 1])}>Back</Button>}
+          {screen !== 'entry' && <button type="button" disabled={busy} onClick={() => go(ORDER[step - 1])} className="inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-zinc-200 px-5 text-[15px] font-medium text-zinc-700 transition-colors hover:bg-zinc-300 disabled:opacity-50"><ArrowLeft size={16} />Back</button>}
           <Button variant="primary" size="sm" loading={looking || busy} className="h-12 flex-1 text-[15px] sm:ml-auto sm:flex-none sm:px-8"
             onClick={() => {
               if (screen === 'entry') void continueFromEntry()
@@ -257,7 +257,7 @@ export default function OfflineModal({ type, onClose }: { type: OfflineType; onC
 
   return (
     <dialog ref={dlg} aria-label={`${noun} insurance, offline`} onCancel={(e) => { e.preventDefault(); onClose() }}
-      className="app-root m-0 h-dvh max-h-none w-full max-w-none flex-col overflow-y-auto overflow-x-hidden rounded-none border-0 bg-zinc-50 p-0 text-zinc-900 shadow-none [&[open]]:flex">
+      className="app-root pb-look m-0 h-dvh max-h-none w-full max-w-none flex-col overflow-y-auto overflow-x-hidden rounded-none border-0 bg-[#eaf0f8] p-0 text-[#253858] shadow-none [&[open]]:flex">
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1080px] items-center gap-4 px-4 sm:px-6">
           <span className="flex items-center gap-2.5">
@@ -300,7 +300,14 @@ export default function OfflineModal({ type, onClose }: { type: OfflineType; onC
           </div>
         </main>
       ) : (
-        <main className="mx-auto w-full max-w-[760px] flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <main className={cn('mx-auto w-full max-w-[1080px] flex-1 px-4 py-6 sm:px-6 sm:py-9', screen !== 'details' && 'lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start lg:gap-7')}>
+          {screen !== 'details' && <div className="max-lg:hidden lg:sticky lg:top-36"><Stepper step={step} f={f} cashback={cashback} onJump={(i) => go(ORDER[i])} /></div>}
+          <div className={cn(screen === 'details' ? 'contents' : 'min-w-0 overflow-hidden rounded-2xl border border-[#d3e0f3] bg-white shadow-[0_10px_30px_rgba(2,52,126,.08)]')}>
+            {screen !== 'details' && <div className="flex items-center gap-3 bg-[var(--pb-soft)] px-5 py-3.5 sm:px-7">
+              <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-indigo-600 text-white">{screen === 'entry' ? <IdCard size={18} /> : <UserRound size={18} />}</span>
+              <p className="min-w-0 truncate text-base font-semibold text-[#253858]">{screen === 'entry' ? 'Vehicle & documents' : 'IDV & owner details'}<span className="ml-2 text-sm font-normal text-[#5b6b85] max-sm:hidden">Step {step + 1} of {STEPS.length}</span></p>
+            </div>}
+            <div className={cn(screen === 'details' ? 'contents' : 'p-5 sm:p-7')}>
 
           {/* 1. Vehicle number + documents */}
           {screen === 'entry' && (
@@ -342,49 +349,53 @@ export default function OfflineModal({ type, onClose }: { type: OfflineType; onC
             </form>
           )}
 
-          {/* 2. Vehicle and previous policy details (auto-filled from the documents), then the cover */}
+          {/* 2. Vehicle and previous policy details: navy vehicle panel + white policy panel (fields auto-filled from the documents) */}
           {screen === 'details' && (
-            <div className="space-y-9">
+            <div className="space-y-6">
               <Heading step={1} title="Vehicle and policy details" sub={filledCount ? 'We filled in what we could read from your documents. Please check each detail.' : 'These help us find the right insurers and price your cover accurately.'} />
               {filledCount > 0 && (
-                <div className="-mt-3 flex items-start gap-3 rounded-2xl border border-violet-200 p-4 text-sm text-violet-950" style={{ background: 'linear-gradient(90deg,#f5f3ff,#fdf4ff)' }}>
+                <div className="flex items-start gap-3 rounded-2xl border border-violet-200 p-4 text-sm text-violet-950" style={{ background: 'linear-gradient(90deg,#f5f3ff,#fdf4ff)' }}>
                   <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-violet-600 text-white"><Sparkles size={16} /></span>
                   <p className="text-violet-950"><b className="font-semibold">{filledCount} detail{filledCount === 1 ? '' : 's'} filled in for you</b> from your {fromSources}. Fields marked <AutoTag from="rc" /> or <AutoTag from="policy" /> came from your documents.</p>
                 </div>
               )}
-              <Group title="Vehicle" hint={f.isNew ? 'Brand-new vehicle: no registration yet.' : formatReg(f.regNumber)}>
-                <Two>
-                  <Row label="Make and model" badge={<AutoTag from={auto.makeModel} />}><input className={ctl} placeholder={type === 'car' ? 'e.g. Maruti Alto 800' : 'e.g. TVS Apache'} {...bind('makeModel')} /></Row>
-                  <Row label="Variant" optional badge={<AutoTag from={auto.variant} />}><input className={ctl} placeholder="e.g. RTR 200 4V FI (200 CC)" {...bind('variant')} /></Row>
-                </Two>
-                <Row label="Fuel type" badge={<AutoTag from={auto.fuel} />}><select className={ctl} value={f.fuel} onChange={(e) => set('fuel', e.target.value)}>{['Petrol', 'Diesel', 'CNG', 'Electric', 'LPG'].map((x) => <option key={x}>{x}</option>)}</select></Row>
-                {!f.isNew && (
-                  <Two>
-                    <Row label="Registration date" badge={<AutoTag from={auto.registrationDate} />}><input type="date" className={ctl} max={new Date().toISOString().slice(0, 10)} {...bind('registrationDate')} /></Row>
-                    <Row label="Manufacturing month" badge={<AutoTag from={auto.manufactureMonth} />}><input type="month" className={ctl} max={new Date().toISOString().slice(0, 7)} {...bind('manufactureMonth')} /></Row>
-                  </Two>
-                )}
-              </Group>
-              {!f.isNew && (
-                <Group title="Previous policy" hint={policyFiles.length ? 'From your current or last insurance policy.' : 'No policy uploaded, so please fill these in from your current or last policy.'}>
-                  {policyMismatch && <p className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"><AlertTriangle size={15} className="shrink-0" />The policy you uploaded is for {formatReg(policyReg!)}, not {formatReg(f.regNumber)}. Please check it.</p>}
-                  <Question label="Did your policy expire more than 90 days ago?" badge={<AutoTag from={auto.expiredOver90} />}><Segmented label="Expired over 90 days" value={f.expiredOver90} options={['No', 'Yes'] as const} onChange={(v) => set('expiredOver90', v)} /></Question>
-                  <Two>
-                    <Row label="Previous policy type" badge={<AutoTag from={auto.prevPolicyType} />}><select className={ctl} value={f.prevPolicyType} onChange={(e) => set('prevPolicyType', e.target.value)}><option value="">Select</option>{PREV_POLICY_TYPES.map((x) => <option key={x}>{x}</option>)}</select></Row>
-                    <Row label="Previous insurer" badge={<AutoTag from={auto.prevInsurer} />}><select className={ctl} value={f.prevInsurer} onChange={(e) => set('prevInsurer', e.target.value)}><option value="">Select</option>{INSURERS.map((x) => <option key={x}>{x}</option>)}</select></Row>
-                  </Two>
-                  <Row label="Existing policy expiry date" badge={<AutoTag from={auto.prevExpiry} />}><input type="date" className={ctl} {...bind('prevExpiry')} /></Row>
-                  <Question label="Did you make a claim in your policy?"><Segmented label="Claim made" value={f.claimMade} options={['No', 'Yes'] as const} onChange={(v) => set('claimMade', v)} /></Question>
-                  <Question label="Previous year No Claim Bonus (NCB)" badge={<AutoTag from={auto.ncb} />}><Chips label="NCB" value={f.ncb} options={NCB_OPTIONS} onChange={(v) => set('ncb', v)} /></Question>
-                  <Two>
-                    <Question label="Owner type"><Segmented label="Owner type" value={f.ownerType} options={['Individual', 'Corporate'] as const} onChange={(v) => set('ownerType', v)} /></Question>
-                    <Question label="Did the ownership change?"><Segmented label="Ownership changed" value={f.ownershipChanged} options={['No', 'Yes'] as const} onChange={(v) => set('ownershipChanged', v)} /></Question>
-                  </Two>
-                </Group>
-              )}
-              <Group title="Cover you want" hint="Comprehensive covers your own vehicle too. Third Party covers only damage you cause to others.">
-                <Segmented label="Policy type" value={f.policyType === 'Limited Third Party' ? 'Third Party' : f.policyType} options={['Comprehensive', 'Third Party'] as const} onChange={(v) => set('policyType', v)} />
-              </Group>
+              <div className="overflow-hidden rounded-2xl border border-[#d3e0f3] bg-white shadow-[0_10px_30px_rgba(2,52,126,.12)] lg:grid lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
+                <section aria-label="Vehicle details" className="pb-navy-panel bg-[var(--pb-navy)] p-5 text-white sm:p-7">
+                  <Group title="Vehicle Details" hint={f.isNew ? 'Brand-new vehicle: no registration yet.' : undefined}>
+                    {!f.isNew && <Row label="Registration number"><input className={ctl} value={formatReg(f.regNumber)} disabled readOnly /></Row>}
+                    <Row label="Make and model" badge={<AutoTag from={auto.makeModel} />}><input className={ctl} placeholder={type === 'car' ? 'e.g. Maruti Alto 800' : 'e.g. TVS Apache'} {...bind('makeModel')} /></Row>
+                    <Row label="Variant" optional badge={<AutoTag from={auto.variant} />}><input className={ctl} placeholder="e.g. RTR 200 4V FI (200 CC)" {...bind('variant')} /></Row>
+                    <Row label="Fuel type" badge={<AutoTag from={auto.fuel} />}><select className={ctl} value={f.fuel} onChange={(e) => set('fuel', e.target.value)}>{['Petrol', 'Diesel', 'CNG', 'Electric', 'LPG'].map((x) => <option key={x}>{x}</option>)}</select></Row>
+                    {!f.isNew && <Row label="Registration date" badge={<AutoTag from={auto.registrationDate} />}><input type="date" className={ctl} max={new Date().toISOString().slice(0, 10)} {...bind('registrationDate')} /></Row>}
+                    {!f.isNew && <Row label="Manufacturing month" badge={<AutoTag from={auto.manufactureMonth} />}><input type="month" className={ctl} max={new Date().toISOString().slice(0, 7)} {...bind('manufactureMonth')} /></Row>}
+                  </Group>
+                </section>
+
+                <section aria-label="Policy details" className="space-y-9 p-5 sm:p-7">
+                  <div>
+                    <p className="mb-3 text-base font-semibold text-[#253858]">Which type of policy do you want to buy?</p>
+                    <Segmented label="Policy type" value={f.policyType === 'Limited Third Party' ? 'Third Party' : f.policyType} options={['Comprehensive', 'Third Party'] as const} onChange={(v) => set('policyType', v)} />
+                    <p className="mt-2.5 text-sm text-zinc-500">Comprehensive covers your own vehicle too. Third Party covers only damage you cause to others.</p>
+                  </div>
+                  {!f.isNew && (
+                    <Group title="Previous Policy Details" hint={policyFiles.length ? 'From your current or last insurance policy.' : 'No policy uploaded, so please fill these in from your current or last policy.'}>
+                      {policyMismatch && <p className="flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900"><AlertTriangle size={15} className="shrink-0" />The policy you uploaded is for {formatReg(policyReg!)}, not {formatReg(f.regNumber)}. Please check it.</p>}
+                      <Question label="Did your policy expire more than 90 days ago?" badge={<AutoTag from={auto.expiredOver90} />}><Segmented label="Expired over 90 days" value={f.expiredOver90} options={['No', 'Yes'] as const} onChange={(v) => set('expiredOver90', v)} /></Question>
+                      <Two>
+                        <Row label="Previous policy type" badge={<AutoTag from={auto.prevPolicyType} />}><select className={ctl} value={f.prevPolicyType} onChange={(e) => set('prevPolicyType', e.target.value)}><option value="">Select</option>{PREV_POLICY_TYPES.map((x) => <option key={x}>{x}</option>)}</select></Row>
+                        <Row label="Previous insurer" badge={<AutoTag from={auto.prevInsurer} />}><select className={ctl} value={f.prevInsurer} onChange={(e) => set('prevInsurer', e.target.value)}><option value="">Select</option>{INSURERS.map((x) => <option key={x}>{x}</option>)}</select></Row>
+                      </Two>
+                      <Row label="Existing policy expiry date" badge={<AutoTag from={auto.prevExpiry} />}><input type="date" className={ctl} {...bind('prevExpiry')} /></Row>
+                      <Question label="Did you make a claim in your policy?"><Segmented label="Claim made" value={f.claimMade} options={['No', 'Yes'] as const} onChange={(v) => set('claimMade', v)} /></Question>
+                      <Question label="Previous year No Claim Bonus (NCB)" badge={<AutoTag from={auto.ncb} />}><Chips label="NCB" value={f.ncb} options={NCB_OPTIONS} onChange={(v) => set('ncb', v)} /></Question>
+                      <Two>
+                        <Question label="Owner type"><Segmented label="Owner type" value={f.ownerType} options={['Individual', 'Corporate'] as const} onChange={(v) => set('ownerType', v)} /></Question>
+                        <Question label="Did the ownership change?"><Segmented label="Ownership changed" value={f.ownershipChanged} options={['No', 'Yes'] as const} onChange={(v) => set('ownershipChanged', v)} /></Question>
+                      </Two>
+                    </Group>
+                  )}
+                </section>
+              </div>
             </div>
           )}
 
@@ -445,6 +456,8 @@ export default function OfflineModal({ type, onClose }: { type: OfflineType; onC
               <p className="text-xs text-zinc-400">Final premium, IDV and insurer are confirmed by our team before anything is issued. Nothing is charged on this form.</p>
             </div>
           )}
+            </div>
+          </div>
         </main>
       )}
       {footer}
