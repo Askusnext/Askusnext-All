@@ -1,10 +1,10 @@
 Home page photos are served from Unsplash (https://unsplash.com/license: free to use, including
 commercially; no attribution required). Image IDs are listed in src/lib/photos.ts.
 
-Car         images.unsplash.com/photo-1767949374180-e5895daa1990  (white SUV, front view)
-Bike        images.unsplash.com/photo-1648204798633-c51d248d637a  (rider on a scooter)
-Auto        images.unsplash.com/photo-1517330357046-3ab5a5dd42a1  (yellow auto-rickshaw)
-Commercial  images.unsplash.com/photo-1627019866926-b6030ff785fe  (white goods carrier)
-Health      images.unsplash.com/photo-1758691462863-9e1b8a863140  (doctor and patient)
-Term        images.unsplash.com/photo-1780980301761-f6e0fa6f0bdf  (family at home)
+Car         public/img/cutouts/car.webp, from images.unsplash.com/photo-1646960700481-c7be5224a7fc, background removed, badge and name plate painted out
+Bike        public/img/cutouts/bike.webp, from images.unsplash.com/photo-1774096218130-c48654cf78fe (unsplash.com/photos/gImMrv1-RI4), background removed
+Auto        public/img/cutouts/auto.webp, from images.unsplash.com/photo-1626149637281-4e227308da18 (unsplash.com/photos/1XJt1RpU5FI), background removed
+Commercial  public/img/cutouts/commercial.webp, from images.unsplash.com/photo-1733662095268-7a88cb5fa10e (unsplash.com/photos/22zfQm4GMQI), background removed
+Health      images.unsplash.com/photo-1763070282903-cbe9922ab7ab  (stethoscope on white)
+Term        public/img/cutouts/term.webp, from images.unsplash.com/photo-1780980301761-f6e0fa6f0bdf, background removed
 Hero        images.unsplash.com/photo-1770871821382-60ea99b0a941  (family in a sunlit garden)

@@ -251,3 +251,64 @@ footer .fraud-note b { color: #ffb4a3 !important; }
 .product-chip b { font-size: 14px !important; }
 .product-card.corner .product-go { width: 40px !important; height: 40px; flex: none; }
 @media (max-width: 760px) { .product-card.corner .product-go { width: 34px !important; height: 34px; } }
+
+/* Cut-out product photo (studio shot on white): bigger, no frame, white blends into the card. */
+.product-thumb.cutout { width: 230px; height: 142px; right: 4px; bottom: 6px; border: 0; border-radius: 0; box-shadow: none; transform: none; overflow: visible; background: transparent; }
+.product-thumb.cutout img { object-fit: contain; object-position: right bottom; mix-blend-mode: multiply; }
+.product-card.corner:hover .product-thumb.cutout { transform: translateX(-6px) scale(1.04); }
+@media (max-width: 760px) { .product-thumb.cutout { width: 170px; height: 104px; right: 2px; bottom: 4px; } }
+.product-thumb.cutout { width: 250px; height: 150px; right: 14px; bottom: 10px; }
+.product-thumb.cutout img { object-position: center bottom; }
+@media (max-width: 760px) { .product-thumb.cutout { width: 176px; height: 106px; right: 8px; bottom: 6px; } }
+@media (max-width: 760px) {
+  .product-thumb.cutout { width: 150px; height: 92px; right: 6px; bottom: 6px; }
+  .product-card.corner[data-product='car'] .product-chips { max-width: 60%; }
+}
+
+/* ── Bento layout: tall car card, cut-out images with no frame ── */
+.product-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-flow: dense; }
+.product-card.corner[data-product='car'] { grid-row: span 2; }
+.product-card.corner[data-product='term'] { grid-column: span 3; }
+.product-thumb.cutout, .product-thumb.soft { border: 0 !important; border-radius: 0 !important; box-shadow: none !important; transform: none !important; background: transparent; overflow: visible; }
+.product-thumb.cutout img { object-fit: contain; object-position: right bottom; mix-blend-mode: multiply; }
+.product-thumb.cutout.local img { mix-blend-mode: normal; filter: drop-shadow(0 12px 14px rgba(15, 27, 51, .18)); }
+.product-thumb.cutout { width: 190px; height: 128px; right: 12px; bottom: 10px; }
+.product-thumb.soft { width: 190px; height: 140px; right: 0; bottom: 0; }
+.product-thumb.soft img { object-fit: cover; -webkit-mask-image: radial-gradient(120% 120% at 100% 100%, #000 45%, transparent 78%); mask-image: radial-gradient(120% 120% at 100% 100%, #000 45%, transparent 78%); border-radius: 0 0 24px 0; }
+.product-card.corner[data-product='car'] .product-thumb.cutout { left: 6%; right: 6%; width: auto; height: 58%; bottom: 14px; }
+.product-card.corner[data-product='car'] .product-thumb.cutout img { object-position: center bottom; }
+.product-card.corner[data-product='car'] .product-name { font-size: 26px; }
+.product-card.corner[data-product='term'] .product-thumb.soft { width: 360px; height: 100%; }
+.product-card.corner[data-product='term'] .product-thumb.soft img { -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 45%); mask-image: linear-gradient(90deg, transparent 0%, #000 45%); }
+.product-card.corner:hover .product-thumb.cutout, .product-card.corner:hover .product-thumb.soft { transform: translateY(-4px) !important; }
+@media (max-width: 1024px) {
+  .product-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .product-card.corner[data-product='term'] { grid-column: span 2; }
+}
+@media (max-width: 760px) {
+  .product-cards { grid-template-columns: 1fr; }
+  .product-card.corner[data-product='car'] { grid-row: auto; min-height: 300px !important; }
+  .product-card.corner[data-product='car'] .product-body { min-height: 300px; }
+  .product-card.corner[data-product='car'] .product-thumb.cutout { height: 150px; left: 22%; right: 2%; }
+  .product-card.corner[data-product='term'] { grid-column: auto; }
+  .product-card.corner[data-product='term'] .product-thumb.soft { width: 170px; }
+  .product-thumb.cutout { width: 140px; height: 96px; right: 8px; bottom: 8px; }
+  .product-thumb.soft { width: 150px; height: 120px; }
+}
+/* Car slightly smaller, same position */
+.product-card.corner[data-product='car'] .product-thumb.cutout { left: 12%; right: 10%; height: 48%; bottom: 20px; }
+@media (max-width: 760px) { .product-card.corner[data-product='car'] .product-thumb.cutout { height: 128px; left: 28%; right: 4%; } }
+
+/* All tiles the same size: no tall car card or wide term card. */
+.product-card.corner[data-product='car'], .product-card.corner[data-product='term'] { grid-row: auto !important; grid-column: auto !important; }
+.product-card.corner[data-product='car'] .product-name { font-size: 20px; }
+.product-card.corner .product-thumb.cutout, .product-card.corner[data-product='car'] .product-thumb.cutout,
+.product-card.corner .product-thumb.soft, .product-card.corner[data-product='term'] .product-thumb.soft { left: auto !important; right: 12px !important; bottom: 10px !important; width: 180px !important; height: 120px !important; }
+.product-card.corner .product-thumb img { object-position: right bottom !important; }
+.product-card.corner[data-product='term'] .product-thumb.soft img { -webkit-mask-image: radial-gradient(120% 120% at 100% 100%, #000 45%, transparent 78%); mask-image: radial-gradient(120% 120% at 100% 100%, #000 45%, transparent 78%); }
+@media (max-width: 1024px) { .product-card.corner[data-product='term'] { grid-column: auto !important; } }
+@media (max-width: 760px) {
+  .product-card.corner[data-product='car'], .product-card.corner[data-product='car'] .product-body { min-height: 176px !important; }
+  .product-card.corner .product-thumb.cutout, .product-card.corner[data-product='car'] .product-thumb.cutout,
+  .product-card.corner .product-thumb.soft, .product-card.corner[data-product='term'] .product-thumb.soft { width: 140px !important; height: 96px !important; right: 8px !important; bottom: 8px !important; }
+}

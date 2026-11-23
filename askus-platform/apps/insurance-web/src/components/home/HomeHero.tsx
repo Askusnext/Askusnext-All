@@ -73,7 +73,7 @@ export function ProductTiles() {
         </div>
         <div className="product-cards">
           {PRODUCTS.filter((p) => productPhoto(p.id)).map((p) => {
-            const photo = productPhoto(p.id, 300, 240)!
+            const photo = productPhoto(p.id, p.id === 'car' ? 760 : 320, p.id === 'car' ? 470 : 260)!
             const accent = ACCENT[p.id] ?? '#2f6bff'
             const cashback = p.id === 'car' || p.id === 'bike'
             return (
@@ -87,7 +87,7 @@ export function ProductTiles() {
                   </span>
                   <span className="product-go" aria-hidden="true"><ArrowRight size={16} /></span>
                 </span>
-                <span className="product-thumb" aria-hidden="true">
+                <span className={`product-thumb ${photo.cutout ? 'cutout' : 'soft'}${photo.local ? ' local' : ''}`} aria-hidden="true">
                   <img src={photo.src} srcSet={photo.srcSet} alt="" loading="lazy" decoding="async" style={{ objectPosition: photo.position }} />
                 </span>
               </button>
