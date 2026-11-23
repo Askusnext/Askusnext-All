@@ -2,4 +2,5 @@
 @import "tailwindcss/utilities.css";
 @import "../src/legacy.css";
 @import "../src/mobile.css";
+@import "../src/home.css";
 @source "../src";

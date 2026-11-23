@@ -9,7 +9,7 @@ import ModeChoice from './components/ModeChoice'
 import OfflineModal from './components/OfflineModal'
 import type { OfflineType } from './lib/offline'
 import Modal from './components/Modal'
-import { ClaimsBand, ProductTiles } from './components/home/HomeHero'
+import { ClaimsBand, Hero, HowItWorks, ProductTiles } from './components/home/HomeHero'
 import { useAuth } from './context/AuthContext'
 import { inr, PRODUCTS, type Product } from './lib/products'
 
@@ -254,6 +254,8 @@ export default function App() {
           </header>
           <main id="main" tabIndex={-1}>
             <ProductTiles />
+            <Hero />
+            <HowItWorks />
             <ClaimsBand />
             <section className="container cashback-section" id="cashback-offer" aria-labelledby="cashback-title">
               <div className="cashback-callout">
@@ -267,23 +269,6 @@ export default function App() {
                     once your policy is confirmed.
                   </p>
                 </div>
-              </div>
-            </section>
-            <section className="quick-services" aria-label="Policy services">
-              <div className="container service-grid">
-                <button data-service="renew">
-                  <span className="service-icon mint"><Ic n="refresh-cw" /></span
-                  ><span><b>Renew your policy</b><small>Keep your protection going</small></span
-                  ><Ic n="chevron-right" /></button
-                ><button data-service="claim">
-                  <span className="service-icon peach"><Ic n="hand-heart" /></span
-                  ><span><b>Need claim assistance?</b><small>Help when it matters most</small></span
-                  ><Ic n="chevron-right" /></button
-                ><button data-action="dashboard">
-                  <span className="service-icon blue"><Ic n="files" /></span
-                  ><span><b>Your saved comparisons</b><small>Pick up where you left off</small></span
-                  ><Ic n="chevron-right" />
-                </button>
               </div>
             </section>
             <DocUpload onNeedSignIn={() => setAuthOpen(true)} />

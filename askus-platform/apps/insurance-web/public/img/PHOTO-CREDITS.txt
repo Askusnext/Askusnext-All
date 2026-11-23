@@ -1,0 +1,10 @@
+Home page photos are served from Unsplash (https://unsplash.com/license: free to use, including
+commercially; no attribution required). Image IDs are listed in src/lib/photos.ts.
+
+Car         public/img/cutouts/car.webp, from images.unsplash.com/photo-1646960700481-c7be5224a7fc, background removed, badge and name plate painted out
+Bike        public/img/cutouts/bike.webp, from images.unsplash.com/photo-1774096218130-c48654cf78fe (unsplash.com/photos/gImMrv1-RI4), background removed
+Auto        public/img/cutouts/auto.webp, from images.unsplash.com/photo-1626149637281-4e227308da18 (unsplash.com/photos/1XJt1RpU5FI), background removed
+Commercial  public/img/cutouts/commercial.webp, from images.unsplash.com/photo-1733662095268-7a88cb5fa10e (unsplash.com/photos/22zfQm4GMQI), background removed
+Health      images.unsplash.com/photo-1763070282903-cbe9922ab7ab  (stethoscope on white)
+Term        public/img/cutouts/term.webp, from images.unsplash.com/photo-1780980301761-f6e0fa6f0bdf, background removed
+Hero        images.unsplash.com/photo-1770871821382-60ea99b0a941  (family in a sunlit garden)
