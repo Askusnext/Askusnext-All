@@ -39,6 +39,17 @@
         "@askus/solutions-web"
       ],
       "port": 3005
+    },
+    {
+      "name": "askus-api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "start",
+        "--prefix",
+        "askus-platform/backend/askus-api"
+      ],
+      "port": 4000
     }
   ]
 }
