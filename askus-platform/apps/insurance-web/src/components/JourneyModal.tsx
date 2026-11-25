@@ -33,7 +33,7 @@ export default function JourneyModal({ product, onClose }: { product: Product; o
             <Ic n="arrow-left" /> Back
           </button>
           <a className="brand journey-home" href="#" aria-label="Askus Insurance home" onClick={(e) => { e.preventDefault(); onClose() }}>
-            <span><b>Askus</b> Insurance</span>
+            <span className="brand-word"><img className="brand-logo" src="/askus-wordmark.png" alt="Askus" width={480} height={144} />Insurance</span>
           </a>
         </div>
         <div className="journey-frame">

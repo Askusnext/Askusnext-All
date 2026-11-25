@@ -15,7 +15,7 @@ import { inr, PRODUCTS, type Product } from './lib/products'
 
 const TOP_LEVEL = new Set(['car', 'bike', 'auto', 'commercial'])
 /** Products that offer an Online / Offline choice. */
-const HAS_OFFLINE = new Set(['car', 'bike'])
+const HAS_OFFLINE = new Set(['car', 'bike', 'auto', 'commercial'])
 const GROUPS = ['Motor Insurance', 'Health Insurance', 'Term Insurance']
 const REVIEWS = [
   { name: 'Look beyond the premium', quote: 'Compare exclusions, waiting periods, deductibles and renewal conditions alongside the price.', question: 'What should I check in my insurance cover?' },
@@ -181,7 +181,7 @@ export default function App() {
           <header className="header">
             <div className="container header-inner">
               <a className="brand" href="#"
-                ><span><b>Askus</b> Insurance</span><small>WE ARE HAPPY TO HELP YOU</small></a
+                ><span className="brand-word"><img className="brand-logo" src="/askus-wordmark.png" alt="Askus" width={480} height={144} />Insurance</span><small>WE ARE HAPPY TO SERVE YOU</small></a
               >
               <button
                 className="icon-button mobile-toggle"
@@ -510,7 +510,7 @@ export default function App() {
             <div className="container">
               <div className="footer-top">
                 <a className="brand footer-brand" href="#"
-                  ><span><b>Askus</b> Insurance</span><small>WE ARE HAPPY TO HELP YOU</small></a
+                  ><span className="brand-word"><img className="brand-logo" src="/askus-wordmark.png" alt="Askus" width={480} height={144} />Insurance</span><small>WE ARE HAPPY TO SERVE YOU</small></a
                 ><span>Askus Insurance preview</span
                 ><a className="text-link" href="#main">Back to top <Ic n="arrow-up" /></a>
               </div>
@@ -574,7 +574,7 @@ export default function App() {
                   unknown callers. Verify an insurer or intermediary through official channels.
                 </p>
                 <div className="footer-bottom">
-                  <span>{new Date().getFullYear()} · Askus Next Global Solutions Private Limited</span
+                  <span>{new Date().getFullYear()} · Askus Insurance</span
                   ><a href="#contact">Contact & Help <Ic n="arrow-right" /></a>
                 </div>
               </div>

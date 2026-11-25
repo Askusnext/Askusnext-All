@@ -312,3 +312,44 @@ footer .fraud-note b { color: #ffb4a3 !important; }
   .product-card.corner .product-thumb.cutout, .product-card.corner[data-product='car'] .product-thumb.cutout,
   .product-card.corner .product-thumb.soft, .product-card.corner[data-product='term'] .product-thumb.soft { width: 140px !important; height: 96px !important; right: 8px !important; bottom: 8px !important; }
 }
+
+/* Askus wordmark logo in the header, footer and journey bar (replaces the old "<b>Askus</b>" text mark).
+   "Insurance" sits on the logo's baseline, a little smaller than the logo, and the tagline lines up under both. */
+.brand .brand-word { display: inline-flex; align-items: baseline; gap: 7px; font-size: 17px; line-height: 1; font-weight: 600; letter-spacing: -.01em; color: var(--ink); }
+.brand .brand-logo { display: block; height: 30px; width: auto; transform: translateY(2px); }
+.brand small { margin-top: 6px; font-size: 8.5px; letter-spacing: .9px; }
+.footer-brand .brand-word { color: #fff; }
+@media (max-width: 360px) {
+  .brand .brand-word { font-size: 15px; gap: 5px; }
+  .brand .brand-logo { height: 26px; }
+}
+
+/* Second line on a home tile (for example "Plan starting @ ₹1.3/day*") */
+.product-offer { display: block; margin-top: 3px; font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.product-card.corner .product-offer { max-width: 60%; }
+@media (max-width: 640px) { .product-offer { font-size: 12.5px; } .product-card.corner .product-offer { max-width: 100%; } }
+/* Tile text uses the card's full width: one line when it fits, wrapping only on narrow cards (the photo sits below, bottom-right). */
+.product-card.corner .product-tag, .product-card.corner .product-offer { max-width: 100%; }
+/* Keep a clear gap between the price/cashback chips and the arrow, even when a tile's text runs long (the card grows instead). */
+.product-card.corner .product-chips { margin-bottom: 18px; }
+@media (max-width: 760px) { .product-card.corner .product-chips { margin-bottom: 14px; } }
+
+/* ── Header refresh: 8px shorter, lighter and more refined menu type ── */
+.header .header-inner { min-height: 75px !important; }
+.header .nav-button {
+  padding-top: 21px !important; padding-bottom: 21px !important;
+  font-size: 14px !important; font-weight: 500 !important; letter-spacing: .01em !important;
+  color: #3b4660; text-transform: none;
+}
+.header .nav-button svg { width: 15px !important; height: 15px !important; opacity: .7; }
+html { scroll-padding-top: 87px; }
+/* Mid-size laptops/tablets (menu still visible): slightly smaller menu text so the account button stays on screen */
+@media (min-width: 851px) and (max-width: 1120px) {
+  .header .nav-button { font-size: 13px !important; letter-spacing: 0 !important; }
+  .header .nav-button svg { width: 13px !important; height: 13px !important; }
+  .header .nav-item { margin: 0 !important; }
+  .header #navigation { gap: 14px !important; }
+}
+/* Narrow desktops: drop the first-name part of "My Account (name)" so the header fits on one line */
+@media (min-width: 851px) and (max-width: 1000px) { .header .account-name { display: none; } }
+@media (min-width: 851px) and (max-width: 900px) { .header .account-my { display: none; } }

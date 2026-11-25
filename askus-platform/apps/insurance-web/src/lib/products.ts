@@ -11,6 +11,8 @@ export type Product = {
   id: string
   name: string
   tag: string
+  /** Optional second line under the tag on the home tile, for example a per-day price. */
+  offer?: string
   group: string
   color: string
   startingAt?: number
@@ -28,12 +30,12 @@ const PARTNER = {
 }
 
 export const PRODUCTS: Product[] = [
-  { id: 'car', iconName: 'car-front', image: car, name: 'Car Insurance', tag: 'Protect your drive', group: 'Motor Insurance', color: '#69849c', startingAt: 2094, journeyUrl: PARTNER.car },
-  { id: 'bike', iconName: 'bike', image: bike, name: 'Bike Insurance', tag: 'Ride with confidence', group: 'Motor Insurance', color: '#62a885', startingAt: 538, journeyUrl: PARTNER.bike },
+  { id: 'car', iconName: 'car-front', image: car, name: 'Car Insurance', tag: 'Compare & save upto 91%', offer: 'Get policy in 10 minutes^', group: 'Motor Insurance', color: '#69849c', startingAt: 2094, journeyUrl: PARTNER.car },
+  { id: 'bike', iconName: 'bike', image: bike, name: 'Bike Insurance', tag: 'Buy two-wheeler insurance in 60 seconds!', offer: 'Plan starting @ ₹1.3/day*', group: 'Motor Insurance', color: '#62a885', startingAt: 538, journeyUrl: PARTNER.bike },
   { id: 'auto', iconName: 'car-taxi-front', image: auto, name: 'Auto Insurance', tag: 'Auto-rickshaw cover', group: 'Motor Insurance', color: '#b58932', startingAt: 2400, journeyUrl: PARTNER.commercial },
-  { id: 'commercial', iconName: 'truck', image: commercial, name: 'Commercial Vehicle Insurance', tag: 'Cover your business vehicle', group: 'Motor Insurance', color: '#69849c', startingAt: 3000, journeyUrl: PARTNER.commercial },
+  { id: 'commercial', iconName: 'truck', image: commercial, name: 'Commercial Vehicle Insurance', tag: 'Cover your business vehicle', group: 'Motor Insurance', color: '#69849c', startingAt: 3139, journeyUrl: PARTNER.commercial },
   { id: 'health', iconName: 'heart-pulse', image: health, name: 'Health Insurance', tag: 'Medical protection', group: 'Health Insurance', color: '#d76279', journeyUrl: PARTNER.health },
-  { id: 'term', iconName: 'shield-check', image: term, name: 'Term Insurance', tag: 'Life cover', group: 'Term Insurance', color: '#8c65cf', journeyUrl: PARTNER.term },
+  { id: 'term', iconName: 'shield-check', image: term, name: 'Term Insurance', tag: 'Special Term Plans For Women', offer: '₹1 Crore Term Insurance · Starting from ₹410/month+', group: 'Term Insurance', color: '#8c65cf', journeyUrl: PARTNER.term },
 ]
 
 export const inr = (n: number) =>

@@ -37,7 +37,7 @@ export class InsuranceRequest {
   updatedBy: string | null;
 
   @Column({ type: 'varchar', nullable: true })
-  vehicleType: 'car' | 'bike' | null;
+  vehicleType: 'car' | 'bike' | 'auto' | 'commercial' | null;
 
   @Column({ type: 'int', nullable: true })
   cashbackUpTo: number | null;
