@@ -19,10 +19,15 @@ type Ctx = {
   /** Signed in with a verified mobile number. */
   user: AuthUser | null
   loading: boolean
-  /** First sign-in needs an email too (`needs: 'email'`); later sign-ins get a single email OTP. */
-  requestOtp: (mobile: string, email?: string, whatsapp?: boolean) => Promise<OtpRequestResult>
-  /** `emailCode` is the second code of a first sign-in. */
-  confirmOtp: (code: string, name?: string, emailCode?: string) => Promise<void>
+  /**
+   * `identifier` is an email or an Indian mobile number. A first sign-in also needs the other contact
+   * (`needs: 'email' | 'mobile'`) and verifies both; later sign-ins get a single email OTP.
+   */
+  requestOtp: (identifier: string, otherIdentifier?: string) => Promise<OtpRequestResult>
+  /** `otherCode` is the second code of a first sign-in. */
+  confirmOtp: (code: string, otherCode?: string) => Promise<void>
+  /** Email or mobile + password, for accounts that have a password set. */
+  loginWithPassword: (identifier: string, password: string) => Promise<void>
   logout: () => Promise<void>
   /** Re-reads the profile after it was edited elsewhere. */
   reload: () => Promise<void>
@@ -31,7 +36,7 @@ const AuthCtx = createContext<Ctx | null>(null)
 
 export function authMessage(e: unknown) {
   if (e instanceof ApiError) {
-    if (e.status === 401) return 'Incorrect or expired OTP. Check the code or request a new one.'
+    if (e.status === 401) return e.message && e.message !== 'Unauthorized' ? e.message : 'Incorrect or expired code. Check it or request a new one.'
     if (e.status === 429) return 'Too many attempts. Try again in a few minutes.'
     if (e.status === 400) return e.message
     if (e.status === 403) return e.message
@@ -41,14 +46,27 @@ export function authMessage(e: unknown) {
   return e instanceof Error && e.message.startsWith('Enter ') ? e.message : 'Something went wrong. Please try again.'
 }
 
-const toUser = (p: CustomerProfileDto): AuthUser | null =>
-  p.mobile ? { uid: p.userId, displayName: p.displayName, phoneNumber: p.mobile, email: p.contactEmail ?? p.loginEmail } : null
+// Same AskUs account as Askus Solutions: staff accounts made there may have only an email, so a mobile is not required to be signed in.
+const toUser = (p: CustomerProfileDto): AuthUser =>
+  ({ uid: p.userId, displayName: p.displayName, phoneNumber: p.mobile ?? '', email: p.contactEmail ?? p.loginEmail })
+
+/** An email stays as typed; a mobile number becomes +91XXXXXXXXXX. Throws a readable error otherwise. */
+export function toIdentifier(raw: string) {
+  const v = raw.trim()
+  if (v.includes('@')) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) throw new Error('Enter a valid email address.')
+    return v.toLowerCase()
+  }
+  const national = normMobile(v)
+  if (!/^[6-9]\d{9}$/.test(national)) throw new Error('Enter a valid email address or 10-digit mobile number.')
+  return `+91${national}`
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
-  const [phone, setPhone] = useState('')
-  const [email, setEmail] = useState('')
+  const [ident, setIdent] = useState('')
+  const [other, setOther] = useState('')
 
   const reload = useCallback(async () => {
     if (!tokenStore.get()) return setUser(null)
@@ -67,19 +85,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     user,
     loading,
     reload,
-    async requestOtp(mobile, mail, whatsapp) {
-      const national = normMobile(mobile)
-      if (!/^[6-9]\d{9}$/.test(national)) throw new Error('Enter a valid 10-digit Indian mobile number.')
-      const res = await api.auth.requestOtp(`+91${national}`, mail?.trim() || undefined, whatsapp ? 'whatsapp' : undefined)
-      setPhone(`+91${national}`)
-      setEmail(mail?.trim() ?? '')
+    async requestOtp(identifier, otherIdentifier) {
+      const id = toIdentifier(identifier)
+      const second = otherIdentifier?.trim() ? toIdentifier(otherIdentifier) : undefined
+      const res = await api.auth.requestOtp(id, second)
+      setIdent(id)
+      setOther(second ?? '')
       return res
     },
-    async confirmOtp(code, name, emailCode) {
-      if (!phone) throw new Error('Enter a new OTP request first.')
-      const other = emailCode ? { identifier: email || undefined, code: emailCode } : undefined
-      tokenStore.set(await api.auth.verifyOtp(phone, code, other))
-      if (name?.trim()) await api.customer.update({ displayName: name.trim() })
+    async confirmOtp(code, otherCode) {
+      if (!ident) throw new Error('Enter a new OTP request first.')
+      const second = otherCode ? { identifier: other || undefined, code: otherCode } : undefined
+      tokenStore.set(await api.auth.verifyOtp(ident, code, second))
+      await reload()
+    },
+    async loginWithPassword(identifier, password) {
+      tokenStore.set(await api.auth.loginPassword(toIdentifier(identifier), password))
       await reload()
     },
     async logout() {
@@ -88,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       tokenStore.clear()
       setUser(null)
     },
-  }), [user, loading, phone, email, reload])
+  }), [user, loading, ident, other, reload])
 
   return <AuthCtx.Provider value={value}>{children}</AuthCtx.Provider>
 }

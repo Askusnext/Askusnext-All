@@ -6,7 +6,7 @@ import { NotStaffError, accessRequestApi } from '../api/api';
 import type { Me } from '../api/session';
 import { useAppDispatch, loginSuccess } from '../store';
 import type { AuthResponse } from '../types';
-import { useWhatsAppAvailable } from '../api/useWhatsApp';
+import Brand from './Brand';
 
 type Mode = 'otp' | 'password';
 
@@ -310,10 +310,6 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
   const [otherCode, setOtherCode] = useState('');
   const [dual, setDual] = useState(false);
   const [emailHint, setEmailHint] = useState('');
-  const [mobileChannel, setMobileChannel] = useState<'whatsapp' | 'sms' | null>(null);
-  const [mobileHint, setMobileHint] = useState('');
-  const [waFailed, setWaFailed] = useState(false);
-  const waAvailable = useWhatsAppAvailable();
   const idRef = useRef<HTMLInputElement>(null);
   const firstDigitRef = useRef<HTMLInputElement>(null);
 
@@ -329,7 +325,6 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
     setIdentifier(''); setPassword(''); setShowPw(false); setDigits(Array(6).fill(''));
     setCodeSent(false); setCooldown(0); setBusy(false); setError(''); setAccess(null); setBlocked(null);
     setNeeds(null); setOtherId(''); setOtherCode(''); setDual(false); setEmailHint('');
-    setMobileChannel(null); setMobileHint(''); setWaFailed(false);
     setMode(USE_REAL_API ? 'otp' : 'password');
   }, []);
 
@@ -377,19 +372,15 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
     return kind !== 'none';
   };
 
-  // `whatsapp` comes from which button was pressed (or what the last request used, for "Resend").
-  const sendCode = (whatsapp = false) => {
+  const sendCode = () => {
     if (!validId()) { setError('Enter a valid email address or 10-digit phone number'); return; }
     if (needs && !otherId.trim()) { setError(`Enter your ${needs === 'email' ? 'email address' : 'mobile number'}`); return; }
     return run(async () => {
-      const res = await api.sendOTP(cleanId(), needs ? otherId.trim() : undefined, whatsapp ? 'whatsapp' : undefined);
+      const res = await api.sendOTP(cleanId(), needs ? otherId.trim() : undefined);
       if (res.needs) { setNeeds(res.needs); return; }
       if (res.status) { setBlocked(res.status); return; }
       setDual(res.channels?.length === 2);
       setEmailHint(res.emailHint ?? '');
-      setMobileHint(res.mobileHint ?? '');
-      setMobileChannel(res.channels?.includes('whatsapp') ? 'whatsapp' : res.channels?.includes('sms') ? 'sms' : null);
-      setWaFailed(Boolean(res.whatsappFailed));
       setCodeSent(true);
       setDigits(Array(6).fill(''));
       setOtherCode('');
@@ -415,7 +406,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
   const submit = (e: FormEvent) => {
     e.preventDefault();
     if (mode === 'otp') {
-      if (!codeSent) return void sendCode(false);
+      if (!codeSent) return void sendCode();
       if (code.length < 6) return void setError('Enter the 6-digit code');
       if (dual && !/^\d{6}$/.test(otherCode.trim())) return void setError('Enter the 6-digit code sent to your ' + (kind === 'email' ? 'mobile' : 'email'));
       return void verify(code);
@@ -429,10 +420,6 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
 
   if (!open) return null;
 
-  // Where the code went, in words
-  const sentTo = mobileChannel === 'whatsapp'
-    ? (dual ? 'your WhatsApp and email' : `your WhatsApp${mobileHint ? ` (${mobileHint})` : ''}`)
-    : dual ? 'your mobile and email' : emailHint || cleanId();
   const idLabel = USE_REAL_API ? 'Email or phone number' : 'Username';
   const cta = busy ? 'Please wait…' : mode === 'otp' ? (codeSent ? 'Verify & sign in' : 'Send OTP') : 'Sign in';
 
@@ -441,20 +428,19 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
       <style>{CSS}</style>
       <div className="slm" role="dialog" aria-modal="true" aria-labelledby="slm-title" onMouseDown={(e) => e.stopPropagation()}>
         <aside className="slm-brand" aria-hidden>
-          <img className="slm-logo-img" src="/askus-wordmark.png" alt="Askus" />
-          <div className="slm-wordmark">SOLUTIONS</div>
+          <Brand />
           <h3 className="slm-pitch">One secure sign-in for your whole operation.</h3>
           <ul className="slm-points">
             <li><span>{Icon.check}</span>Sign in with a one-time code. No password to remember.</li>
             <li><span>{Icon.check}</span>Use your work email or your phone number.</li>
             <li><span>{Icon.check}</span>Stay signed in for 12 hours.</li>
           </ul>
-          <div className="slm-fine">Restricted access · AskusNext Global Solutions Pvt Ltd</div>
+          <div className="slm-fine">Restricted access · Askus Next Global Solutions Private Limited</div>
         </aside>
 
         <section className="slm-main">
           <button type="button" className="slm-close" aria-label="Close" onClick={onClose}>{Icon.close}</button>
-          <img className="slm-mobile-logo" src="/askus-wordmark.png" alt="Askus" />
+          <div className="slm-mobile-logo"><Brand /></div>
           {blocked ? (
             <StatusNotice status={blocked} who={cleanId()} onDone={onClose} onRetry={() => { setBlocked(null); setCodeSent(false); setIdentifier(''); setError(''); }} />
           ) : access ? (
@@ -464,7 +450,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
           <h2 id="slm-title" className="slm-title">{mode === 'otp' && codeSent ? 'Enter your code' : 'Welcome back'}</h2>
           <p className="slm-sub">
             {mode === 'otp' && codeSent
-              ? <>We sent a 6-digit code to <strong>{sentTo}</strong>. <button type="button" className="slm-linkbtn" onClick={() => { setCodeSent(false); setDigits(Array(6).fill('')); setNeeds(null); setOtherId(''); setOtherCode(''); setDual(false); setMobileChannel(null); setWaFailed(false); setError(''); }}>Change</button></>
+              ? <>We sent a 6-digit code to <strong>{dual ? 'your mobile and email' : emailHint || cleanId()}</strong>. <button type="button" className="slm-linkbtn" onClick={() => { setCodeSent(false); setDigits(Array(6).fill('')); setNeeds(null); setOtherId(''); setOtherCode(''); setDual(false); setError(''); }}>Change</button></>
               : 'Access is provisioned by an Admin or Super Admin.'}
           </p>
 
@@ -487,7 +473,6 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
                     placeholder={USE_REAL_API ? 'name@askussolutions.in' : 'Enter username'}
                     value={identifier} onChange={(e) => { setIdentifier(e.target.value); setNeeds(null); setOtherId(''); setError(''); }}
                   />
-                  {USE_REAL_API && kind !== 'none' && <span className="slm-chip">{kind === 'email' ? 'Email' : 'Phone · +91'}</span>}
                 </div>
                 {mode === 'otp' && needs && (
                   <>
@@ -526,7 +511,7 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
                 <OtpBoxes digits={digits} onChange={(d) => { setDigits(d); setError(''); }} disabled={busy} firstRef={firstDigitRef} />
                 {dual && (
                   <>
-                    <label className="slm-label" htmlFor="slm-code2">Code sent to your {kind === 'email' ? `phone (${mobileChannel === 'whatsapp' ? 'WhatsApp' : 'SMS'})` : 'email'}</label>
+                    <label className="slm-label" htmlFor="slm-code2">Code sent to your {kind === 'email' ? 'phone (SMS)' : 'email'}</label>
                     <div className="slm-field">
                       <input
                         id="slm-code2" className="slm-input" type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6}
@@ -538,23 +523,14 @@ export default function StaffLoginModal({ open, onClose, contact }: { open: bool
                 <div className="slm-resend">
                   {cooldown > 0
                     ? <span>Resend code in {cooldown}s</span>
-                    : <>Didn’t get it? <button type="button" className="slm-linkbtn" disabled={busy} onClick={() => void sendCode(mobileChannel === 'whatsapp')}>Resend code</button></>}
+                    : <>Didn’t get it? <button type="button" className="slm-linkbtn" disabled={busy} onClick={sendCode}>Resend code</button></>}
                 </div>
-                {waFailed && <div role="status" style={{ fontSize: 12, color: '#fbbf24', marginBottom: 6 }}>WhatsApp isn’t available right now, so we sent your code {dual ? 'by SMS' : 'to your email'} instead.</div>}
-                {mobileChannel === 'whatsapp' && (
-                  <div className="slm-resend">
-                    <button type="button" className="slm-linkbtn" disabled={busy} onClick={() => void sendCode(false)}>Didn’t get it on WhatsApp? Send it by {dual ? 'SMS' : 'email'}</button>
-                  </div>
-                )}
               </>
             )}
 
             <div className="slm-error" role="alert" aria-live="polite">{error}</div>
 
             <button type="submit" className="slm-cta" disabled={busy}>{cta}</button>
-            {mode === 'otp' && !codeSent && waAvailable && (
-              <button type="button" className="slm-wa" disabled={busy} onClick={() => void sendCode(true)}>Send code on WhatsApp</button>
-            )}
             <div className="slm-foot">{contact}</div>
           </form>
           </>
@@ -570,68 +546,60 @@ const CSS = `
   background:rgba(4,8,18,0.72); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); animation:slm-fade .18s ease-out; }
 @keyframes slm-fade{ from{opacity:0} to{opacity:1} }
 @keyframes slm-rise{ from{opacity:0; transform:translateY(10px) scale(.985)} to{opacity:1; transform:none} }
-.slm{ --brand:#0a1a33; --accent:#5ad4ff; --ink:#0f1b2d; --muted:#5b6b82; --line:#d9e2ee; --bg:#ffffff;
+.slm{ --accent:#0066ff; --line:#dbe5f4; --bg:#ffffff;
   width:100%; max-width:860px; max-height:calc(100vh - 40px); overflow:auto; display:grid; grid-template-columns:5fr 6fr;
   border-radius:20px; background:var(--bg); color:var(--ink); box-shadow:0 30px 80px rgba(0,0,0,.55); animation:slm-rise .22s ease-out;
-  font-family:'Segoe UI',system-ui,-apple-system,sans-serif; }
+  font-family:var(--font-family); }
 .slm *{ box-sizing:border-box; }
 
-.slm-brand{ position:relative; padding:40px 34px; color:#eaf4ff; display:flex; flex-direction:column; gap:18px;
-  background:radial-gradient(120% 90% at 0% 0%, #12335f 0%, var(--brand) 55%, #060f20 100%); overflow:hidden; }
-.slm-brand::before{ content:''; position:absolute; inset:0; opacity:.5; pointer-events:none;
-  background-image:linear-gradient(rgba(90,212,255,.10) 1px, transparent 1px), linear-gradient(90deg, rgba(90,212,255,.10) 1px, transparent 1px);
-  background-size:34px 34px; mask-image:radial-gradient(80% 70% at 30% 20%, #000, transparent); -webkit-mask-image:radial-gradient(80% 70% at 30% 20%, #000, transparent); }
-.slm-brand > *{ position:relative; }
-.slm-logo{ width:44px; height:44px; }
-.slm-logo-img{ height:46px; width:auto; align-self:flex-start; }
-.slm-mobile-logo{ display:none; height:34px; width:auto; margin:0 0 14px; }
-.slm-wordmark{ font-family:'SFMono-Regular',Consolas,monospace; font-weight:700; letter-spacing:.14em; font-size:13px; color:var(--accent); }
+.slm-brand{ padding:40px 34px; color:var(--ink); display:flex; flex-direction:column; gap:24px;
+  background:#eff6ff; border-right:1px solid var(--line); }
+.slm-mobile-logo{ display:none; margin:0 0 24px; }
 .slm-pitch{ margin:6px 0 0; font-size:25px; line-height:1.25; font-weight:700; letter-spacing:-.01em; }
-.slm-points{ list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; font-size:14px; line-height:1.5; color:#c9daf0; }
+.slm-points{ list-style:none; margin:8px 0 0; padding:0; display:flex; flex-direction:column; gap:14px; font-size:14px; line-height:1.5; color:var(--muted); }
 .slm-points li{ display:flex; gap:11px; align-items:flex-start; }
-.slm-points li span{ flex:none; width:24px; height:24px; border-radius:50%; background:rgba(90,212,255,.16); color:var(--accent); display:grid; place-items:center; margin-top:-1px; }
-.slm-fine{ margin-top:auto; padding-top:18px; font-size:11.5px; color:#7f94b2; letter-spacing:.02em; }
+.slm-points li span{ flex:none; width:24px; height:24px; border-radius:50%; background:#dbeafe; color:var(--accent); display:grid; place-items:center; margin-top:-1px; }
+.slm-fine{ margin-top:auto; padding-top:18px; font-size:11.5px; color:var(--muted); letter-spacing:.02em; }
 
 .slm-main{ position:relative; padding:40px 40px 30px; }
-.slm-close{ position:absolute; top:14px; right:14px; width:36px; height:36px; border-radius:10px; border:none; background:transparent; color:var(--muted); cursor:pointer; display:grid; place-items:center; }
-.slm-close:hover{ background:#eef3f9; color:var(--ink); }
-.slm-title{ margin:0 0 6px; font-size:26px; font-weight:700; letter-spacing:-.015em; }
+.slm-close{ position:absolute; top:14px; right:14px; width:36px; height:36px; border-radius:10px; border:none; background:var(--brand); color:#fff; cursor:pointer; display:grid; place-items:center; }
+.slm-close:hover{ background:var(--brand-hover); }
+.slm .slm-title{ margin:0 0 6px; font-size:26px; font-weight:600; letter-spacing:-.015em; }
 .slm-sub{ margin:0 0 22px; font-size:14px; line-height:1.55; color:var(--muted); }
 .slm-sub strong{ color:var(--ink); word-break:break-all; }
-.slm-linkbtn{ background:none; border:none; padding:0; color:#0a6fa8; font:inherit; font-weight:600; cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
-.slm-linkbtn:hover{ color:#07517c; } .slm-linkbtn:disabled{ opacity:.5; cursor:default; }
+.slm-linkbtn{ background:var(--brand); border:none; border-radius:6px; padding:4px 8px; color:#fff; font:inherit; font-weight:500; cursor:pointer; }
+.slm-linkbtn:hover:not(:disabled){ background:var(--brand-hover); } .slm-linkbtn:disabled{ opacity:.5; cursor:default; }
 
-.slm-seg{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; margin-bottom:20px; border-radius:12px; background:#eef3f9; }
-.slm-seg button{ border:none; background:transparent; padding:10px 8px; border-radius:9px; font:inherit; font-size:14px; font-weight:600; color:var(--muted); cursor:pointer; transition:background .15s, color .15s, box-shadow .15s; }
-.slm-seg button.on{ background:#fff; color:var(--ink); box-shadow:0 1px 4px rgba(15,27,45,.14); }
+.slm-seg{ display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px; margin-bottom:20px; border-radius:12px; background:#eff6ff; }
+.slm-seg button{ border:1.5px solid transparent; background:transparent; padding:8px 6px; border-radius:9px; font:inherit; font-size:14px; font-weight:500; color:#475569; cursor:pointer; transition:background .15s, color .15s, box-shadow .15s; }
+.slm-seg button:hover:not(.on){ background:#dbeafe; color:#1d4ed8; }
+.slm-seg button.on{ background:#fff; border-color:#bfdbfe; color:#1d4ed8; font-weight:600; box-shadow:0 1px 3px rgba(29,78,216,.15); }
 
 .slm-label{ display:block; margin:0 0 7px; font-size:13px; font-weight:600; color:#2a3a52; }
 .slm-field{ position:relative; display:flex; align-items:center; margin-bottom:16px; border:1.5px solid var(--line); border-radius:12px; background:#fff; transition:border-color .15s, box-shadow .15s; }
-.slm-field:focus-within{ border-color:#1d9bd6; box-shadow:0 0 0 4px rgba(29,155,214,.16); }
-.slm-ico{ flex:none; padding:0 4px 0 14px; color:#7b8aa0; display:grid; place-items:center; }
+.slm-field:focus-within{ border-color:#1d4ed8; box-shadow:0 0 0 4px rgba(29,78,216,.16); }
+.slm-ico{ flex:none; padding:0 4px 0 14px; color:#475569; display:grid; place-items:center; }
 .slm-input{ flex:1; min-width:0; border:none; outline:none; background:transparent; padding:14px 12px; font:inherit; font-size:15px; color:var(--ink); }
-.slm-input::placeholder{ color:#9aa8bb; }
-.slm-chip{ flex:none; margin-right:10px; padding:3px 9px; border-radius:999px; background:#e4f4fc; color:#0a6fa8; font-size:11.5px; font-weight:700; white-space:nowrap; }
-.slm-eye{ flex:none; width:44px; height:44px; border:none; background:transparent; color:#7b8aa0; cursor:pointer; display:grid; place-items:center; border-radius:10px; }
-.slm-eye:hover{ color:var(--ink); }
+.slm-input::placeholder{ color:#475569; }
+.slm-input:-webkit-autofill,.slm-input:-webkit-autofill:hover,.slm-input:-webkit-autofill:focus,.slm-input:-webkit-autofill:active{ -webkit-box-shadow:0 0 0 1000px #fff inset; box-shadow:0 0 0 1000px #fff inset; -webkit-text-fill-color:var(--ink); caret-color:var(--ink); transition:background-color 9999s ease-out 0s; }
+.slm-input:autofill{ background:transparent; }
+.slm-eye{ flex:none; width:44px; height:44px; border:none; background:var(--brand); color:#fff; cursor:pointer; display:grid; place-items:center; border-radius:10px; }
+.slm-eye:hover{ background:var(--brand-hover); }
 
 .slm-otp{ display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin:2px 0 14px; }
-.slm-otp-box{ width:100%; aspect-ratio:1/1.12; text-align:center; font:inherit; font-size:24px; font-weight:700; color:var(--ink); border:1.5px solid var(--line); border-radius:12px; background:#fff; outline:none; transition:border-color .15s, box-shadow .15s; caret-color:#1d9bd6; }
-.slm-otp-box:focus{ border-color:#1d9bd6; box-shadow:0 0 0 4px rgba(29,155,214,.16); }
+.slm-otp-box{ width:100%; aspect-ratio:1/1.12; text-align:center; font:inherit; font-size:24px; font-weight:700; color:var(--ink); border:1.5px solid var(--line); border-radius:12px; background:#fff; outline:none; transition:border-color .15s, box-shadow .15s; caret-color:#1d4ed8; }
+.slm-otp-box:focus{ border-color:#1d4ed8; box-shadow:0 0 0 4px rgba(29,78,216,.16); }
 .slm-otp-box:disabled{ background:#f3f6fa; }
 .slm-resend{ font-size:13px; color:var(--muted); margin-bottom:6px; }
 
 .slm-error{ min-height:22px; margin:2px 0 8px; font-size:13px; font-weight:600; color:#c0392b; }
-.slm-cta{ width:100%; border:none; border-radius:12px; padding:15px 18px; font:inherit; font-size:15.5px; font-weight:700; letter-spacing:.01em; color:#04223a; cursor:pointer;
-  background:linear-gradient(180deg,#6fdcff,#3cc3f2); box-shadow:0 6px 18px rgba(60,195,242,.38); transition:transform .12s, box-shadow .12s, filter .12s; }
-.slm-wa{ width:100%; margin-top:10px; border:2px solid #25D366; background:transparent; border-radius:12px; padding:13px 18px; font:inherit; font-size:15px; font-weight:700; color:#25D366; cursor:pointer; }
-.slm-wa:hover:not(:disabled){ background:rgba(37,211,102,.12); }
-.slm-wa:disabled{ opacity:.6; cursor:not-allowed; }
-.slm-cta:hover:not(:disabled){ filter:brightness(1.04); box-shadow:0 8px 22px rgba(60,195,242,.5); }
+.slm-cta{ width:100%; border:1px solid var(--brand); border-radius:12px; padding:15px 18px; font:inherit; font-size:15.5px; font-weight:500; letter-spacing:.01em; color:#fff; cursor:pointer;
+  background:var(--brand); transition:background .12s; }
+.slm-cta:hover:not(:disabled){ background:var(--brand-hover); }
 .slm-cta:active:not(:disabled){ transform:translateY(1px); }
 .slm-cta:disabled{ opacity:.65; cursor:default; box-shadow:none; }
 .slm-foot{ margin-top:16px; text-align:center; font-size:13px; }
-.slm-foot a{ color:#0a6fa8; font-weight:600; text-decoration:none; } .slm-foot a:hover{ text-decoration:underline; }
+.slm-foot a{ color:#1e40af; font-weight:600; text-decoration:none; } .slm-foot a:hover{ text-decoration:underline; }
 
 .slm-done-badge.wait{ background:#fff3d6; color:#b27300; }
 .slm-done-badge.bad{ background:#fde8e6; color:#c0392b; }
@@ -639,13 +607,13 @@ const CSS = `
 .slm-quote.bad{ border-left-color:#e0685b; background:#fff5f4; color:#5a1f19; }
 .slm-who{ margin:-6px 0 18px; font-size:13px; color:var(--muted); } .slm-who strong{ color:var(--ink); word-break:break-all; }
 .slm-retry{ align-self:center; margin-top:14px; font-size:13px; }
-.slm-opt{ margin-left:6px; font-size:11.5px; font-weight:600; color:#7b8aa0; }
+.slm-opt{ margin-left:6px; font-size:11.5px; font-weight:600; color:#475569; }
 .slm-note{ margin:0 0 16px; padding:11px 14px; border-radius:10px; background:#fff6e5; color:#8a5a00; font-size:13px; line-height:1.5; }
 .slm-drop{ display:flex; align-items:center; gap:14px; margin-bottom:16px; padding:14px 16px; border:1.5px dashed #b9c8da; border-radius:12px; background:#f8fbfe; cursor:pointer; transition:border-color .15s, background .15s; }
-.slm-drop:hover, .slm-drop:focus-within{ border-color:#1d9bd6; background:#f0f9fe; }
-.slm-drop.has{ border-style:solid; border-color:#1d9bd6; background:#f0f9fe; }
+.slm-drop:hover, .slm-drop:focus-within{ border-color:#1d4ed8; background:#eff6ff; }
+.slm-drop.has{ border-style:solid; border-color:#1d4ed8; background:#eff6ff; }
 .slm-drop input{ position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
-.slm-drop-ico{ flex:none; width:40px; height:40px; border-radius:10px; background:#e4f4fc; color:#0a6fa8; display:grid; place-items:center; }
+.slm-drop-ico{ flex:none; width:40px; height:40px; border-radius:10px; background:#e8efff; color:#1e40af; display:grid; place-items:center; }
 .slm-drop-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
 .slm-drop-text strong{ font-size:14px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .slm-drop-text em{ font-style:normal; font-size:12.5px; color:var(--muted); }
@@ -653,7 +621,7 @@ const CSS = `
 .slm-done-badge{ width:46px; height:46px; margin-bottom:14px; border-radius:50%; background:#e3f7ec; color:#17995a; display:grid; place-items:center; }
 .slm-done-badge svg{ width:22px; height:22px; }
 .slm-status{ display:inline-block; margin:2px 0 18px; padding:4px 11px; border-radius:999px; background:#fff3d6; color:#8a5a00; font-size:12px; font-weight:700; letter-spacing:.02em; }
-.slm-quote{ margin:0 0 20px; padding:14px 18px; border-left:4px solid #3cc3f2; border-radius:0 12px 12px 0; background:#f0f9fe; color:#18314d; font-size:15.5px; line-height:1.6; font-weight:500; }
+.slm-quote{ margin:0 0 20px; padding:14px 18px; border-left:4px solid #1d4ed8; border-radius:0 12px 12px 0; background:#eff6ff; color:#18314d; font-size:15.5px; line-height:1.6; font-weight:500; }
 .slm-summary{ width:100%; margin:0 0 22px; padding:4px 16px; border:1px solid var(--line); border-radius:12px; }
 .slm-summary div{ display:flex; justify-content:space-between; gap:16px; padding:10px 0; font-size:13.5px; }
 .slm-summary div + div{ border-top:1px solid #edf1f6; }
