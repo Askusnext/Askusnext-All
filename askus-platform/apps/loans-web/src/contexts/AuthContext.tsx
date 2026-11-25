@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import type { UserProfile } from '../types'
 import {
+  type OtpOutcome,
   confirmPhoneOtp,
   initiateGoogleSignIn,
   observeAuth,
@@ -20,10 +21,10 @@ interface AuthContextType {
   pendingGoogleUser: { uid: string; email: string; displayName: string } | null
   openAuthModal: (defaultTab?: 'phone' | 'whatsapp') => void
   closeAuthModal: () => void
-  sendPhoneOtp: (mobile: string) => Promise<boolean>
-  verifyPhoneOtp: (mobile: string, code: string) => Promise<boolean>
-  sendWhatsAppOtp: (mobile: string) => Promise<boolean>
-  verifyWhatsAppOtp: (mobile: string, code: string) => Promise<boolean>
+  /** Asks for a code. `whatsapp: true` asks for it on WhatsApp. Returns what happened, or null if it could not be sent. */
+  sendPhoneOtp: (mobile: string, opts?: { email?: string; whatsapp?: boolean }) => Promise<OtpOutcome | null>
+  /** `other` carries the email and its code on a first sign-in. */
+  verifyPhoneOtp: (mobile: string, code: string, other?: { email?: string; emailCode?: string }) => Promise<boolean>
   loginWithGoogle: () => Promise<boolean>
   completeGooglePhoneLinking: (mobile: string, code: string) => Promise<boolean>
   logout: () => Promise<void>
@@ -55,19 +56,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     resetPhoneRecaptcha()
   }, [])
 
-  const sendPhoneOtp = async (mobile: string) => {
+  const sendPhoneOtp = async (mobile: string, opts?: { email?: string; whatsapp?: boolean }) => {
     try {
-      await requestPhoneOtp(mobile)
-      showToast({ type: 'info', title: 'Verification code sent', message: 'Enter the 6-digit code we sent to your mobile number.' })
-      return true
+      const outcome = await requestPhoneOtp(mobile, opts)
+      if (outcome.needsEmail) return outcome // nothing sent yet: the screen asks for the email first
+      const where = outcome.mobileChannel === 'whatsapp' ? 'on WhatsApp' : outcome.dual ? 'by SMS and email' : 'to your email'
+      showToast({
+        type: 'info',
+        title: outcome.whatsappFailed ? 'WhatsApp unavailable' : 'Verification code sent',
+        message: outcome.whatsappFailed ? `WhatsApp is not available right now, so we sent your code ${outcome.dual ? 'by SMS' : 'to your email'}.` : `We sent your 6-digit code ${where}.`,
+      })
+      return outcome
     } catch (error) {
       showToast({ type: 'error', title: 'Could not send code', message: error instanceof Error ? error.message : 'Phone verification failed.' })
-      return false
+      return null
     }
   }
 
-  const verifyPhoneOtp = async (mobile: string, code: string) => {
-    const result = await confirmPhoneOtp(mobile, code)
+  const verifyPhoneOtp = async (mobile: string, code: string, other?: { email?: string; emailCode?: string }) => {
+    const result = await confirmPhoneOtp(mobile, code, other)
     if (!result.success || !result.user) {
       showToast({ type: 'error', title: 'Verification failed', message: result.error || 'Check the code and try again.' })
       return false
@@ -78,12 +85,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     showToast({ type: 'success', title: 'Phone verified', message: 'You are signed in securely.' })
     return true
   }
-
-  const sendWhatsAppOtp = async () => {
-    showToast({ type: 'error', title: 'WhatsApp unavailable', message: 'WhatsApp authentication has not been configured.' })
-    return false
-  }
-  const verifyWhatsAppOtp = async () => false
 
   const loginWithGoogle = async () => {
     const result = await initiateGoogleSignIn()
@@ -121,8 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{
       user, isAuthenticated: Boolean(user), isMobileVerified,
       isAdmin: user?.role === 'admin', isLoading, isAuthModalOpen, pendingGoogleUser,
-      openAuthModal, closeAuthModal, sendPhoneOtp, verifyPhoneOtp, sendWhatsAppOtp,
-      verifyWhatsAppOtp, loginWithGoogle, completeGooglePhoneLinking, logout, patchUser,
+      openAuthModal, closeAuthModal, sendPhoneOtp, verifyPhoneOtp, loginWithGoogle, completeGooglePhoneLinking, logout, patchUser,
     }}>
       {children}
     </AuthContext.Provider>

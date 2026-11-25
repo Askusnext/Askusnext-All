@@ -77,3 +77,27 @@
 @keyframes ai-spin { to { transform: rotate(360deg) } }
 .ai-ring { background: conic-gradient(from 0deg, #8b5cf6, #ec4899, #f59e0b, #8b5cf6); animation: ai-spin 1.6s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .offer-sheen, .offer-pulse, .ai-ring { animation: none } }
+
+/* ---- Offline journey look: Askus blue and navy, outlined fields, chip choices, stepper card ----
+   Tailwind colours are CSS variables, so re-pointing the "indigo" ramp here turns every indigo accent inside
+   the offline journey into Askus blue (#0065ff) without touching the logic or the other pages. */
+.pb-look {
+  --color-indigo-50: #eaf2ff; --color-indigo-100: #d9e7ff; --color-indigo-200: #b8d2ff; --color-indigo-300: #8ab4ff;
+  --color-indigo-400: #4d8fff; --color-indigo-500: #1a73ff; --color-indigo-600: #0065ff; --color-indigo-700: #0052cc;
+  --color-indigo-800: #02347e; --color-indigo-900: #02347e;
+  --pb-navy: #02347e; --pb-ink: #253858; --pb-soft: #e3edff;
+  color: var(--pb-ink);
+}
+.pb-look :focus-visible { outline-color: #0065ff; }
+
+.app-root.pb-look { font-family: Poppins, Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-feature-settings: normal; }
+
+/* A navy panel inside the offline journey (the vehicle details column): outlined, transparent fields with light text.
+   The variables are read by Row / Group in offline/parts.tsx so labels and titles switch to light colours too. */
+.pb-navy-panel { --field-bg: var(--pb-navy); --label-ink: rgba(255,255,255,.82); --heading-ink: #fff; --accent: #fff; --hint-ink: rgba(255,255,255,.72); color-scheme: dark; }
+.pb-navy-panel :is(input, select, textarea) { background-color: transparent; color: #fff; border-color: rgba(255,255,255,.4); }
+.pb-navy-panel :is(input, select, textarea)::placeholder { color: rgba(255,255,255,.5); }
+.pb-navy-panel :is(input, select, textarea):hover { border-color: rgba(255,255,255,.7); }
+.pb-navy-panel :is(input, select, textarea):focus { border-color: #fff; box-shadow: 0 0 0 4px rgba(255,255,255,.18); }
+.pb-navy-panel :is(input, select):disabled { color: rgba(255,255,255,.7); background-color: rgba(255,255,255,.07); }
+.pb-navy-panel select option { color: #253858; background: #fff; }

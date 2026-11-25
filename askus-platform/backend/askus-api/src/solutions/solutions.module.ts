@@ -40,6 +40,7 @@ import { TimesheetService } from './timesheet.service';
 import { PresenceConsent, PresenceCurrent, PresenceSession, PresenceTransition, StaffAssignmentAudit } from './presence.entities';
 import { PresenceController } from './presence.controller';
 import { PresenceGateway } from './presence.gateway';
+import { PresenceLinkGateway } from './presence-link.gateway';
 import { PresenceService } from './presence.service';
 import { PresenceBus, StaffHierarchyService } from './staff-hierarchy.service';
 import { UsersController } from './users.controller';
@@ -99,6 +100,7 @@ import { UsersService } from './users.service';
     StaffHierarchyService,
     PresenceService,
     PresenceGateway,
+    PresenceLinkGateway,
   ],
   exports: [StaffHierarchyService],
 })

@@ -5,6 +5,8 @@ import { Column, CreateDateColumn, Entity, Index, PrimaryColumn, PrimaryGenerate
 const SCHEMA = 'solutions';
 
 export type PresenceState = 'active' | 'background' | 'away' | 'offline';
+/** Why someone is Offline. 'closed' = they closed the tab or signed out (we were told); 'lost' = the connection just stopped (laptop closed, asleep, network off). */
+export type OfflineReason = 'closed' | 'lost';
 export type ConsentDecision = 'accepted' | 'deferred' | 'withdrawn';
 
 /** Every change of a staff member's Admin, written in the same transaction as the change. */
@@ -82,7 +84,7 @@ export class PresenceSession {
   endedAt: Date | null;
 
   @Column({ type: 'varchar', length: 20, nullable: true })
-  endReason: 'logout' | 'withdrawn' | 'replaced' | null;
+  endReason: 'logout' | 'withdrawn' | 'replaced' | 'lost' | null;
 }
 
 /** Aggregate state across all of a person's sessions. `version` only ever increases. */
@@ -105,6 +107,10 @@ export class PresenceCurrent {
   @Column({ type: 'timestamptz', nullable: true })
   lastSeenAt: Date | null;
 
+  /** Only set while Offline. */
+  @Column({ type: 'varchar', length: 8, nullable: true })
+  offlineReason: OfflineReason | null;
+
   @Column({ type: 'bigint', default: 0, transformer: { to: (v: number) => v, from: (v: string | number) => Number(v) } })
   version: number;
 }
@@ -125,6 +131,10 @@ export class PresenceTransition {
 
   @Column({ type: 'varchar', length: 12 })
   toState: PresenceState;
+
+  /** For a change to Offline: why. */
+  @Column({ type: 'varchar', length: 8, nullable: true })
+  reason: OfflineReason | null;
 
   @Column({ type: 'timestamptz' })
   at: Date;

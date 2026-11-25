@@ -3,6 +3,7 @@ import { Alert, Button, Modal, Popover, Space, Tag, Typography } from 'antd';
 import { presenceApi, type MyPresence } from '../api/presence';
 import { STATE_COLOR, STATE_LABEL } from '../presence/logic';
 import { registerPresenceStopper, takesPartInPresence } from '../presence/session';
+import { PresenceLink } from '../presence/link';
 import { PresenceTracker } from '../presence/tracker';
 
 const { Text, Paragraph } = Typography;
@@ -62,7 +63,7 @@ export default function PresenceGate({ role, dark = true }: { role?: string; dar
     if (trackerRef.current) return;
     const t = new PresenceTracker(m.config.heartbeatSeconds, undefined, undefined, (s) => {
       if (s === 'revoked' && alive.current) void refresh();
-    });
+    }, new PresenceLink());
     trackerRef.current = t;
     void t.start();
   }, [refresh]);

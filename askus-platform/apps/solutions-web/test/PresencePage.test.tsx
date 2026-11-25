@@ -62,7 +62,7 @@ describe('Admin view (team only)', () => {
     await screen.findByText('Eve Employee');
     expect(screen.getByText('What these states mean')).toBeTruthy();
     expect(screen.getByText(/does not prove typing, productivity or working time/)).toBeTruthy();
-    expect(screen.getByText(/cause is unknown/)).toBeTruthy();
+    expect(screen.getByText(/cannot tell those last cases apart/)).toBeTruthy();
     expect(screen.getByText(/not proof of work or productivity/)).toBeTruthy();
     expect(screen.getByText(/not used for attendance or payroll/)).toBeTruthy();
   });
@@ -70,7 +70,7 @@ describe('Admin view (team only)', () => {
   it('shows presence badge, time in state, last seen and the history button per person', async () => {
     show('Admin');
     const r = (await screen.findByText('Eve Employee')).closest('tr')!;
-    expect(within(r).getByText('Active in Solutions')).toBeTruthy();
+    expect(within(r).getByText('Available')).toBeTruthy();
     expect(within(r).getByText(/^\d+m$/)).toBeTruthy();
     expect(within(r).getByRole('button', { name: 'History' })).toBeTruthy();
   });
@@ -103,9 +103,9 @@ describe('live behaviour', () => {
     show('Admin');
     await screen.findByText('Eve Employee');
     await push({ type: 'upsert', row: row('e1', 'Eve Employee', { state: 'away', version: 5 }) });
-    expect(within(screen.getByText('Eve Employee').closest('tr')!).getByText('Away (10+ min)')).toBeTruthy();
+    expect(within(screen.getByText('Eve Employee').closest('tr')!).getByText('Away')).toBeTruthy();
     await push({ type: 'upsert', row: row('e1', 'Eve Employee', { state: 'active', version: 3 }) }); // older: dropped
-    expect(within(screen.getByText('Eve Employee').closest('tr')!).getByText('Away (10+ min)')).toBeTruthy();
+    expect(within(screen.getByText('Eve Employee').closest('tr')!).getByText('Away')).toBeTruthy();
   });
 
   it('removes a person the moment they are reassigned away', async () => {

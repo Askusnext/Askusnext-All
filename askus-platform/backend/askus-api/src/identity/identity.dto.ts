@@ -11,6 +11,11 @@ export class RequestOtpDto {
   @IsIn(['staff'])
   app?: 'staff';
 
+  // Ask for the mobile code on WhatsApp instead of SMS/email. Falls back by itself when WhatsApp cannot deliver.
+  @IsOptional()
+  @IsIn(['whatsapp'])
+  channel?: 'whatsapp';
+
   // First sign-in only: the other contact (email if identifier is a mobile, and vice versa).
   @IsOptional()
   @Matches(IDENTIFIER, { message: 'otherIdentifier must be a mobile number or email' })

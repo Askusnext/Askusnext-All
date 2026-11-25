@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, ArrowLeft, ShieldCheck, CheckCircle2 } from 'lucide-react'
+import { X, ArrowLeft, ShieldCheck, CheckCircle2, MessageCircle } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { isValidIndianMobile } from '../../utils/validation'
-import { isWhatsAppAuthAvailable } from '../../services/api/authService'
+import { isWhatsAppAuthAvailable, loadAuthOptions, type OtpOutcome } from '../../services/api/authService'
 
-type AuthStep = 'initial' | 'phone_otp' | 'whatsapp_otp' | 'google_phone_input' | 'google_phone_otp'
+type AuthStep = 'initial' | 'email_input' | 'phone_otp' | 'whatsapp_otp' | 'google_phone_input' | 'google_phone_otp'
 
 export const AuthModal: React.FC = () => {
   const {
@@ -13,8 +13,6 @@ export const AuthModal: React.FC = () => {
     closeAuthModal,
     sendPhoneOtp,
     verifyPhoneOtp,
-    sendWhatsAppOtp,
-    verifyWhatsAppOtp,
     loginWithGoogle,
     completeGooglePhoneLinking,
     pendingGoogleUser
@@ -26,6 +24,16 @@ export const AuthModal: React.FC = () => {
   const [cooldown, setCooldown] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  // First sign-in needs an email and a second code; WhatsApp is offered only when the server can deliver on it
+  const [emailAddress, setEmailAddress] = useState('')
+  const [emailOtp, setEmailOtp] = useState('')
+  const [outcome, setOutcome] = useState<OtpOutcome | null>(null)
+  const [viaWa, setViaWa] = useState(false)
+  const [waAvailable, setWaAvailable] = useState(isWhatsAppAuthAvailable())
+
+  useEffect(() => {
+    void loadAuthOptions().then(setWaAvailable)
+  }, [])
 
   // Switch to Google phone input if pendingGoogleUser appears
   useEffect(() => {
@@ -50,6 +58,10 @@ export const AuthModal: React.FC = () => {
       setOtpCode(['', '', '', '', '', ''])
       setErrorMessage(null)
       setIsSubmitting(false)
+      setEmailAddress('')
+      setEmailOtp('')
+      setOutcome(null)
+      setViaWa(false)
     }
   }, [isAuthModalOpen])
 
@@ -102,12 +114,23 @@ export const AuthModal: React.FC = () => {
     }
     setErrorMessage(null)
     setIsSubmitting(true)
-    const success = await sendPhoneOtp(mobileNumber)
+    const result = await sendPhoneOtp(mobileNumber)
     setIsSubmitting(false)
-    if (success) {
-      setStep('phone_otp')
-      setCooldown(30)
+    if (result) goToCodeStep(result, false)
+  }
+
+  // After a code request: ask for the email first (first sign-in), or show the code boxes for the channel used
+  const goToCodeStep = (result: OtpOutcome, whatsapp: boolean) => {
+    setOutcome(result)
+    setViaWa(whatsapp)
+    setOtpCode(['', '', '', '', '', ''])
+    setEmailOtp('')
+    if (result.needsEmail) {
+      setStep('email_input')
+      return
     }
+    setStep(result.mobileChannel === 'whatsapp' ? 'whatsapp_otp' : 'phone_otp')
+    setCooldown(30)
   }
 
   // 2. WhatsApp OTP Trigger
@@ -118,12 +141,31 @@ export const AuthModal: React.FC = () => {
     }
     setErrorMessage(null)
     setIsSubmitting(true)
-    const success = await sendWhatsAppOtp(mobileNumber)
+    const result = await sendPhoneOtp(mobileNumber, { whatsapp: true })
     setIsSubmitting(false)
-    if (success) {
-      setStep('whatsapp_otp')
-      setCooldown(30)
+    if (result) goToCodeStep(result, true)
+  }
+
+  // First sign-in: the email is the second thing we verify
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailAddress.trim())) {
+      setErrorMessage('Please enter a valid email address.')
+      return
     }
+    setErrorMessage(null)
+    setIsSubmitting(true)
+    const result = await sendPhoneOtp(mobileNumber, { email: emailAddress.trim(), whatsapp: viaWa })
+    setIsSubmitting(false)
+    if (result) goToCodeStep(result, viaWa)
+  }
+
+  // "Didn't get it on WhatsApp?": ask again, this time by SMS (first sign-in) or email (later sign-ins)
+  const handleSendWithoutWhatsApp = async () => {
+    setIsSubmitting(true)
+    const result = await sendPhoneOtp(mobileNumber, { email: emailAddress.trim() || undefined })
+    setIsSubmitting(false)
+    if (result) goToCodeStep(result, false)
   }
 
   // 3. Google Sign-In
@@ -145,12 +187,14 @@ export const AuthModal: React.FC = () => {
     setErrorMessage(null)
     setIsSubmitting(true)
 
-    if (step === 'phone_otp') {
-      const ok = await verifyPhoneOtp(mobileNumber, fullOtp)
-      if (!ok) setErrorMessage('Invalid OTP code. Please try again.')
-    } else if (step === 'whatsapp_otp') {
-      const ok = await verifyWhatsAppOtp(mobileNumber, fullOtp)
-      if (!ok) setErrorMessage('Invalid WhatsApp security code.')
+    if (step === 'phone_otp' || step === 'whatsapp_otp') {
+      if (outcome?.dual && !/^\d{6}$/.test(emailOtp.trim())) {
+        setErrorMessage('Please enter the 6-digit code we sent to your email.')
+        setIsSubmitting(false)
+        return
+      }
+      const ok = await verifyPhoneOtp(mobileNumber, fullOtp, outcome?.dual ? { email: emailAddress.trim(), emailCode: emailOtp.trim() } : undefined)
+      if (!ok) setErrorMessage(step === 'whatsapp_otp' ? 'Invalid WhatsApp security code.' : 'Invalid OTP code. Please try again.')
     } else if (step === 'google_phone_otp') {
       const ok = await completeGooglePhoneLinking(mobileNumber, fullOtp)
       if (!ok) setErrorMessage('Failed to verify mobile for Google account.')
@@ -162,14 +206,39 @@ export const AuthModal: React.FC = () => {
   const handleResend = async () => {
     if (cooldown > 0) return
     setIsSubmitting(true)
-    if (step === 'phone_otp' || step === 'google_phone_otp') {
+    if (step === 'phone_otp' || step === 'whatsapp_otp') {
+      const result = await sendPhoneOtp(mobileNumber, { email: emailAddress.trim() || undefined, whatsapp: viaWa })
+      if (result) {
+        setOutcome(result)
+        setOtpCode(['', '', '', '', '', ''])
+        setEmailOtp('')
+      }
+    } else if (step === 'google_phone_otp') {
       await sendPhoneOtp(mobileNumber)
-    } else if (step === 'whatsapp_otp') {
-      await sendWhatsAppOtp(mobileNumber)
     }
     setIsSubmitting(false)
     setCooldown(30)
   }
+
+  // The second code of a first sign-in (the first goes in the six boxes)
+  const emailCodeField = outcome?.dual ? (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-slate-500">Code sent to your email ({outcome.emailHint ?? emailAddress})</label>
+      <input
+        type="text"
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        maxLength={6}
+        value={emailOtp}
+        onChange={(e) => {
+          setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))
+          if (errorMessage) setErrorMessage(null)
+        }}
+        placeholder="6-digit email code"
+        className="h-12 w-full rounded-xl border-2 border-slate-300 px-3 text-center text-lg font-bold tracking-widest text-slate-900 transition focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+      />
+    </div>
+  ) : null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -287,6 +356,17 @@ export const AuthModal: React.FC = () => {
                 </button>
               </form>
 
+              {waAvailable && (
+                <button
+                  type="button"
+                  onClick={handleWhatsAppLogin}
+                  disabled={isSubmitting}
+                  className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-emerald-600 bg-white text-sm font-bold uppercase tracking-wider text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-70"
+                >
+                  <MessageCircle size={18} />
+                  {isSubmitting ? 'Sending…' : 'Login with WhatsApp'}
+                </button>
+              )}
 
               {/* Bottom Terms & Policy (Exact match to screenshot) */}
               <div className="mt-8 pt-4 border-t border-slate-200 text-center">
@@ -305,6 +385,50 @@ export const AuthModal: React.FC = () => {
             </motion.div>
           )}
 
+          {/* STEP 1b: FIRST SIGN-IN NEEDS AN EMAIL TOO */}
+          {step === 'email_input' && (
+            <motion.div
+              key="step-email"
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+            >
+              <h3 className="text-xl font-bold text-slate-900 mb-1">Add your email</h3>
+              <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+                First sign-in: we verify your mobile ({viaWa ? 'WhatsApp' : 'SMS'}) and your email once. After that, codes come to your email{waAvailable ? ' or WhatsApp' : ' only'}.
+              </p>
+
+              {errorMessage && (
+                <div className="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
+                  {errorMessage}
+                </div>
+              )}
+
+              <form onSubmit={handleEmailSubmit} className="space-y-5" noValidate>
+                <input
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  autoFocus
+                  value={emailAddress}
+                  onChange={(e) => {
+                    setEmailAddress(e.target.value)
+                    if (errorMessage) setErrorMessage(null)
+                  }}
+                  placeholder="you@example.com"
+                  className="h-12 w-full rounded-xl border-2 border-slate-300 px-3 text-base text-slate-900 transition focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full h-12 rounded-xl bg-[#0066FF] hover:bg-blue-700 text-white font-bold text-sm tracking-wide shadow-md shadow-blue-500/20 active:scale-[0.99] transition disabled:opacity-70"
+                >
+                  {isSubmitting ? 'Sending codes…' : 'Send codes'}
+                </button>
+              </form>
+            </motion.div>
+          )}
+
           {/* STEP 2: PHONE OTP VERIFICATION */}
           {step === 'phone_otp' && (
             <motion.div
@@ -315,9 +439,21 @@ export const AuthModal: React.FC = () => {
             >
               <h3 className="text-xl font-bold text-slate-900 mb-1">Verify Mobile OTP</h3>
               <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-                Enter the 6-digit verification code sent via SMS to{' '}
-                <span className="font-semibold text-slate-800">+91 {mobileNumber}</span>.
+                {outcome && !outcome.dual && outcome.mobileChannel === null ? (
+                  <>
+                    Enter the 6-digit code we emailed to <span className="font-semibold text-slate-800">{outcome.emailHint ?? 'your email'}</span>.
+                  </>
+                ) : (
+                  <>
+                    Enter the 6-digit verification code sent via SMS to{' '}
+                    <span className="font-semibold text-slate-800">+91 {mobileNumber}</span>
+                    {outcome?.dual ? ', then the code sent to your email.' : '.'}
+                  </>
+                )}
               </p>
+              {outcome?.whatsappFailed && (
+                <p className="-mt-4 mb-5 text-xs text-amber-700">WhatsApp is not available right now, so we sent your code {outcome.dual ? 'by SMS' : 'to your email'} instead.</p>
+              )}
 
               {errorMessage && (
                 <div className="mb-4 rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-700">
@@ -342,6 +478,8 @@ export const AuthModal: React.FC = () => {
                     />
                   ))}
                 </div>
+
+                {emailCodeField}
 
                 <button
                   type="submit"
@@ -382,8 +520,9 @@ export const AuthModal: React.FC = () => {
               </div>
 
               <p className="text-xs text-slate-500 mb-6 leading-relaxed">
-                A 6-digit security code has been dispatched to your official WhatsApp account on{' '}
-                <span className="font-semibold text-slate-800">+91 {mobileNumber}</span>.
+                A 6-digit security code has been sent to your WhatsApp on{' '}
+                <span className="font-semibold text-slate-800">{outcome?.mobileHint ?? `+91 ${mobileNumber}`}</span>
+                {outcome?.dual ? ', then enter the code sent to your email.' : '.'}
               </p>
 
               {errorMessage && (
@@ -409,6 +548,8 @@ export const AuthModal: React.FC = () => {
                   ))}
                 </div>
 
+                {emailCodeField}
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -429,6 +570,14 @@ export const AuthModal: React.FC = () => {
                   {cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend WhatsApp OTP'}
                 </button>
               </div>
+              <button
+                type="button"
+                onClick={handleSendWithoutWhatsApp}
+                disabled={isSubmitting}
+                className="mt-4 w-full text-center text-xs font-semibold text-slate-600 hover:text-slate-900 disabled:text-slate-400"
+              >
+                Didn't get it on WhatsApp? Send it by {outcome?.dual ? 'SMS' : 'email'} instead
+              </button>
             </motion.div>
           )}
 

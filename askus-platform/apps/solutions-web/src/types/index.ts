@@ -279,8 +279,10 @@ export interface OTPResponse {
   success: boolean;
   status?: 'PENDING' | 'REJECTED';
   needs?: 'email' | 'mobile';
-  channels?: ('sms' | 'email')[];
+  channels?: ('sms' | 'email' | 'whatsapp')[];
   emailHint?: string;
+  mobileHint?: string;
+  whatsappFailed?: boolean;
   sessionId: string;
   message: string;
 }

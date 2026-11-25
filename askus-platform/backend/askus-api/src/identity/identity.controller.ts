@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { LoginPasswordDto, RefreshDto, RequestOtpDto, VerifyOtpDto } from './identity.dto';
@@ -9,11 +9,17 @@ import { IdentityService } from './identity.service';
 export class IdentityController {
   constructor(private readonly identity: IdentityService) {}
 
+  /** What the sign-in screens may offer. Public and contains no secrets. */
+  @Get('options')
+  options() {
+    return { whatsapp: this.identity.whatsappAvailable() };
+  }
+
   @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('request-otp')
   @HttpCode(200)
   requestOtp(@Body() dto: RequestOtpDto) {
-    return this.identity.requestOtp(dto.identifier, dto.app, dto.otherIdentifier);
+    return this.identity.requestOtp(dto.identifier, dto.app, dto.otherIdentifier, dto.channel);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60_000 } })

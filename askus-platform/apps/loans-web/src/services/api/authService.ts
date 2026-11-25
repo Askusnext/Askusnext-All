@@ -54,8 +54,56 @@ async function loadProfile(): Promise<UserProfile | null> {
   }
 }
 
-async function verify(identifier: string, code: string): Promise<UserProfile> {
-  const tokens = await http<AuthTokens>('/auth/verify-otp', { method: 'POST', body: { identifier, code } })
+/** What a code request did, in the terms the sign-in screen needs. */
+export interface OtpOutcome {
+  /** First sign-in: the email address is still needed before any code is sent. */
+  needsEmail: boolean
+  /** First sign-in: two codes were sent (mobile and email) and both must be entered. */
+  dual: boolean
+  /** Where the code for the mobile number went; null when a verified account's code went to email only. */
+  mobileChannel: 'whatsapp' | 'sms' | null
+  emailHint?: string
+  /** Masked number a WhatsApp code went to (verified accounts). */
+  mobileHint?: string
+  /** WhatsApp was asked for but could not be used, so the code was sent by SMS or email instead. */
+  whatsappFailed: boolean
+}
+
+interface OtpResponse {
+  sent: boolean
+  needs?: 'email' | 'mobile'
+  channels?: ('sms' | 'email' | 'whatsapp')[]
+  emailHint?: string
+  mobileHint?: string
+  whatsappFailed?: boolean
+}
+
+const toOutcome = (r: OtpResponse): OtpOutcome => ({
+  needsEmail: r.needs === 'email',
+  dual: (r.channels?.length ?? 0) === 2,
+  mobileChannel: r.channels?.includes('whatsapp') ? 'whatsapp' : r.channels?.includes('sms') ? 'sms' : null,
+  emailHint: r.emailHint,
+  mobileHint: r.mobileHint,
+  whatsappFailed: Boolean(r.whatsappFailed),
+})
+
+let whatsappOffered = false
+
+/** Asks the server what it can offer (is WhatsApp set up?). Never throws: on any problem WhatsApp is simply not offered. */
+export async function loadAuthOptions(): Promise<boolean> {
+  try {
+    whatsappOffered = Boolean((await http<{ whatsapp?: boolean }>('/auth/options')).whatsapp)
+  } catch {
+    whatsappOffered = false
+  }
+  return whatsappOffered
+}
+
+async function verify(identifier: string, code: string, other?: { email?: string; emailCode?: string }): Promise<UserProfile> {
+  const tokens = await http<AuthTokens>('/auth/verify-otp', {
+    method: 'POST',
+    body: { identifier, code, otherIdentifier: other?.email?.trim().toLowerCase() || undefined, otherCode: other?.emailCode || undefined },
+  })
   tokenStore.set(tokens)
   const profile = await loadProfile()
   if (!profile) throw new Error('Could not load your profile. Please try again.')
@@ -78,19 +126,27 @@ export function resetPhoneRecaptcha() {
   /* nothing to reset: there is no captcha widget any more */
 }
 
-export async function requestPhoneOtp(mobile: string) {
+/**
+ * Asks for a sign-in code. A first sign-in also needs an email (the answer says so: `needsEmail`), then sends one
+ * code to the mobile (SMS or WhatsApp) and one to the email. Later sign-ins get a single code (email, or WhatsApp
+ * when asked for).
+ */
+export async function requestPhoneOtp(mobile: string, opts: { email?: string; whatsapp?: boolean } = {}): Promise<OtpOutcome> {
   const identifier = normalizeIndianPhone(mobile)
   try {
-    await http('/auth/request-otp', { method: 'POST', body: { identifier } })
+    const res = await http<OtpResponse>('/auth/request-otp', {
+      method: 'POST',
+      body: { identifier, otherIdentifier: opts.email?.trim().toLowerCase() || undefined, channel: opts.whatsapp ? 'whatsapp' : undefined },
+    })
+    return toOutcome(res)
   } catch (error) {
     throw new Error(friendly(error, 'Could not send the code.'))
   }
-  return { success: true }
 }
 
-export async function confirmPhoneOtp(mobile: string, code: string) {
+export async function confirmPhoneOtp(mobile: string, code: string, other?: { email?: string; emailCode?: string }) {
   try {
-    const user = await verify(normalizeIndianPhone(mobile), code.trim())
+    const user = await verify(normalizeIndianPhone(mobile), code.trim(), other)
     emit(user)
     return { success: true, user }
   } catch (error) {
@@ -101,11 +157,14 @@ export async function confirmPhoneOtp(mobile: string, code: string) {
 // ---- Staff: email OTP ----
 
 export async function requestAdminOtp(email: string) {
+  let res: OtpResponse
   try {
-    await http('/auth/request-otp', { method: 'POST', body: { identifier: email.trim().toLowerCase() } })
+    res = await http<OtpResponse>('/auth/request-otp', { method: 'POST', body: { identifier: email.trim().toLowerCase() } })
   } catch (error) {
     throw new Error(friendly(error, 'Could not send the code.'))
   }
+  // A staff account that has never completed its first sign-in needs a mobile number too; do that once on the Solutions site.
+  if (!res.sent) throw new Error('No code was sent. Complete your first sign-in on the Solutions site (it verifies your mobile and email), then come back.')
 }
 
 /** Signs a staff member in. Rejects (and signs out) any account without loans access. */
@@ -160,14 +219,7 @@ export async function initiateGoogleSignIn(): Promise<{
   return { completed: false, error: 'Google sign-in is not available. Sign in with your mobile number.' }
 }
 
+/** True once `loadAuthOptions()` has found that the server can deliver codes on WhatsApp. */
 export function isWhatsAppAuthAvailable() {
-  return false
-}
-
-export async function requestWhatsAppOtp() {
-  return { success: false, error: 'WhatsApp authentication is not configured.' }
-}
-
-export async function confirmWhatsAppOtp() {
-  return { success: false, error: 'WhatsApp authentication is not configured.' }
+  return whatsappOffered
 }
