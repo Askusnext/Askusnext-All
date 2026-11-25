@@ -1,5 +1,5 @@
 import { ArrowRight, BadgeIndianRupee, Bike, CarFront, CarTaxiFront, FilePlus2, FileCheck2, HeartPulse, MapPinned, Phone, RefreshCw, Search, ShieldCheck, Sparkles, Truck, UserRoundCheck, type LucideIcon } from 'lucide-react'
-import { OFFLINE_CASHBACK } from '../../lib/offline'
+import { OFFLINE_CASHBACK, TILE_CASHBACK } from '../../lib/offline'
 import { HELPLINE, PRODUCTS, inr } from '../../lib/products'
 import { HERO_PHOTO, productPhoto } from '../../lib/photos'
 
@@ -75,15 +75,16 @@ export function ProductTiles() {
           {PRODUCTS.filter((p) => productPhoto(p.id)).map((p) => {
             const photo = productPhoto(p.id, p.id === 'car' ? 760 : 320, p.id === 'car' ? 470 : 260)!
             const accent = ACCENT[p.id] ?? '#2f6bff'
-            const cashback = p.id === 'car' || p.id === 'bike'
+            const cashback = TILE_CASHBACK[p.id]
             return (
               <button key={p.id} type="button" data-product={p.id} className="product-card corner" style={{ ['--accent' as string]: accent }}>
                 <span className="product-body">
                   <span className="product-name">{p.name}</span>
                   <span className="product-tag">{p.tag}</span>
+                  {p.offer && <span className="product-offer">{p.offer}</span>}
                   <span className="product-chips">
                     <span className="product-chip">{p.startingAt ? <>From <b>{inr(p.startingAt)}*</b></> : 'Compare plans'}</span>
-                    {cashback && <span className="product-chip cashback">Up to {inr(OFFLINE_CASHBACK[p.id as 'car' | 'bike'])} cashback</span>}
+                    {cashback ? <span className="product-chip cashback">Up to {inr(cashback)} cashback</span> : null}
                   </span>
                   <span className="product-go" aria-hidden="true"><ArrowRight size={16} /></span>
                 </span>

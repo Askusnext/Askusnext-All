@@ -3,7 +3,7 @@ import { uploadDocument, type UploadedDoc } from './storage'
 import { normMobile } from './validate'
 import { describeReg } from './vehicle'
 
-export { INSURERS, NCB_OPTIONS, OFFLINE_CASHBACK, PREV_POLICY_TYPES, type OfflineType } from './offlineConsts'
+export { INSURERS, NCB_OPTIONS, OFFLINE_CASHBACK, OFFLINE_VEHICLE, ONLINE_CASHBACK, PREV_POLICY_TYPES, TILE_CASHBACK, type OfflineType } from './offlineConsts'
 import type { OfflineType } from './offlineConsts'
 
 export type OfflineForm = {

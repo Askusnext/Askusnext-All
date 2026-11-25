@@ -85,6 +85,9 @@ export function createApiClient({ baseUrl, getAccessToken, refreshAccessToken }:
           otherIdentifier: other?.identifier,
           otherCode: other?.code,
         }),
+      /** Email or mobile + password, for accounts that have a password set. */
+      loginPassword: (identifier: string, password: string) =>
+        request<AuthTokens>('/auth/login-password', 'POST', { identifier, password }),
       refresh: (refreshToken: string) =>
         request<AuthTokens>('/auth/refresh', 'POST', { refreshToken }),
       logout: (refreshToken: string) =>

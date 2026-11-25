@@ -17,7 +17,7 @@ export interface InsuranceRequestRow {
   status: RequestStatus;
   adminNote?: string;
   updatedBy?: string;
-  vehicleType?: 'car' | 'bike';
+  vehicleType?: 'car' | 'bike' | 'auto' | 'commercial';
   cashbackUpTo?: number;
   applicant?: Record<string, string>;
   vehicle?: Record<string, string | boolean>;

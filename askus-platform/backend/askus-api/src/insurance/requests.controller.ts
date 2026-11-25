@@ -25,7 +25,7 @@ const apiBase = (req: Request) => process.env.PUBLIC_API_URL ?? `${req.protocol}
 
 class OfflineRequestDto {
   @IsUUID() id: string;
-  @IsIn(['car', 'bike']) vehicleType: 'car' | 'bike';
+  @IsIn(['car', 'bike', 'auto', 'commercial']) vehicleType: 'car' | 'bike' | 'auto' | 'commercial';
   @IsObject() applicant: Record<string, unknown>;
   @IsObject() vehicle: Record<string, unknown>;
   @IsObject() policy: Record<string, unknown>;

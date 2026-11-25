@@ -7,13 +7,16 @@ const unsplash = (id: string, w: number, h: number, focus = '') =>
   `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&h=${h}&q=70${focus}`
 
 const IDS: Record<string, { id: string; alt: string; position?: string; focus?: string; cutout?: boolean; local?: string }> = {
-  // Background removed; the maker's badge and name plate are painted out.
-  car: { id: '', local: '/img/cutouts/car.webp', alt: 'A white sedan, front three-quarter view' },
-  // Real photos with the background removed (macOS Vision subject lift), saved in public/img/cutouts.
-  bike: { id: '', local: '/img/cutouts/bike.webp', alt: 'A red scooter, side view' },
-  auto: { id: '', local: '/img/cutouts/auto.webp', alt: 'A yellow and black auto-rickshaw' },
-  commercial: { id: '', local: '/img/cutouts/commercial.webp', alt: 'A white mini goods truck' },
+  // Owner-supplied photo, background removed with rembg (isnet-general-use).
+  car: { id: '', local: '/img/cutouts/car-front.webp', alt: 'A white SUV, front view' },
+  // Owner-supplied photo with its own transparent background.
+  bike: { id: '', local: '/img/cutouts/bike-front.webp', alt: 'A white sports motorcycle, front view' },
+  // Owner-supplied photo, background removed with rembg (isnet-general-use).
+  auto: { id: '', local: '/img/cutouts/auto-front.webp', alt: 'A green and yellow auto-rickshaw, front view' },
+  // Owner-supplied photo, background removed with rembg (isnet-general-use).
+  commercial: { id: '', local: '/img/cutouts/commercial-front.webp', alt: 'A white heavy truck, front view' },
   health: { id: '1763070282903-cbe9922ab7ab', alt: 'A stethoscope', cutout: true },
+  // Real photo with the background removed (macOS Vision subject lift), saved in public/img/cutouts.
   term: { id: '', local: '/img/cutouts/term.webp', alt: 'A happy family sitting together' },
 }
 

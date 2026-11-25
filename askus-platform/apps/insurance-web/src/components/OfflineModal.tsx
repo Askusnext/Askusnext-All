@@ -3,7 +3,7 @@ import { AlertTriangle, ArrowLeft, ArrowRight, Check, CheckCircle2, Copy, Headph
 import { useAuth } from '../context/AuthContext'
 import { HELPLINE, inr } from '../lib/products'
 import {
-  ADDON_OPTIONS, INSURERS, NCB_OPTIONS, OFFLINE_CASHBACK, PREV_POLICY_TYPES, emptyForm, normReg, submitOfflineRequest, validateStep,
+  ADDON_OPTIONS, INSURERS, NCB_OPTIONS, OFFLINE_CASHBACK, OFFLINE_VEHICLE, PREV_POLICY_TYPES, emptyForm, normReg, submitOfflineRequest, validateStep,
   type OfflineForm, type OfflineType,
 } from '../lib/offline'
 import { scanDocument, warmUpReader, type ScanKind } from '../lib/ocr'
@@ -33,8 +33,8 @@ const Heading = ({ step, title, sub }: { step: number; title: string; sub: strin
 
 export default function OfflineModal({ type, onClose }: { type: OfflineType; onClose: () => void }) {
   const { user } = useAuth()
-  const noun = type === 'car' ? 'Car' : 'Bike'
-  const vehicle = type === 'car' ? 'car' : 'bike'
+  const words = OFFLINE_VEHICLE[type]
+  const { noun, vehicle } = words
   const dlg = useRef<HTMLDialogElement>(null)
   const [screen, setScreen] = useState<Screen>('entry')
   const [usedVehicle, setUsedVehicle] = useState(false)
@@ -261,8 +261,8 @@ export default function OfflineModal({ type, onClose }: { type: OfflineType; onC
       <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-[1080px] items-center gap-4 px-4 sm:px-6">
           <span className="flex items-center gap-2.5">
-            <span className="grid size-8 place-items-center rounded-lg bg-indigo-600 text-white"><ShieldCheck size={17} /></span>
-            <span className="text-sm font-semibold max-sm:hidden">Askus Insurance</span>
+            <img src="/askus-wordmark.png" alt="Askus" width={480} height={144} className="h-7 w-auto" />
+            <span className="text-sm font-semibold max-sm:hidden">Insurance</span>
           </span>
           <div className="min-w-0 flex-1 lg:flex lg:justify-center">{screen !== 'done' && <Progress step={step} onJump={(i) => go(ORDER[i])} />}</div>
           <a href={`tel:+91${HELPLINE}`} className="hidden h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-zinc-600 hover:bg-zinc-100 lg:inline-flex"><Headphones size={16} />{HELPLINE}</a>
@@ -354,8 +354,8 @@ export default function OfflineModal({ type, onClose }: { type: OfflineType; onC
               )}
               <Group title="Vehicle" hint={f.isNew ? 'Brand-new vehicle: no registration yet.' : formatReg(f.regNumber)}>
                 <Two>
-                  <Row label="Make and model" badge={<AutoTag from={auto.makeModel} />}><input className={ctl} placeholder={type === 'car' ? 'e.g. Maruti Alto 800' : 'e.g. TVS Apache'} {...bind('makeModel')} /></Row>
-                  <Row label="Variant" optional badge={<AutoTag from={auto.variant} />}><input className={ctl} placeholder="e.g. RTR 200 4V FI (200 CC)" {...bind('variant')} /></Row>
+                  <Row label="Make and model" badge={<AutoTag from={auto.makeModel} />}><input className={ctl} placeholder={words.model} {...bind('makeModel')} /></Row>
+                  <Row label="Variant" optional badge={<AutoTag from={auto.variant} />}><input className={ctl} placeholder={words.variant} {...bind('variant')} /></Row>
                 </Two>
                 <Row label="Fuel type" badge={<AutoTag from={auto.fuel} />}><select className={ctl} value={f.fuel} onChange={(e) => set('fuel', e.target.value)}>{['Petrol', 'Diesel', 'CNG', 'Electric', 'LPG'].map((x) => <option key={x}>{x}</option>)}</select></Row>
                 {!f.isNew && (
@@ -429,7 +429,7 @@ export default function OfflineModal({ type, onClose }: { type: OfflineType; onC
                   <Row label="City" badge={<AutoTag from={auto.city} />}><input className={ctl} autoComplete="address-level2" {...bind('city')} /></Row>
                   <Row label="Pincode" badge={<AutoTag from={auto.pincode} />}><input className={ctl} inputMode="numeric" maxLength={6} autoComplete="postal-code" {...bind('pincode')} /></Row>
                 </Two>
-                <Question label={`Is the ${vehicle === 'car' ? 'car' : 'two-wheeler'} on loan?`}><Segmented label="On loan" value={f.onLoan} options={['No', 'Yes'] as const} onChange={(v) => set('onLoan', v)} /></Question>
+                <Question label={`Is the ${words.loan} on loan?`}><Segmented label="On loan" value={f.onLoan} options={['No', 'Yes'] as const} onChange={(v) => set('onLoan', v)} /></Question>
               </Group>
 
               <section className="rounded-xl border border-zinc-200 bg-white p-5">

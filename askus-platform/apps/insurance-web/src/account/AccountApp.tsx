@@ -254,8 +254,8 @@ function ProfileForm({ uid, onLoaded }: { uid: string; onLoaded: (p: Profile) =>
 /* ------------------------------ shell ------------------------------ */
 const Brand = () => (
   <a href="/" className="flex items-center gap-2.5" aria-label="Askus Insurance home">
-    <span className="grid size-8 place-items-center rounded-lg bg-indigo-600 text-white"><ShieldCheck size={17} /></span>
-    <span className="leading-tight"><span className="block text-sm font-semibold text-zinc-900">Askus Insurance</span><span className="block text-[11px] text-zinc-500">My account</span></span>
+    <img src="/askus-wordmark.png" alt="Askus" width={480} height={144} className="h-8 w-auto" />
+    <span className="leading-tight"><span className="block text-sm font-semibold text-zinc-900">Insurance</span><span className="block text-[11px] text-zinc-500">My account</span></span>
   </a>
 )
 

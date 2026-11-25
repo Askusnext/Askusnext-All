@@ -10,7 +10,7 @@ import { StorageService } from '../storage/storage.service';
 import { DocRef, InsuranceRequest, RequestStatus } from './insurance.entities';
 
 export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
-const CASHBACK = { car: 500, bike: 300 } as const;
+const CASHBACK = { car: 500, bike: 300, auto: 2000, commercial: 11000 } as const;
 const MOBILE = /^[6-9]\d{9}$/;
 const MIME: Record<string, string> = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
 const KEY = /^insurance\/[0-9a-f-]{36}\/[0-9a-f-]{36}\/doc_\d\.(pdf|jpg|png|webp)$/i;
@@ -85,7 +85,7 @@ export class RequestsService {
   }
 
   async createOffline(user: AuthUser, body: {
-    id: string; vehicleType: 'car' | 'bike'; applicant: Record<string, unknown>; vehicle: Record<string, unknown>;
+    id: string; vehicleType: keyof typeof CASHBACK; applicant: Record<string, unknown>; vehicle: Record<string, unknown>;
     policy: Record<string, unknown>; plan: Record<string, unknown>; documents: DocRef[];
   }) {
     await this.requireVerifiedMobile(user.id);
